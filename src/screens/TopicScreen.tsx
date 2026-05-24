@@ -156,7 +156,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.metaAgo}>{timeAgo(current.createdAt)}</Text>
                   <View style={{ marginLeft: 6 }}>
-                    <Remaining expiresAt={current.expiresAt} color={colors.textDim} size={12} />
+                    <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
                   </View>
                 </View>
               )}
