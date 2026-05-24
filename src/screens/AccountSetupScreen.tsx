@@ -18,6 +18,7 @@ import { ImageIcon, PencilIcon } from '../components/icons';
 import { useStore } from '../store';
 import { makeMockPeople } from '../seed';
 import { pickRawImage } from '../lib/avatar';
+import { hasBanned } from '../lib/words';
 import { CropModal } from '../components/CropModal';
 
 export function AccountSetupScreen() {
@@ -102,7 +103,14 @@ export function AccountSetupScreen() {
         </ScrollView>
 
         <View style={{ paddingBottom: insets.bottom + space.md, paddingTop: space.sm }}>
-          <PrimaryButton label={copy.setupNext} disabled={!name.trim()} onPress={() => setStep(1)} />
+          {(hasBanned(name) || hasBanned(handle)) && (
+            <Text style={styles.bannedNote}>使えない言葉が入ってるみたい。</Text>
+          )}
+          <PrimaryButton
+            label={copy.setupNext}
+            disabled={!name.trim() || hasBanned(name) || hasBanned(handle)}
+            onPress={() => setStep(1)}
+          />
         </View>
 
         {cropUri && (
@@ -223,6 +231,7 @@ const styles = StyleSheet.create({
   at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.handle },
   handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.3, paddingVertical: 15, marginLeft: 4 },
   hint: { color: colors.textFaint, fontSize: font.small, marginTop: space.xs },
+  bannedNote: { color: colors.warn, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginBottom: space.xs },
 
   person: {
     flexDirection: 'row',

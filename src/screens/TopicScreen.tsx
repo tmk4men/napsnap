@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, PrimaryButton, Remaining, useTick } from '../components/ui';
+import { Avatar, Remaining, useTick } from '../components/ui';
 import { ChekiCard } from '../components/ChekiCard';
 import { TopicNote } from '../components/TopicNote';
 import { ReactionBar } from '../components/ReactionBar';
@@ -115,16 +115,17 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.sm }]}>
-      {/* 今日のお題（ノートの切れ端） */}
+      {/* 今日のお題（ノートの切れ端）。出すボタンは紙の中に。 */}
       <View style={styles.noteWrap}>
-        <TopicNote prompt={topic.prompt} bg={colors.bg} />
-        <Pressable
-          onPress={() => nav.openCamera(topic.key)}
-          style={({ pressed }) => [styles.joinBtn, pressed && { transform: [{ scale: 0.97 }] }]}
-        >
-          <PencilIcon size={15} color={colors.limeInk} />
-          <Text style={styles.joinText}>{copy.topicJoin}</Text>
-        </Pressable>
+        <TopicNote prompt={topic.prompt} bg={colors.bg}>
+          <Pressable
+            onPress={() => nav.openCamera(topic.key)}
+            style={({ pressed }) => [styles.joinBtn, pressed && { transform: [{ scale: 0.97 }] }]}
+          >
+            <PencilIcon size={15} color={colors.limeInk} />
+            <Text style={styles.joinText}>{copy.topicJoin}</Text>
+          </Pressable>
+        </TopicNote>
       </View>
 
       {/* スワイプ領域 */}
@@ -163,12 +164,9 @@ export function TopicScreen({ nav }: { nav: Nav }) {
           </Animated.View>
         )}
 
-        {/* 件数＋音 */}
+        {/* 音だけ（何枚目かは出さない） */}
         {posts.length > 0 && (
           <View style={styles.hud} pointerEvents="box-none">
-            <Text style={styles.count}>
-              {safeIndex + 1} / {posts.length}
-            </Text>
             <Pressable onPress={hasSound ? toggleSound : undefined} style={[styles.soundBtn, !hasSound && { opacity: 0.4 }]} hitSlop={8}>
               {hasSound && !muted ? <SpeakerOnIcon size={16} color={colors.text} /> : <SpeakerOffIcon size={16} color={colors.text} />}
             </Pressable>
@@ -176,17 +174,12 @@ export function TopicScreen({ nav }: { nav: Nav }) {
         )}
       </View>
 
-      {/* 下部：リアクション（※残すには入らない）or 投稿CTA */}
-      <View style={[styles.bottom, { paddingBottom: insets.bottom + space.sm }]}>
-        {posts.length > 0 && current ? (
-          <>
-            <ReactionBar key={current.id} selected={mine} onReact={(t) => reactToTopic(current.id, t)} />
-            <Text style={styles.swipeHint}>{copy.topicSwipeHint}</Text>
-          </>
-        ) : (
-          <PrimaryButton label={copy.topicJoin} onPress={() => nav.openCamera(topic.key)} />
-        )}
-      </View>
+      {/* リアクション（※残すには入らない）。バーは無し、ボタンだけ浮かせる。 */}
+      {posts.length > 0 && current && (
+        <View style={[styles.reactFloat, { bottom: insets.bottom + space.lg }]} pointerEvents="box-none">
+          <ReactionBar key={current.id} selected={mine} onReact={(t) => reactToTopic(current.id, t)} />
+        </View>
+      )}
     </View>
   );
 }
@@ -198,8 +191,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    alignSelf: 'center',
-    marginTop: space.sm,
     backgroundColor: colors.lime,
     borderRadius: radius.pill,
     paddingHorizontal: 16,
@@ -222,9 +213,8 @@ const styles = StyleSheet.create({
     right: space.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
-  count: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
   soundBtn: {
     width: 32,
     height: 32,
@@ -235,8 +225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bottom: { paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.xs, alignItems: 'center' },
-  swipeHint: { color: colors.textFaint, fontSize: font.tiny, fontWeight: '700', marginTop: 2 },
+  reactFloat: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.lg },
   emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.ui },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', fontFamily: fonts.ui },

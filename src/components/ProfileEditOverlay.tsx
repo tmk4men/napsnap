@@ -5,6 +5,7 @@ import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { FadeIn, PrimaryButton } from './ui';
 import { CloseIcon } from './icons';
+import { hasBanned } from '../lib/words';
 
 const AD_SECONDS = 5;
 
@@ -86,7 +87,14 @@ export function ProfileEditOverlay({
               />
             </View>
             <View style={{ height: space.lg }} />
-            <PrimaryButton label="保存する" disabled={!name.trim() || !handle.trim()} onPress={() => onSave(name, handle)} />
+            {(hasBanned(name) || hasBanned(handle)) && (
+              <Text style={styles.bannedNote}>使えない言葉が入ってるみたい。</Text>
+            )}
+            <PrimaryButton
+              label="保存する"
+              disabled={!name.trim() || !handle.trim() || hasBanned(name) || hasBanned(handle)}
+              onPress={() => onSave(name, handle)}
+            />
           </View>
         )}
       </View>
@@ -159,6 +167,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairline,
   },
-  at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700' },
-  handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '600', fontFamily: fonts.ui, paddingVertical: 15, marginLeft: 4 },
+  at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.handle },
+  handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.3, paddingVertical: 15, marginLeft: 4 },
+  bannedNote: { color: colors.warn, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginBottom: space.sm },
 });

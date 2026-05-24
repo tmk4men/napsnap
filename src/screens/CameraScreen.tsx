@@ -11,7 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
-import { CameraIcon, CloseIcon, FlipCameraIcon } from '../components/icons';
+import { BoltIcon, CameraIcon, CloseIcon, FlipCameraIcon } from '../components/icons';
 import { Waveform } from '../components/Waveform';
 import { preloadDetector } from '../lib/faceCheck';
 import { Nav } from '../navigation/nav';
@@ -21,18 +21,29 @@ import { topicByKey } from '../topics';
 
 type Phase = 'live' | 'recording';
 
+// 2秒の環境音には十分な軽量設定（モノ・低ビットレート）。保存/配信を軽くする（#5）。
+// プリセットを土台に共通フィールドだけ上書きし、端末ごとの enum 設定は壊さない。
+const REC_OPTIONS: any = {
+  ...RecordingPresets.LOW_QUALITY,
+  sampleRate: 22050,
+  numberOfChannels: 1,
+  bitRate: 32000,
+  web: { ...(RecordingPresets.LOW_QUALITY as any).web, bitsPerSecond: 32000 },
+};
+
 export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string }) {
   const insets = useSafeAreaInsets();
   const topic = topicByKey(topicKey);
   const [permission, requestPermission] = useCameraPermissions();
   const [micGranted, setMicGranted] = useState(false);
   const camRef = useRef<CameraView | null>(null);
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorder = useAudioRecorder(REC_OPTIONS);
 
   const [phase, setPhase] = useState<Phase>('live');
   const [frozenUri, setFrozenUri] = useState<string | null>(null);
   const [withSound, setWithSound] = useState(true);
   const [facing, setFacing] = useState<CameraType>('back');
+  const [torch, setTorch] = useState(false); // ライト（トーチ）on/off
   const progress = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -167,7 +178,7 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
   return (
     <View style={styles.container}>
       {granted ? (
-        <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing={facing} />
+        <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing={facing} enableTorch={torch} />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.noCam]}>
           <CameraIcon size={46} color={colors.onMediaDim} />
@@ -184,14 +195,20 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
           <Text style={styles.guideText}>{topic ? `お題：${topic.prompt}` : copy.cameraGuide}</Text>
         </View>
         {granted ? (
-          <Pressable
-            onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
-            style={styles.flip}
-            hitSlop={12}
-          >
-            <FlipCameraIcon size={18} color={colors.onMedia} />
-            <Text style={styles.flipLabel}>{facing === 'back' ? '外' : '内'}</Text>
-          </Pressable>
+          <View style={styles.topRightRow}>
+            <Pressable onPress={() => setTorch((t) => !t)} style={styles.flip} hitSlop={12}>
+              <BoltIcon size={18} color={torch ? colors.lime : colors.onMedia} />
+              <Text style={[styles.flipLabel, !torch && { color: colors.onMediaDim }]}>{torch ? 'ON' : 'OFF'}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+              style={styles.flip}
+              hitSlop={12}
+            >
+              <FlipCameraIcon size={18} color={colors.onMedia} />
+              <Text style={styles.flipLabel}>{facing === 'back' ? '外' : '内'}</Text>
+            </Pressable>
+          </View>
         ) : (
           <View style={{ width: 44 }} />
         )}
@@ -255,6 +272,7 @@ const styles = StyleSheet.create({
   },
   flipIcon: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
   flipLabel: { color: colors.lime, fontSize: font.small, fontWeight: '800' },
+  topRightRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   guidePill: {
     flexDirection: 'row',
     alignItems: 'center',

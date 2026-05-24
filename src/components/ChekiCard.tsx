@@ -65,11 +65,11 @@ export function ChekiCard({
         {editable ? (
           <TextInput
             value={text}
-            onChangeText={(t) => onChangeText?.(t.slice(0, 40))}
+            onChangeText={(t) => onChangeText?.(t.slice(0, 15))}
             placeholder={placeholder}
             placeholderTextColor={colors.textFaint}
             style={[styles.caption, { fontFamily: f.family, fontWeight: f.weight, fontSize }]}
-            maxLength={40}
+            maxLength={15}
           />
         ) : redactStrip ? (
           <View style={styles.redact} />

@@ -44,13 +44,16 @@ export function PrimaryButton({
 }
 
 // 「撮る」をカメラのSVGで表す。block=全幅のライムピル / 既定=丸ボタン。
+// label を渡すとカメラSVGの横に文字を並べる（例：撮ってひらく）。
 export function ShootButton({
   onPress,
   block = false,
+  label,
   style,
 }: {
   onPress: () => void;
   block?: boolean;
+  label?: string;
   style?: StyleProp<ViewStyle>;
 }) {
   return (
@@ -62,7 +65,10 @@ export function ShootButton({
         style,
       ]}
     >
-      <CameraIcon size={block ? 24 : 23} color={colors.limeInk} />
+      <View style={styles.shootRow}>
+        <CameraIcon size={block ? 22 : 23} color={colors.limeInk} />
+        {label ? <Text style={styles.shootLabel}>{label}</Text> : null}
+      </View>
     </Pressable>
   );
 }
@@ -300,6 +306,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(24,26,13,0.10)',
     boxShadow: shadow.button,
   },
+  shootRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  shootLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.ui },
 
   ghost: {
     paddingVertical: 14,

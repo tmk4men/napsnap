@@ -50,8 +50,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const displayAuthor = displayPost ? (displayPost.userId === s.currentUserId ? me : userById(s.users, displayPost.userId)) : undefined;
   const reactionsOf = (id: string) => s.reactions.filter((r) => r.postId === id).length;
 
-  const [stageW, setStageW] = useState(0);
-  const cardW = Math.min(Math.max(0, stageW - 96), 240);
+  const [stage, setStage] = useState({ w: 0, h: 0 });
+  // チェキを“できるだけ大きく”：横幅と、縦に収まる高さの両方から最大サイズを決める。
+  const cardW = Math.max(0, Math.min(stage.w - 16, Math.floor((stage.h - 56) / 1.31), 380));
 
   const [showActivity, setShowActivity] = useState(false);
   const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
@@ -99,15 +100,12 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       )}
 
       {/* 中央：チェキのヒーロー or メッセージ */}
-      <View style={styles.stage} onLayout={(e) => setStageW(e.nativeEvent.layout.width)}>
+      <View
+        style={styles.stage}
+        onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+      >
         {showCard && displayPost ? (
           <View style={styles.heroWrap}>
-            {mediaMode && (
-              <View style={styles.lockChip}>
-                <View style={styles.lockDot} />
-                <Text style={styles.lockChipText}>{copy.revealChip}</Text>
-              </View>
-            )}
             {cardW > 0 && (
               <ChekiCard
                 uri={displayPost.imageUrl}
@@ -129,9 +127,15 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                   </View>
                 </>
               ) : (
-                <Text style={styles.metaName}>
-                  {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'だれかの今'}
-                </Text>
+                <>
+                  <Text style={styles.metaName}>
+                    {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'だれかの今'}
+                  </Text>
+                  {/* ロック中でも、この投稿があと何時間で消えるかを赤で出す（早く撮ろう） */}
+                  <View style={{ marginLeft: 6 }}>
+                    <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
+                  </View>
+                </>
               )}
             </View>
           </View>
@@ -163,7 +167,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <GhostButton label={copy.shoot} onPress={() => nav.openCamera()} />
           )
         ) : (
-          <ShootButton block onPress={() => nav.openCamera()} />
+          <ShootButton block label={copy.revealChip} onPress={() => nav.openCamera()} />
         )}
       </View>
 
@@ -234,7 +238,7 @@ const styles = StyleSheet.create({
   memoryThumb: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },
   memoryLabel: { color: colors.text, fontSize: font.small, fontWeight: '900', fontFamily: fonts.ui },
   memorySub: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
-  stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg },
+  stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },
   heroWrap: { alignItems: 'center', gap: space.sm },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },

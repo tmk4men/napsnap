@@ -13,6 +13,8 @@ import { useStore } from '../store';
 import { PostCaption } from '../types';
 import { topicByKey } from '../topics';
 import { detectFaces, FaceResult } from '../lib/faceCheck';
+import { compressForStore } from '../lib/compressImage';
+import { hasBanned } from '../lib/words';
 
 const DEFAULT_CAPTION: PostCaption = { text: '', fontKey: 'hand', color: colors.text, x: 0.5, y: 0.85 };
 
@@ -37,6 +39,8 @@ export function PreviewScreen({
 
   const [caption, setCaption] = useState<PostCaption>(DEFAULT_CAPTION);
   const hasCaption = caption.text.trim().length > 0;
+  const banned = hasBanned(caption.text); // 禁止ワードが入っていたら出せない
+  const [posting, setPosting] = useState(false);
   const [stageW, setStageW] = useState(0);
   const cardW = Math.min(Math.max(0, stageW - 72), 300);
 
@@ -55,14 +59,17 @@ export function PreviewScreen({
   const checking = face === null;
   const hasFace = !!face?.ok && face.faces > 0; // 顔ありで確定 → ブロック
   const checkFailed = !!face && !face.ok; // 判定できなかった → 出せるが注意書き
-  const canPost = !checking && !hasFace;
+  const canPost = !checking && !hasFace && !banned && !posting;
 
-  function postIt() {
+  async function postIt() {
     if (!canPost) return;
+    setPosting(true);
     try {
       player.pause();
     } catch {}
-    addPost(uri, audioUri, hasCaption ? caption : undefined, topicKey);
+    // 保存・配信を軽くするため、出す直前に画像を縮小＋再エンコード（失敗時は元のまま）
+    const finalUri = await compressForStore(uri);
+    addPost(finalUri, audioUri, hasCaption ? caption : undefined, topicKey);
     nav.onPosted();
   }
 
@@ -98,7 +105,7 @@ export function PreviewScreen({
             tilt={0}
             editable
             onChangeText={(t) => setCaption((c) => ({ ...c, text: t }))}
-            placeholder="ひとこと（任意）"
+            placeholder="ひとこと（15字まで）"
           />
         )}
       </View>
@@ -122,7 +129,12 @@ export function PreviewScreen({
           ))}
         </View>
 
-        {hasFace ? (
+        {banned ? (
+          <View style={styles.warn}>
+            <View style={styles.warnDot} />
+            <Text style={styles.warnText}>使えない言葉が入ってるみたい。</Text>
+          </View>
+        ) : hasFace ? (
           <View style={styles.warn}>
             <View style={styles.warnDot} />
             <Text style={styles.warnText}>顔が写ってるかも。napsnapは顔なしで。</Text>
@@ -137,7 +149,7 @@ export function PreviewScreen({
           /* 顔ブロックは出せない＝撮り直しは回数に数えず、何度でも */
           <PrimaryButton label="撮り直す" onPress={() => nav.openCamera(topicKey)} />
         ) : (
-          <PrimaryButton label={checking ? '確認中…' : copy.post} onPress={postIt} disabled={!canPost} />
+          <PrimaryButton label={posting ? '出してる…' : checking ? '確認中…' : copy.post} onPress={postIt} disabled={!canPost} />
         )}
         {canRetake && !hasFace && (
           <GhostButton label="撮り直す（あと1回）" onPress={nav.retake} style={{ marginTop: space.xs }} />

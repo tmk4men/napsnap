@@ -24,11 +24,13 @@ export function TopicNote({
   kicker = '今日のお題',
   bg = colors.bg,
   style,
+  children,
 }: {
   prompt: string;
   kicker?: string;
   bg?: string;
   style?: StyleProp<ViewStyle>;
+  children?: React.ReactNode; // 紙の中に置くもの（例：このお題に出すボタン）
 }) {
   const [w, setW] = useState(0);
   const hand = captionFont('hand');
@@ -46,6 +48,8 @@ export function TopicNote({
         <Text style={styles.kicker}>{kicker}</Text>
         <Text style={[styles.prompt, { fontFamily: hand.family, fontWeight: hand.weight }]}>{prompt}</Text>
         <View style={styles.rule} />
+
+        {children ? <View style={styles.footer}>{children}</View> : null}
 
         {/* 下端の切り取り（ギザギザ） */}
         {w > 0 && (
@@ -66,7 +70,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 6,
     borderTopRightRadius: 6,
     paddingTop: space.md,
-    paddingBottom: space.lg + 6,
+    paddingBottom: space.lg + 10,
     paddingLeft: space.lg + 8,
     paddingRight: space.lg,
     boxShadow: '0 10px 22px rgba(44,36,22,0.16)',
@@ -94,5 +98,6 @@ const styles = StyleSheet.create({
   kicker: { color: colors.textDim, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui, marginBottom: 2 },
   prompt: { color: colors.text, fontSize: 30, lineHeight: 38 },
   rule: { height: 1, backgroundColor: 'rgba(23,23,19,0.10)', marginTop: 8 },
+  footer: { marginTop: space.sm, alignItems: 'center' },
   torn: { position: 'absolute', left: 0, right: 0, bottom: 0 },
 });

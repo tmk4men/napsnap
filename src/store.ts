@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, User, ViewRecord } from './types';
 import { uid } from './lib/id';
 import { HOUR, isActive, now } from './lib/time';
-import { PASS_HOURS, POST_TTL_HOURS, REACTIONS } from './copy';
+import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
 import { makeFollowPosts, makeMyMemories, makeSeedReactions, makeTopicPosts } from './seed';
 import { todaysTopic } from './topics';
 
@@ -51,6 +51,7 @@ interface Actions {
   markActivitySeen: () => void;
   refreshFollowPostsIfStale: () => void;
   refreshTopicPostsIfStale: () => void;
+  pruneExpired: () => void;
   resetDemo: () => void;
 }
 
@@ -277,6 +278,31 @@ export const useStore = create<Store>()(
             posts: [...st.posts, ...fresh],
             reactions: [...st.reactions, ...makeSeedReactions(fresh, users, currentUserId ?? '')],
           }));
+        },
+
+        // 期限切れの投稿を捨ててストレージを増やさない（#4）。
+        // ただし「自分の投稿(=思い出)」と「まだ残す枠にあるもの(反応24h以内)」は残す。
+        pruneExpired: () => {
+          const { currentUserId } = get();
+          const reactionCutoff = Date.now() - REACTION_TTL_HOURS * HOUR;
+          set((st) => {
+            const keepReacted = new Set(
+              st.reactions
+                .filter((r) => r.userId === currentUserId && r.createdAt > reactionCutoff)
+                .map((r) => r.postId)
+            );
+            const posts = st.posts.filter(
+              (p) => p.userId === currentUserId || isActive(p.expiresAt) || keepReacted.has(p.id)
+            );
+            if (posts.length === st.posts.length) return {} as any; // 変化なし
+            const ids = new Set(posts.map((p) => p.id));
+            return {
+              posts,
+              reactions: st.reactions.filter((r) => ids.has(r.postId)),
+              views: st.views.filter((v) => ids.has(v.postId)),
+              feedStates: st.feedStates.filter((f) => ids.has(f.postId)),
+            };
+          });
         },
 
         resetDemo: () => set({ ...initial }),
