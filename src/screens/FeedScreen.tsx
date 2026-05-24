@@ -95,10 +95,14 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   const bounceOpacity = bounce.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.85] });
 
   const ty = useRef(new Animated.Value(0)).current;
+  const cardOpacity = useRef(new Animated.Value(1)).current;
   const postRef = useRef(post);
   postRef.current = post;
   useEffect(() => {
     ty.setValue(0);
+    // 新しい投稿がふわっと入る
+    cardOpacity.setValue(0);
+    Animated.timing(cardOpacity, { toValue: 1, duration: 300, useNativeDriver: NATIVE }).start();
   }, [post?.id]);
 
   const doSkip = () => {
@@ -146,7 +150,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.card, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
+      <Animated.View style={[styles.card, { opacity: cardOpacity, transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
         <MediaImage uri={post.imageUrl} blurRadius={open ? 0 : 40} />
         {/* 画像タップで音を再生（スワイプはこの下の pan が拾う） */}
         <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />

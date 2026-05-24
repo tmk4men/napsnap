@@ -12,6 +12,7 @@ import { TabBar } from './TabBar';
 import { Nav, TabKey } from './nav';
 import { useStore } from '../store';
 import { currentUser, keptPosts } from '../selectors';
+import { FadeIn } from '../components/ui';
 
 type Overlay = null | 'camera' | 'preview' | 'feed';
 
@@ -64,21 +65,23 @@ export function AppShell() {
   return (
     <View style={styles.root}>
       <View style={styles.content}>
-        {tab === 'home' && <HomeScreen nav={nav} />}
-        {tab === 'kept' && <KeptScreen nav={nav} />}
-        {tab === 'search' && <SearchScreen />}
-        {tab === 'me' && <MeScreen nav={nav} />}
+        <FadeIn key={tab} style={styles.content} dy={6} duration={200}>
+          {tab === 'home' && <HomeScreen nav={nav} />}
+          {tab === 'kept' && <KeptScreen nav={nav} />}
+          {tab === 'search' && <SearchScreen />}
+          {tab === 'me' && <MeScreen nav={nav} />}
+        </FadeIn>
       </View>
       <TabBar active={tab} onChange={nav.setTab} keptCount={keptCount} me={me} />
 
       {overlay !== null && (
-        <View style={StyleSheet.absoluteFill}>
+        <FadeIn key={overlay} style={StyleSheet.absoluteFill} dy={0} duration={200}>
           {overlay === 'camera' && <CameraScreen nav={nav} />}
           {overlay === 'preview' && draftUri && (
             <PreviewScreen uri={draftUri} audioUri={draftAudio} canRetake={!retakeUsed} nav={nav} />
           )}
           {overlay === 'feed' && <FeedScreen nav={nav} />}
-        </View>
+        </FadeIn>
       )}
     </View>
   );

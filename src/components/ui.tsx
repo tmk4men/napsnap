@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Image,
   Pressable,
   StyleProp,
@@ -190,6 +191,32 @@ export function Remaining({
       <ClockIcon size={size} color={color} />
       <Text style={[styles.remainingText, { color, fontSize: size }]}>{formatClock(expiresAt)}</Text>
     </View>
+  );
+}
+
+// マウント時にふわっと（フェード＋少し上へ）。key を変えると再生される。
+export function FadeIn({
+  children,
+  style,
+  dy = 10,
+  duration = 240,
+}: {
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+  dy?: number;
+  duration?: number;
+}) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration, useNativeDriver: true }).start();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return (
+    <Animated.View
+      style={[style, { opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [dy, 0] }) }] }]}
+    >
+      {children}
+    </Animated.View>
   );
 }
 

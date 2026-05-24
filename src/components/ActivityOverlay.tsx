@@ -3,7 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
-import { Avatar, PrimaryButton } from './ui';
+import { Avatar, FadeIn, PrimaryButton } from './ui';
 import { CloseIcon, TraceMark } from './icons';
 import { timeAgo } from '../lib/time';
 import { ActivityItem } from '../selectors';
@@ -30,7 +30,7 @@ export function ActivityOverlay({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={styles.container}>
+    <FadeIn style={styles.container} dy={16} duration={220}>
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
         <Text style={styles.title}>アクティビティ</Text>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
@@ -67,7 +67,7 @@ export function ActivityOverlay({
           ))
         )}
       </ScrollView>
-    </View>
+    </FadeIn>
   );
 }
 

@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
-import { Avatar } from './ui';
+import { Avatar, FadeIn } from './ui';
 import { CloseIcon, SearchIcon, TraceMark } from './icons';
 import { User } from '../types';
 
@@ -36,7 +36,7 @@ export function ConnectionsOverlay({
     : base;
 
   return (
-    <View style={styles.container}>
+    <FadeIn style={styles.container} dy={16} duration={220}>
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
         <View style={styles.tabs}>
           <Pressable onPress={() => setTab('following')} style={[styles.tab, tab === 'following' && styles.tabActive]}>
@@ -98,7 +98,7 @@ export function ConnectionsOverlay({
           })}
         </ScrollView>
       )}
-    </View>
+    </FadeIn>
   );
 }
 
