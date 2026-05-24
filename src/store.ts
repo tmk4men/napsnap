@@ -33,6 +33,7 @@ interface PersistedState {
   feedStates: FeedState[];
   accessPass: AccessPass | null;
   lastSeenActivityAt: number; // アクティビティ（通知）を最後に見た時刻
+  avatarChangedAt: number; // プロフ画像を最後に変更した時刻（24h変更ロック用）
 }
 
 interface Actions {
@@ -61,6 +62,7 @@ const initial: PersistedState = {
   feedStates: [],
   accessPass: null,
   lastSeenActivityAt: 0,
+  avatarChangedAt: 0,
 };
 
 export const useStore = create<Store>()(
@@ -121,6 +123,7 @@ export const useStore = create<Store>()(
             feedStates: [],
             accessPass: null,
             lastSeenActivityAt: now(),
+            avatarChangedAt: 0,
           });
         },
 
@@ -129,6 +132,7 @@ export const useStore = create<Store>()(
           if (!currentUserId) return;
           set((st) => ({
             users: st.users.map((u) => (u.id === currentUserId ? { ...u, avatarImageUri: uri } : u)),
+            avatarChangedAt: now(),
           }));
         },
 
@@ -222,7 +226,7 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v7',
+      name: 'napsnap-store-v8',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,
@@ -235,6 +239,7 @@ export const useStore = create<Store>()(
         feedStates: s.feedStates,
         accessPass: s.accessPass,
         lastSeenActivityAt: s.lastSeenActivityAt,
+        avatarChangedAt: s.avatarChangedAt,
       }),
     }
   )

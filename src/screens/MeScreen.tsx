@@ -39,7 +39,13 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const [conn, setConn] = useState<'following' | 'followers' | null>(null);
   const [cropUri, setCropUri] = useState<string | null>(null);
 
+  // プロフ画像は一度変えると24時間変更できない
+  const avatarLockMs = s.avatarChangedAt + 24 * 60 * 60 * 1000 - Date.now();
+  const avatarLocked = s.avatarChangedAt > 0 && avatarLockMs > 0;
+  const avatarLockHours = Math.ceil(avatarLockMs / (60 * 60 * 1000));
+
   async function changePhoto() {
+    if (avatarLocked) return;
     const uri = await pickRawImage();
     if (!uri) return;
     if (Platform.OS === 'web') setCropUri(uri);
@@ -60,8 +66,8 @@ export function MeScreen({ nav }: { nav: Nav }) {
         <View style={styles.profile}>
           <Pressable onPress={changePhoto} style={styles.avatarWrap}>
             <Avatar user={me} size={64} />
-            <View style={styles.editBadge}>
-              <PencilIcon size={12} color={colors.limeInkSoft} />
+            <View style={[styles.editBadge, avatarLocked && styles.editBadgeLocked]}>
+              <PencilIcon size={12} color={avatarLocked ? colors.textFaint : colors.limeInkSoft} />
             </View>
           </Pressable>
           <View style={{ marginLeft: space.md, flex: 1 }}>
@@ -79,6 +85,10 @@ export function MeScreen({ nav }: { nav: Nav }) {
             </View>
           </View>
         </View>
+
+        {avatarLocked && (
+          <Text style={styles.avatarLockNote}>プロフ画像はあと{avatarLockHours}時間は変えられない</Text>
+        )}
 
         {/* ハイライト（1年前/1ヶ月前/1週間前） */}
         {highlights.length > 0 && (
@@ -210,6 +220,8 @@ const styles = StyleSheet.create({
     borderWidth: 2.5,
     borderColor: colors.bg,
   },
+  editBadgeLocked: { backgroundColor: colors.surfaceSunken },
+  avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   name: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.display },
   handle: { color: colors.textDim, fontSize: font.body, marginTop: 2, fontWeight: '600' },
   stats: { flexDirection: 'row', gap: space.lg, marginTop: space.sm },

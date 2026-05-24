@@ -1,4 +1,4 @@
-export type TabKey = 'home' | 'kept' | 'me';
+export type TabKey = 'home' | 'kept' | 'search' | 'me';
 
 // アプリ内ナビゲーション（URLルーティングは使わず、状態でオーバーレイを出し分ける）。
 // これにより Web 書き出しが単一の index.html になり GitHub Pages に置きやすい。

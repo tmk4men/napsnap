@@ -5,6 +5,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { KeptScreen } from '../screens/KeptScreen';
 import { MeScreen } from '../screens/MeScreen';
 import { CameraScreen } from '../screens/CameraScreen';
+import { SearchScreen } from '../screens/SearchScreen';
 import { PreviewScreen } from '../screens/PreviewScreen';
 import { FeedScreen } from '../screens/FeedScreen';
 import { TabBar } from './TabBar';
@@ -65,6 +66,7 @@ export function AppShell() {
       <View style={styles.content}>
         {tab === 'home' && <HomeScreen nav={nav} />}
         {tab === 'kept' && <KeptScreen nav={nav} />}
+        {tab === 'search' && <SearchScreen />}
         {tab === 'me' && <MeScreen nav={nav} />}
       </View>
       <TabBar active={tab} onChange={nav.setTab} keptCount={keptCount} me={me} />
