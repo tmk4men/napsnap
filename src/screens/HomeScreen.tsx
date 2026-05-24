@@ -7,11 +7,12 @@ import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
 import { CaptionView } from '../components/Caption';
 import { ActivityOverlay } from '../components/ActivityOverlay';
-import { BellIcon, CameraIcon } from '../components/icons';
+import { MemoryViewer } from '../components/MemoryViewer';
+import { BellIcon, CameraIcon, ChevronRightIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { activityItems, currentUser, feedQueue, isPassOpen, userById } from '../selectors';
-import { isActive } from '../lib/time';
+import { activityItems, currentUser, feedQueue, isPassOpen, memoryHighlights, userById } from '../selectors';
+import { isActive, timeAgo } from '../lib/time';
 import { Post } from '../types';
 
 export function HomeScreen({ nav }: { nav: Nav }) {
@@ -23,21 +24,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const open = isPassOpen(s);
   const me = currentUser(s);
 
-  const [showActivity, setShowActivity] = useState(false);
-  const activity = useMemo(
-    () => activityItems(s),
-    [s.posts, s.views, s.reactions, s.following, s.currentUserId]
-  );
-  const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length;
-  const openActivity = () => {
-    setShowActivity(true);
-    markActivitySeen();
-  };
-
-  const queue = useMemo(
-    () => feedQueue(s),
-    [s.posts, s.feedStates, s.following, s.currentUserId]
-  );
+  const queue = useMemo(() => feedQueue(s), [s.posts, s.feedStates, s.following, s.currentUserId]);
   const myActive = useMemo(
     () =>
       s.posts
@@ -45,29 +32,39 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         .sort((a, b) => b.createdAt - a.createdAt),
     [s.posts, s.currentUserId]
   );
+  const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
+  const activity = useMemo(() => activityItems(s), [s.posts, s.views, s.reactions, s.following, s.currentUserId]);
+  const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length;
 
   const count = queue.length;
   const followedLatest = queue[0];
-  const heroPost = [myActive[0], followedLatest]
-    .filter((p): p is Post => !!p)
-    .sort((a, b) => b.createdAt - a.createdAt)[0];
+  const heroPost = [myActive[0], followedLatest].filter((p): p is Post => !!p).sort((a, b) => b.createdAt - a.createdAt)[0];
   const heroIsMine = !!heroPost && heroPost.userId === s.currentUserId;
-  const heroAuthor = heroIsMine ? me : userById(s.users, heroPost?.userId);
 
-  const mediaMode = !open && !!followedLatest;
-  const openHero = open && !!heroPost;
+  const mediaMode = !open && !!followedLatest; // 未投稿：モザイク予告
+  const openHero = open && !!heroPost; // 投稿済み：くっきり
   const showImage = mediaMode || openHero;
-  const heroImage = mediaMode ? followedLatest?.imageUrl : heroPost?.imageUrl;
+
+  const displayPost = mediaMode ? followedLatest : openHero ? heroPost : undefined;
+  const displayAuthor = displayPost ? (displayPost.userId === s.currentUserId ? me : userById(s.users, displayPost.userId)) : undefined;
+  const reactionsOf = (id: string) => s.reactions.filter((r) => r.postId === id).length;
 
   const onPhoto = showImage;
   const textColor = onPhoto ? colors.onMedia : colors.text;
   const dimColor = onPhoto ? colors.onMediaDim : colors.textDim;
 
+  const [showActivity, setShowActivity] = useState(false);
+  const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
+  const openActivity = () => {
+    setShowActivity(true);
+    markActivitySeen();
+  };
+
   return (
     <View style={[styles.container, showImage && { backgroundColor: colors.surfaceMedia }]}>
       {showImage && (
         <>
-          <Image source={{ uri: heroImage }} style={StyleSheet.absoluteFill} blurRadius={mediaMode ? 28 : 0} resizeMode="cover" />
+          <Image source={{ uri: displayPost?.imageUrl }} style={StyleSheet.absoluteFill} blurRadius={mediaMode ? 32 : 0} resizeMode="cover" />
           {mediaMode ? (
             <View style={styles.scrimFull} />
           ) : (
@@ -84,18 +81,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
         <Text style={[styles.brand, { color: textColor }]}>napsnap</Text>
         <View style={styles.headerRight}>
-          <Pressable
-            onPress={nav.openCamera}
-            style={[styles.camBtn, onPhoto ? styles.camBtnMedia : styles.camBtnLight]}
-            hitSlop={8}
-          >
+          <Pressable onPress={nav.openCamera} style={[styles.iconBtn, onPhoto ? styles.iconMedia : styles.iconLight]} hitSlop={8}>
             <CameraIcon size={20} color={textColor} />
           </Pressable>
-          <Pressable
-            onPress={openActivity}
-            style={[styles.camBtn, onPhoto ? styles.camBtnMedia : styles.camBtnLight]}
-            hitSlop={8}
-          >
+          <Pressable onPress={openActivity} style={[styles.iconBtn, onPhoto ? styles.iconMedia : styles.iconLight]} hitSlop={8}>
             <BellIcon size={19} color={textColor} />
             {unread > 0 && (
               <View style={styles.bellBadge}>
@@ -107,7 +96,24 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         </View>
       </View>
 
-      {/* 中央（ヒーローのときは下のレールに出すので空） */}
+      {/* 思い出の入口（1年前の今日 など） */}
+      {memory && (
+        <Pressable
+          onPress={() => setViewingMemory([memory.post])}
+          style={({ pressed }) => [styles.memoryCard, pressed && { backgroundColor: colors.surfaceSunken }]}
+        >
+          <Image source={{ uri: memory.post.imageUrl }} style={styles.memoryThumb} resizeMode="cover" />
+          <View style={{ flex: 1, marginLeft: space.sm }}>
+            <Text style={styles.memoryLabel}>{memory.label}</Text>
+            <Text style={styles.memorySub} numberOfLines={1}>
+              {memory.post.caption?.text ? memory.post.caption.text.replace(/\n/g, ' ') : 'あの日の痕跡'}
+            </Text>
+          </View>
+          <ChevronRightIcon size={18} color={colors.textFaint} />
+        </Pressable>
+      )}
+
+      {/* 中央 */}
       <View style={styles.center}>
         {open ? (
           heroPost ? null : (
@@ -131,15 +137,23 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         )}
       </View>
 
-      {/* ヒーローの投稿メタ（下部レール） */}
-      {openHero && heroPost && heroAuthor && (
+      {/* 投稿メタ（下部レール）：投稿者＋（投稿済み=残り時間 / 未投稿=リアクション数） */}
+      {showImage && displayPost && displayAuthor && (
         <View style={[styles.heroRail, { bottom: insets.bottom + 88 }]} pointerEvents="none">
-          <Avatar user={heroAuthor} size={32} />
+          <Avatar user={displayAuthor} size={32} />
           <View style={{ marginLeft: space.sm }}>
-            <Text style={styles.heroWhoText}>{heroIsMine ? 'あなたの今' : `${heroAuthor.displayName} たちの今`}</Text>
-            <View style={{ marginTop: 3 }}>
-              <Remaining expiresAt={heroPost.expiresAt} color={colors.onMediaDim} size={12} />
-            </View>
+            <Text style={styles.heroWhoText}>
+              {openHero ? (heroIsMine ? 'あなたの今' : `${displayAuthor.displayName} たちの今`) : displayAuthor.displayName}
+            </Text>
+            {openHero ? (
+              <View style={{ marginTop: 3 }}>
+                <Remaining expiresAt={displayPost.expiresAt} color={colors.onMediaDim} size={12} />
+              </View>
+            ) : (
+              <Text style={styles.heroMeta}>
+                {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : timeAgo(displayPost.createdAt)}
+              </Text>
+            )}
           </View>
         </View>
       )}
@@ -168,13 +182,14 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           }}
         />
       )}
+      {viewingMemory && <MemoryViewer posts={viewingMemory} onClose={() => setViewingMemory(null)} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  scrimFull: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.34)' },
+  scrimFull: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },
   scrimTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 170, backgroundColor: 'rgba(0,0,0,0.30)' },
   scrimBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 300, backgroundColor: 'rgba(0,0,0,0.48)' },
   header: {
@@ -185,9 +200,9 @@ const styles = StyleSheet.create({
   },
   brand: { fontSize: 26, fontWeight: '700', fontFamily: fonts.brand },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  camBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  camBtnLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
-  camBtnMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
+  iconBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  iconLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
+  iconMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
   bellBadge: {
     position: 'absolute',
     top: -3,
@@ -203,9 +218,26 @@ const styles = StyleSheet.create({
     borderColor: colors.bg,
   },
   bellBadgeText: { color: colors.limeInk, fontSize: 10, fontWeight: '900' },
+  memoryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: space.lg,
+    marginTop: space.sm,
+    padding: space.xs,
+    paddingRight: space.sm,
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    boxShadow: shadow.card,
+  },
+  memoryThumb: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },
+  memoryLabel: { color: colors.text, fontSize: font.small, fontWeight: '900', fontFamily: fonts.ui },
+  memorySub: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
   center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
   heroRail: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
   heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  heroMeta: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700', marginTop: 3, fontFamily: fonts.ui },
   big: { fontSize: font.display, fontWeight: '900', lineHeight: 58, fontFamily: fonts.display },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui },
   lockChip: {

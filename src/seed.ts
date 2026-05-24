@@ -1,7 +1,7 @@
 // デモ用のモックデータ。バックエンドが無いので、アカウント作成時に
 // フォロー候補のモックの人とその投稿を流し込んで「核ループ」を成立させる。
 
-import { Post, User } from './types';
+import { Post, Reaction, ReactionType, User } from './types';
 import { uid } from './lib/id';
 import { avatarImage, lifeImage, TRACE_SEEDS } from './lib/images';
 import { HOUR } from './lib/time';
@@ -55,6 +55,29 @@ export function makeFollowPosts(people: User[]): Post[] {
     });
   }
   return posts;
+}
+
+// フォロー中の投稿に、他のモック仲間からのリアクションを少し付ける（未投稿時の予告で
+// 「N人が反応」を見せるため）。自分の投稿には付けない。
+export function makeSeedReactions(posts: Post[], people: User[], meId: string): Reaction[] {
+  const types: ReactionType[] = ['love', 'lol', 'whoa'];
+  const out: Reaction[] = [];
+  for (const post of posts) {
+    if (post.userId === meId) continue;
+    const others = people.filter((p) => p.id !== post.userId);
+    const n = 1 + Math.floor(Math.random() * Math.min(4, others.length));
+    const picks = [...others].sort(() => Math.random() - 0.5).slice(0, n);
+    for (const u of picks) {
+      out.push({
+        id: uid('r_'),
+        postId: post.id,
+        userId: u.id,
+        type: types[Math.floor(Math.random() * types.length)],
+        createdAt: post.createdAt + 5 * 60 * 1000,
+      });
+    }
+  }
+  return out;
 }
 
 // 自分の「思い出」（過去の投稿）。カレンダー＆ハイライト用に、1年前/1ヶ月前/1週間前など

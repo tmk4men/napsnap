@@ -6,7 +6,7 @@ import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, User,
 import { uid } from './lib/id';
 import { HOUR, isActive, now } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTIONS } from './copy';
-import { makeFollowPosts, makeMyMemories } from './seed';
+import { makeFollowPosts, makeMyMemories, makeSeedReactions } from './seed';
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -108,15 +108,16 @@ export const useStore = create<Store>()(
             createdAt: now(),
           };
           const followed = people.filter((p) => followingIds.includes(p.id));
+          const followPosts = makeFollowPosts(followed);
           // 相互アンロック：最初はパスを閉じておき、1枚出すと6時間だけ開く。
           set({
             onboarded: true,
             currentUserId: id,
             users: [me, ...people],
             following: followingIds,
-            posts: [...makeFollowPosts(followed), ...makeMyMemories(id)],
+            posts: [...followPosts, ...makeMyMemories(id)],
             views: [],
-            reactions: [],
+            reactions: makeSeedReactions(followPosts, people, id),
             feedStates: [],
             accessPass: null,
             lastSeenActivityAt: now(),
@@ -221,7 +222,7 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v6',
+      name: 'napsnap-store-v7',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,
