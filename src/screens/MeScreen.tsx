@@ -3,7 +3,7 @@ import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
-import { copy, reactionMeta } from '../copy';
+import { copy } from '../copy';
 import { Avatar, Card, GhostButton, Remaining, useTick } from '../components/ui';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
@@ -152,10 +152,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
                       <Avatar user={user} size={26} />
                       <Text style={styles.viewerName}>{user.displayName}</Text>
                       {reaction ? (
-                        <View style={styles.viewerReact}>
-                          <ReactionIcon type={reaction.type} size={14} color={colors.text} />
-                          <Text style={styles.viewerReactLabel}>{reactionMeta(reaction.type).label}</Text>
-                        </View>
+                        <ReactionIcon type={reaction.type} size={18} color={colors.text} />
                       ) : (
                         <Text style={styles.viewerSaw}>{copy.saw}</Text>
                       )}
