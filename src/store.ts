@@ -34,11 +34,13 @@ interface PersistedState {
   accessPass: AccessPass | null;
   lastSeenActivityAt: number; // アクティビティ（通知）を最後に見た時刻
   avatarChangedAt: number; // プロフ画像を最後に変更した時刻（24h変更ロック用）
+  profileEditAt: number[]; // 名前/ID変更のタイムスタンプ（2週間に2回まで）
 }
 
 interface Actions {
   completeAccountSetup: (input: AccountSetupInput) => void;
   updateProfileImage: (uri: string) => void;
+  updateProfile: (displayName: string, handle: string) => void;
   toggleFollow: (userId: string) => void;
   addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption) => string;
   markViewed: (postId: string) => void;
@@ -63,6 +65,7 @@ const initial: PersistedState = {
   accessPass: null,
   lastSeenActivityAt: 0,
   avatarChangedAt: 0,
+  profileEditAt: [],
 };
 
 export const useStore = create<Store>()(
@@ -124,6 +127,7 @@ export const useStore = create<Store>()(
             accessPass: null,
             lastSeenActivityAt: now(),
             avatarChangedAt: 0,
+            profileEditAt: [],
           });
         },
 
@@ -133,6 +137,19 @@ export const useStore = create<Store>()(
           set((st) => ({
             users: st.users.map((u) => (u.id === currentUserId ? { ...u, avatarImageUri: uri } : u)),
             avatarChangedAt: now(),
+          }));
+        },
+
+        updateProfile: (displayName, handle) => {
+          const { currentUserId } = get();
+          if (!currentUserId) return;
+          const name = displayName.trim();
+          const h = handle.trim().replace(/^@/, '');
+          set((st) => ({
+            users: st.users.map((u) =>
+              u.id === currentUserId ? { ...u, displayName: name || u.displayName, handle: h || u.handle } : u
+            ),
+            profileEditAt: [...st.profileEditAt, now()].slice(-10),
           }));
         },
 
@@ -226,7 +243,7 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v8',
+      name: 'napsnap-store-v9',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,
@@ -240,6 +257,7 @@ export const useStore = create<Store>()(
         accessPass: s.accessPass,
         lastSeenActivityAt: s.lastSeenActivityAt,
         avatarChangedAt: s.avatarChangedAt,
+        profileEditAt: s.profileEditAt,
       }),
     }
   )

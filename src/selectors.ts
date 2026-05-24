@@ -91,6 +91,18 @@ export function followedActivePostCount(s: Snapshot): number {
   return followedActivePosts(s).length;
 }
 
+// 名前/ID変更：2週間に2回まで。
+const TWO_WEEKS = 14 * 24 * HOUR;
+export function profileEditsLeft(s: Pick<Store, 'profileEditAt'>): number {
+  const recent = s.profileEditAt.filter((t) => t > Date.now() - TWO_WEEKS).length;
+  return Math.max(0, 2 - recent);
+}
+export function nextProfileEditDays(s: Pick<Store, 'profileEditAt'>): number {
+  const recent = s.profileEditAt.filter((t) => t > Date.now() - TWO_WEEKS).sort((a, b) => a - b);
+  if (recent.length < 2) return 0;
+  return Math.max(1, Math.ceil((recent[0] + TWO_WEEKS - Date.now()) / (24 * HOUR)));
+}
+
 // アクティビティ（通知）：自分の投稿への反応/足跡＋フォロー中の新着痕跡。
 export interface ActivityItem {
   id: string;

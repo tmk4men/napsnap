@@ -232,6 +232,22 @@ export function UserIcon({ size = 22, color = colors.text }: IconProps) {
   );
 }
 
+// --- 足跡（見た＝足あと） ---
+export function FootprintIcon({ size = 18, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M9.2 11.5c-2.1 0-3.4 2.3-2.8 5.2.4 2 1.5 3.3 3 3.3 1.7 0 2.6-1.4 2.6-3.6 0-2.8-.6-4.9-2.8-4.9z"
+        fill={color}
+      />
+      <Circle cx={7.4} cy={5.6} r={1.5} fill={color} />
+      <Circle cx={11} cy={4.7} r={1.4} fill={color} />
+      <Circle cx={14.3} cy={5.4} r={1.3} fill={color} />
+      <Circle cx={16.7} cy={7.6} r={1.2} fill={color} />
+    </Svg>
+  );
+}
+
 // --- 検索 ---
 export function SearchIcon({ size = 18, color = colors.text }: IconProps) {
   return (

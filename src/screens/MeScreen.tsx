@@ -6,14 +6,15 @@ import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, Card, GhostButton, Remaining, useTick } from '../components/ui';
 import { SoundBadge, useClipPlayer } from '../components/audio';
-import { PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
+import { FootprintIcon, PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { ConnectionsOverlay } from '../components/ConnectionsOverlay';
 import { CropModal } from '../components/CropModal';
+import { ProfileEditOverlay } from '../components/ProfileEditOverlay';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { currentUser, memoryHighlights, myArchive, myPosts } from '../selectors';
+import { currentUser, memoryHighlights, myArchive, myPosts, nextProfileEditDays, profileEditsLeft } from '../selectors';
 import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
@@ -26,6 +27,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const resetDemo = useStore((st) => st.resetDemo);
   const toggleFollow = useStore((st) => st.toggleFollow);
   const updateProfileImage = useStore((st) => st.updateProfileImage);
+  const updateProfile = useStore((st) => st.updateProfile);
   const { play, playingId } = useClipPlayer();
   const me = currentUser(s);
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
@@ -38,6 +40,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const [viewing, setViewing] = useState<Post[] | null>(null);
   const [conn, setConn] = useState<'following' | 'followers' | null>(null);
   const [cropUri, setCropUri] = useState<string | null>(null);
+  const [editProfile, setEditProfile] = useState(false);
 
   // プロフ画像は一度変えると24時間変更できない
   const avatarLockMs = s.avatarChangedAt + 24 * 60 * 60 * 1000 - Date.now();
@@ -72,7 +75,12 @@ export function MeScreen({ nav }: { nav: Nav }) {
           </Pressable>
           <View style={{ marginLeft: space.md, flex: 1 }}>
             <Text style={styles.name}>{me?.displayName}</Text>
-            <Text style={styles.handle}>@{me?.handle}</Text>
+            <View style={styles.handleRow}>
+              <Text style={styles.handle}>@{me?.handle}</Text>
+              <Pressable onPress={() => setEditProfile(true)} hitSlop={8}>
+                <Text style={styles.editLink}>編集</Text>
+              </Pressable>
+            </View>
             <View style={styles.stats}>
               <Pressable onPress={() => setConn('following')} style={styles.connStat} hitSlop={6}>
                 <Text style={styles.connNum}>{followingUsers.length}</Text>
@@ -164,7 +172,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
                       {reaction ? (
                         <ReactionIcon type={reaction.type} size={18} color={colors.text} />
                       ) : (
-                        <Text style={styles.viewerSaw}>{copy.saw}</Text>
+                        <FootprintIcon size={16} color={colors.textFaint} />
                       )}
                     </View>
                   ))}
@@ -187,6 +195,19 @@ export function MeScreen({ nav }: { nav: Nav }) {
             updateProfileImage(d);
             setCropUri(null);
           }}
+        />
+      )}
+      {editProfile && (
+        <ProfileEditOverlay
+          currentName={me?.displayName ?? ''}
+          currentHandle={me?.handle ?? ''}
+          editsLeft={profileEditsLeft(s)}
+          nextInDays={nextProfileEditDays(s)}
+          onSave={(n, h) => {
+            updateProfile(n, h);
+            setEditProfile(false);
+          }}
+          onClose={() => setEditProfile(false)}
         />
       )}
       {conn && (
@@ -223,7 +244,20 @@ const styles = StyleSheet.create({
   editBadgeLocked: { backgroundColor: colors.surfaceSunken },
   avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   name: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.display },
-  handle: { color: colors.textDim, fontSize: font.body, marginTop: 2, fontWeight: '600' },
+  handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 2 },
+  handle: { color: colors.textDim, fontSize: font.body, fontWeight: '600' },
+  editLink: {
+    color: colors.textDim,
+    fontSize: font.small,
+    fontWeight: '700',
+    fontFamily: fonts.ui,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
   stats: { flexDirection: 'row', gap: space.lg, marginTop: space.sm },
   connStat: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   connNum: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
