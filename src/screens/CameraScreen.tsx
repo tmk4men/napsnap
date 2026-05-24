@@ -188,9 +188,7 @@ export function CameraScreen({ nav }: { nav: Nav }) {
         )}
       </View>
 
-      <View pointerEvents="none" style={styles.frame}>
-        <Text style={styles.frameHint}>{copy.cameraSoundHint}</Text>
-      </View>
+      <View pointerEvents="none" style={styles.frame} />
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.lg }]}>
         <Pressable onPress={shoot} style={({ pressed }) => [styles.shutterOuter, pressed && { transform: [{ scale: 0.94 }] }]}>

@@ -1,12 +1,12 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, font, radius } from '../theme';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { colors, radius } from '../theme';
 import { REACTIONS } from '../copy';
 import { ReactionType } from '../types';
 import { ReactionIcon } from './icons';
 
 // フィード用：3つのリアクションから1つ選ぶと、その投稿は「残した」に入り次へ進む。
-// 写真の上に置くので、暗いスクリム調のセグメント＋選択時はライムを“点灯”させる。
+// アイコンのみ（ラベルなし）。選択時はライムを点灯させる。
 export function ReactionBar({
   onReact,
   selected,
@@ -24,8 +24,7 @@ export function ReactionBar({
             onPress={() => onReact(r.type)}
             style={({ pressed }) => [styles.item, active && styles.itemActive, pressed && styles.pressed]}
           >
-            <ReactionIcon type={r.type} size={24} color={active ? colors.lime : colors.onMedia} />
-            <Text style={[styles.label, active && styles.labelActive]}>{r.label}</Text>
+            <ReactionIcon type={r.type} size={28} color={active ? colors.lime : colors.onMedia} />
           </Pressable>
         );
       })}
@@ -34,24 +33,20 @@ export function ReactionBar({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
+  row: { flexDirection: 'row', justifyContent: 'center', gap: 14 },
   item: {
-    flex: 1,
-    maxWidth: 116,
+    width: 62,
+    height: 62,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(18,17,14,0.55)',
-    borderRadius: radius.md,
-    paddingVertical: 12,
     borderWidth: 1,
     borderColor: colors.mediaChipBorder,
-    gap: 5,
   },
   itemActive: {
     backgroundColor: 'rgba(217,247,74,0.16)',
     borderColor: 'rgba(217,247,74,0.55)',
   },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
-  label: { color: colors.onMediaDim, fontSize: font.tiny, fontWeight: '800', letterSpacing: 0.3 },
-  labelActive: { color: colors.lime },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.94 }] },
 });

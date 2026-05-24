@@ -58,8 +58,6 @@ export function AccountSetupScreen() {
       >
         <Text style={styles.brand}>napsnap</Text>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Text style={styles.title}>{copy.setupNameTitle}</Text>
-
           {/* 大きいアバタープレビュー＋写真を選ぶ */}
           <View style={styles.avatarStage}>
             <Pressable onPress={choosePhoto} style={styles.avatarPreviewWrap}>
@@ -72,10 +70,9 @@ export function AccountSetupScreen() {
               <ImageIcon size={16} color={colors.text} />
               <Text style={styles.chooseText}>{avatarUri ? '写真を変える' : '写真を選ぶ'}</Text>
             </Pressable>
-            <Text style={styles.avatarHint}>顔の写らない、好きな1枚を。あとから変えられる。</Text>
           </View>
 
-          <Text style={styles.fieldLabel}>なまえ</Text>
+          <Text style={styles.fieldLabel}>name</Text>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -85,7 +82,7 @@ export function AccountSetupScreen() {
             maxLength={12}
           />
 
-          <Text style={styles.fieldLabel}>ユーザーID</Text>
+          <Text style={styles.fieldLabel}>ID</Text>
           <View style={styles.handleWrap}>
             <Text style={styles.at}>@</Text>
             <TextInput
@@ -98,7 +95,6 @@ export function AccountSetupScreen() {
               maxLength={16}
             />
           </View>
-          <Text style={styles.hint}>半角英数と _ のみ。あとから変えられる。</Text>
         </ScrollView>
 
         <View style={{ paddingBottom: insets.bottom + space.md, paddingTop: space.sm }}>
@@ -112,7 +108,6 @@ export function AccountSetupScreen() {
     <View style={[styles.container, { paddingTop: insets.top + space.xl }]}>
       <Text style={styles.brand}>napsnap</Text>
       <Text style={styles.title}>{copy.setupFollowTitle}</Text>
-      <Text style={styles.sub}>{copy.setupFollowSub}</Text>
 
       <ScrollView style={{ flex: 1, marginTop: space.lg }} showsVerticalScrollIndicator={false}>
         {people.map((p) => {
@@ -185,7 +180,6 @@ const styles = StyleSheet.create({
   },
   chosePressed: { backgroundColor: colors.surfaceSunken, transform: [{ scale: 0.98 }] },
   chooseText: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-  avatarHint: { color: colors.textFaint, fontSize: font.small, textAlign: 'center' },
 
   fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '800', marginTop: space.lg, marginBottom: space.xs },
   input: {

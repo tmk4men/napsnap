@@ -85,7 +85,6 @@ export function PreviewScreen({
             <TextIcon size={16} color={colors.text} />
             <Text style={styles.textBtnLabel}>{hasCaption ? '文字を編集' : '文字を入れる'}</Text>
           </Pressable>
-          <Text style={styles.note}>{copy.previewNote}</Text>
           <PrimaryButton label={copy.post} onPress={postIt} />
           {canRetake && <GhostButton label={copy.retake} onPress={nav.retake} style={{ marginTop: space.xs }} />}
         </View>
@@ -150,5 +149,4 @@ const styles = StyleSheet.create({
   },
   textBtnPressed: { backgroundColor: colors.surfaceSunken },
   textBtnLabel: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-  note: { color: colors.textDim, fontSize: font.body, textAlign: 'center', lineHeight: font.body * 1.6, paddingBottom: space.sm },
 });

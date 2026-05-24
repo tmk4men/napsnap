@@ -11,7 +11,7 @@ export const REACTION_TTL_HOURS = 24;
 export const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
   { type: 'love', emoji: '🫶', label: 'すき' },
   { type: 'lol', emoji: '😂', label: 'わら' },
-  { type: 'whoa', emoji: '⚡️', label: 'やば' },
+  { type: 'whoa', emoji: '👀', label: 'やば' },
 ];
 
 export function reactionMeta(type: ReactionType) {
@@ -20,11 +20,9 @@ export function reactionMeta(type: ReactionType) {
 
 export const copy = {
   // アカウント設定
-  setupNameTitle: 'なまえと\nアイコン',
-  setupNamePlaceholder: 'なまえ',
+  setupNamePlaceholder: 'name',
   setupNext: 'つぎへ',
-  setupFollowTitle: 'だれの今を\n見る？',
-  setupFollowSub: 'フォローした人の投稿だけ、届く。',
+  setupFollowTitle: 'だれの今を見る？',
   setupStart: 'はじめる',
   setupBack: 'もどる',
 
@@ -32,18 +30,15 @@ export const copy = {
   lockedHeadline: 'まだ、見えない',
   lockedSub: '1枚出すと、6時間みんなが見える。',
   lockedEmpty: 'まだ誰も出してない',
-  lockedEmptySub: '最初の1枚を出してみる。',
   shoot: '撮る',
   revealChip: '撮ると、見える',
 
   // ホーム：オープン
   see: '見る',
   allSeenTitle: '今日はここまで',
-  allSeenSub: 'また誰かが出したら、増える。',
 
   // カメラ
   cameraGuide: '人間なしで、今を1枚',
-  cameraSoundHint: 'シャッターの瞬間＋2.5秒の音が残る',
   faceBlocked: '顔は禁止',
   recording: '録音中',
   recordingHint: 'いまの音を残してる',
@@ -51,7 +46,6 @@ export const copy = {
 
   // プレビュー
   previewTitle: 'これでいく？',
-  previewNote: 'この1枚と2.5秒の音が残る。出すと6時間みんなが見える。24時間で消える。',
   previewPlay: '音を聞く',
   previewPlaying: '再生中',
   post: '出す',

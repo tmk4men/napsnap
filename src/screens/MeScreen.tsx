@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Card, GhostButton, Remaining, useTick } from '../components/ui';
@@ -9,6 +9,7 @@ import { SoundBadge, useClipPlayer } from '../components/audio';
 import { PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
+import { ConnectionsOverlay } from '../components/ConnectionsOverlay';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { currentUser, memoryHighlights, myArchive, myPosts } from '../selectors';
@@ -30,8 +31,11 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const archive = useMemo(() => myArchive(s), [s.posts, s.currentUserId]);
   const highlights = useMemo(() => memoryHighlights(s), [s.posts, s.currentUserId]);
   const people = s.users.filter((u) => u.isMock);
+  const followingUsers = people.filter((p) => s.following.includes(p.id));
+  const followers = people; // デモ：モックの人はみんな自分をフォローしている
 
   const [viewing, setViewing] = useState<Post[] | null>(null);
+  const [conn, setConn] = useState<'following' | 'followers' | null>(null);
 
   async function changePhoto() {
     const uri = await pickAvatarImage();
@@ -59,6 +63,16 @@ export function MeScreen({ nav }: { nav: Nav }) {
           <View style={{ marginLeft: space.md, flex: 1 }}>
             <Text style={styles.name}>{me?.displayName}</Text>
             <Text style={styles.handle}>@{me?.handle}</Text>
+            <View style={styles.stats}>
+              <Pressable onPress={() => setConn('following')} style={styles.connStat} hitSlop={6}>
+                <Text style={styles.connNum}>{followingUsers.length}</Text>
+                <Text style={styles.connLabel}>フォロー中</Text>
+              </Pressable>
+              <Pressable onPress={() => setConn('followers')} style={styles.connStat} hitSlop={6}>
+                <Text style={styles.connNum}>{followers.length}</Text>
+                <Text style={styles.connLabel}>フォロワー</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -149,36 +163,21 @@ export function MeScreen({ nav }: { nav: Nav }) {
           ))
         )}
 
-        {/* フォロー中 */}
-        <Text style={styles.sectionLabel}>
-          {copy.following}・{s.following.length}
-        </Text>
-        {people.map((p) => {
-          const on = s.following.includes(p.id);
-          return (
-            <View key={p.id} style={styles.person}>
-              <Avatar user={p} size={40} />
-              <View style={{ flex: 1, marginLeft: space.sm }}>
-                <Text style={styles.personName}>{p.displayName}</Text>
-                <Text style={styles.personHandle}>@{p.handle}</Text>
-              </View>
-              <Pressable
-                onPress={() => toggleFollow(p.id)}
-                style={({ pressed }) => [styles.followBtn, on && styles.followBtnOn, pressed && { opacity: 0.8 }]}
-              >
-                <Text style={[styles.followText, on && styles.followTextOn]}>
-                  {on ? 'フォロー中' : 'フォロー'}
-                </Text>
-              </Pressable>
-            </View>
-          );
-        })}
-
-        <View style={{ height: space.lg }} />
+        <View style={{ height: space.xl }} />
         <GhostButton label="デモを最初からやり直す" onPress={resetDemo} />
       </ScrollView>
 
       {viewing && <MemoryViewer posts={viewing} onClose={() => setViewing(null)} />}
+      {conn && (
+        <ConnectionsOverlay
+          initial={conn}
+          following={followingUsers}
+          followers={followers}
+          isFollowing={(id) => s.following.includes(id)}
+          onToggle={toggleFollow}
+          onClose={() => setConn(null)}
+        />
+      )}
     </View>
   );
 }
@@ -202,6 +201,10 @@ const styles = StyleSheet.create({
   },
   name: { color: colors.text, fontSize: font.title, fontWeight: '900', fontFamily: fonts.display },
   handle: { color: colors.textDim, fontSize: font.body, marginTop: 2, fontWeight: '600' },
+  stats: { flexDirection: 'row', gap: space.lg, marginTop: space.sm },
+  connStat: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  connNum: { color: colors.text, fontSize: font.body, fontWeight: '900' },
+  connLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700' },
 
   hl: { width: 132, height: 168, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunken, justifyContent: 'flex-end' },
   hlImg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
@@ -238,28 +241,4 @@ const styles = StyleSheet.create({
     marginTop: space.lg,
     marginBottom: space.sm,
   },
-  person: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.lg,
-    padding: space.sm,
-    marginBottom: space.sm,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    boxShadow: shadow.chip,
-  },
-  personName: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-  personHandle: { color: colors.textDim, fontSize: font.small, marginTop: 1 },
-  followBtn: {
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  followBtnOn: { backgroundColor: colors.lime, borderColor: colors.lime },
-  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
-  followTextOn: { color: colors.limeInk },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Circle, Path, Line, G } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Path, Line, G } from 'react-native-svg';
 import { ReactionType } from '../types';
 import { colors } from '../theme';
 
@@ -32,6 +32,18 @@ export function BoltIcon({ size = 24, color = colors.text }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path d="M13 2L4 14h6l-1 8 9-13h-6l1-7z" fill={color} />
+    </Svg>
+  );
+}
+
+// 「やば」＝👀（目）
+export function EyesIcon({ size = 24, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Ellipse cx={7.6} cy={12} rx={3.7} ry={4.7} stroke={color} strokeWidth={1.8} fill="none" />
+      <Ellipse cx={16.4} cy={12} rx={3.7} ry={4.7} stroke={color} strokeWidth={1.8} fill="none" />
+      <Circle cx={8.9} cy={12.6} r={1.7} fill={color} />
+      <Circle cx={17.7} cy={12.6} r={1.7} fill={color} />
     </Svg>
   );
 }
@@ -217,11 +229,11 @@ export function ChevronDownIcon({ size = 18, color = colors.text }: IconProps) {
 const REACTION_ICONS: Record<ReactionType, (p: IconProps) => React.JSX.Element> = {
   love: HeartIcon,
   lol: SmileIcon,
-  whoa: BoltIcon,
+  whoa: EyesIcon,
   // 旧データ用フォールバック（現在は未使用の種類）
   saw: SmileIcon,
   feel: SmileIcon,
-  nap: BoltIcon,
+  nap: EyesIcon,
 };
 
 export function ReactionIcon({ type, size = 24, color }: { type: ReactionType } & IconProps) {

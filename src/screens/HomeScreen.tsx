@@ -70,18 +70,15 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <>
               {heroAuthor && (
                 <View style={styles.heroWho}>
-                  <Avatar user={heroAuthor} size={28} />
+                  <Avatar user={heroAuthor} size={32} />
                   <Text style={styles.heroWhoText}>{heroAuthor.displayName} たちの今</Text>
                 </View>
               )}
-              <Text style={[styles.big, { color: textColor }]}>{count}件、{'\n'}見れる</Text>
-              <View style={{ height: space.md }} />
               <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
             </>
           ) : (
             <>
               <Text style={[styles.big, { color: textColor }]}>{copy.allSeenTitle}</Text>
-              <Text style={[styles.sub, { color: dimColor }]}>{copy.allSeenSub}</Text>
               <View style={{ height: space.md }} />
               <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
             </>
@@ -98,7 +95,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         ) : (
           <>
             <Text style={[styles.big, { color: textColor }]}>{copy.lockedEmpty}</Text>
-            <Text style={[styles.sub, { color: dimColor }]}>{copy.lockedEmptySub}</Text>
           </>
         )}
       </View>
@@ -107,7 +103,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       <View style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
         {open ? (
           count > 0 ? (
-            <PrimaryButton label={`${copy.see}（${count}）`} onPress={nav.openFeed} />
+            <PrimaryButton label={copy.see} onPress={nav.openFeed} />
           ) : (
             <GhostButton label={copy.shoot} onPress={nav.openCamera} />
           )
