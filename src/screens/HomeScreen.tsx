@@ -6,6 +6,7 @@ import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
 import { CaptionView } from '../components/Caption';
+import { MediaImage } from '../components/MediaImage';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { BellIcon, CameraIcon, ChevronRightIcon } from '../components/icons';
@@ -64,7 +65,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     <View style={[styles.container, showImage && { backgroundColor: colors.surfaceMedia }]}>
       {showImage && (
         <>
-          <Image source={{ uri: displayPost?.imageUrl }} style={StyleSheet.absoluteFill} blurRadius={mediaMode ? 32 : 0} resizeMode="cover" />
+          <MediaImage uri={displayPost?.imageUrl} blurRadius={mediaMode ? 32 : 0} />
           {mediaMode ? (
             <View style={styles.scrimFull} />
           ) : (
@@ -132,8 +133,16 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <Text style={[styles.big, { color: textColor }]}>{copy.lockedHeadline}</Text>
             <Text style={[styles.sub, { color: dimColor }]}>{copy.lockedSub}</Text>
           </>
+        ) : s.following.length === 0 ? (
+          <>
+            <Text style={[styles.big, { color: textColor }]}>{copy.noFollowing}</Text>
+            <Text style={[styles.sub, { color: dimColor }]}>自分タブから、見たい人をフォロー。</Text>
+          </>
         ) : (
-          <Text style={[styles.big, { color: textColor }]}>{copy.lockedEmpty}</Text>
+          <>
+            <Text style={[styles.big, { color: textColor }]}>{copy.lockedEmpty}</Text>
+            <Text style={[styles.sub, { color: dimColor }]}>誰かが出したら、通知に届く。</Text>
+          </>
         )}
       </View>
 

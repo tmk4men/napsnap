@@ -8,6 +8,7 @@ import { Avatar, GhostButton, Remaining, useTick } from '../components/ui';
 import { Nav } from '../navigation/nav';
 import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { CaptionView } from '../components/Caption';
+import { MediaImage } from '../components/MediaImage';
 import { useStore } from '../store';
 import { keptPosts, userById } from '../selectors';
 import { timeAgo } from '../lib/time';
@@ -120,7 +121,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
   return (
     <View style={styles.container} onLayout={(e) => (hRef.current = e.nativeEvent.layout.height)}>
       <Animated.View style={[styles.card, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
-        <Image source={{ uri: current.post.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <MediaImage uri={current.post.imageUrl} />
         <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />
         <View style={styles.shadeTop} pointerEvents="none" />
         <View style={styles.shadeBottom} pointerEvents="none" />

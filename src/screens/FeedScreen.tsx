@@ -8,6 +8,7 @@ import { Avatar, GhostButton, PrimaryButton, Pill, Remaining, useTick } from '..
 import { ReactionBar } from '../components/ReactionBar';
 import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { CaptionView } from '../components/Caption';
+import { MediaImage } from '../components/MediaImage';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { feedQueue, isPassOpen, userById } from '../selectors';
@@ -146,12 +147,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.card, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
-        <Image
-          source={{ uri: post.imageUrl }}
-          style={StyleSheet.absoluteFill}
-          resizeMode="cover"
-          blurRadius={open ? 0 : 40}
-        />
+        <MediaImage uri={post.imageUrl} blurRadius={open ? 0 : 40} />
         {/* 画像タップで音を再生（スワイプはこの下の pan が拾う） */}
         <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />
         <View style={styles.shadeTop} pointerEvents="none" />

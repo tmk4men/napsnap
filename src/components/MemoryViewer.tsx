@@ -4,6 +4,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { CaptionView } from './Caption';
+import { MediaImage } from './MediaImage';
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SpeakerOnIcon } from './icons';
 import { Post } from '../types';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
@@ -38,7 +39,7 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
   return (
     <View style={styles.container}>
       <Pressable style={StyleSheet.absoluteFill} onPress={playSound}>
-        <Image source={{ uri: post.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        <MediaImage uri={post.imageUrl} />
       </Pressable>
       <View style={styles.scrimTop} pointerEvents="none" />
       <View style={styles.scrimBottom} pointerEvents="none" />

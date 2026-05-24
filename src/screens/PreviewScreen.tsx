@@ -109,11 +109,14 @@ export function PreviewScreen({
           ) : null}
 
           {hasFace ? (
-            <PrimaryButton label="撮り直す" onPress={nav.retake} />
+            /* 顔ブロックは出せない＝撮り直しは回数に数えず、何度でも */
+            <PrimaryButton label="撮り直す" onPress={nav.openCamera} />
           ) : (
             <PrimaryButton label={checking ? '確認中…' : copy.post} onPress={postIt} disabled={!canPost} />
           )}
-          {canRetake && !hasFace && <GhostButton label={copy.retake} onPress={nav.retake} style={{ marginTop: space.xs }} />}
+          {canRetake && !hasFace && (
+            <GhostButton label="撮り直す（あと1回）" onPress={nav.retake} style={{ marginTop: space.xs }} />
+          )}
         </View>
       )}
     </View>
