@@ -149,19 +149,22 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       {/* 投稿メタ（下部レール）：投稿者＋（投稿済み=残り時間 / 未投稿=リアクション数） */}
       {showImage && displayPost && displayAuthor && (
         <View style={[styles.heroRail, { bottom: insets.bottom + 88 }]} pointerEvents="none">
-          <Avatar user={displayAuthor} size={32} />
+          <Avatar user={displayAuthor} size={32} blur={!openHero} />
           <View style={{ marginLeft: space.sm }}>
-            <Text style={styles.heroWhoText}>
-              {openHero ? (heroIsMine ? 'あなたの今' : `${displayAuthor.displayName} たちの今`) : displayAuthor.displayName}
-            </Text>
             {openHero ? (
-              <View style={{ marginTop: 3 }}>
-                <Remaining expiresAt={displayPost.expiresAt} color={colors.onMediaDim} size={12} />
-              </View>
+              <>
+                <Text style={styles.heroWhoText}>{heroIsMine ? 'あなたの今' : `${displayAuthor.displayName} たちの今`}</Text>
+                <View style={{ marginTop: 3 }}>
+                  <Remaining expiresAt={displayPost.expiresAt} color={colors.onMediaDim} size={12} />
+                </View>
+              </>
             ) : (
-              <Text style={styles.heroMeta}>
-                {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : timeAgo(displayPost.createdAt)}
-              </Text>
+              <>
+                <View style={styles.redactBar} />
+                <Text style={styles.heroMeta}>
+                  {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'だれかの今'}
+                </Text>
+              </>
             )}
           </View>
         </View>
@@ -261,6 +264,7 @@ const styles = StyleSheet.create({
   heroRail: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
   heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   heroMeta: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700', marginTop: 3, fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  redactBar: { width: 88, height: 13, borderRadius: 7, backgroundColor: 'rgba(255,253,247,0.5)' },
   big: { fontSize: font.display, fontWeight: '900', lineHeight: 58, fontFamily: fonts.display },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui },
   lockChip: {

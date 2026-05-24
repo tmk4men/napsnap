@@ -177,13 +177,19 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 
         {/* 投稿者＋残り時間（時計） */}
         <View style={[styles.author, { bottom: insets.bottom + 224 }]} pointerEvents="none">
-          <Avatar user={author} size={44} />
+          <Avatar user={author} size={44} blur={!open} />
           <View style={{ marginLeft: space.sm, flex: 1 }}>
-            <Text style={styles.authorName}>{author?.displayName ?? '友達'}</Text>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>{timeAgo(post.createdAt)}</Text>
-              <Remaining expiresAt={post.expiresAt} color={colors.onMedia} size={12} />
-            </View>
+            {open ? (
+              <>
+                <Text style={styles.authorName}>{author?.displayName ?? '友達'}</Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.metaText}>{timeAgo(post.createdAt)}</Text>
+                  <Remaining expiresAt={post.expiresAt} color={colors.onMedia} size={12} />
+                </View>
+              </>
+            ) : (
+              <View style={styles.redactBar} />
+            )}
           </View>
         </View>
       </Animated.View>
@@ -264,6 +270,7 @@ const styles = StyleSheet.create({
   authorName: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 4 },
   metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  redactBar: { width: 96, height: 14, borderRadius: 7, backgroundColor: 'rgba(255,253,247,0.5)' },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.md, gap: space.sm },
   skip: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs },
   relock: { gap: space.sm },

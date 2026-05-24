@@ -112,7 +112,7 @@ export function Pill({
 
 // プロフィール画像があれば写真、なければ頭文字。絵文字は最後のフォールバック。
 // ring=true のときは外側にライムの輪＋内側にクリームの隙間を作る（写真/文字で見え方が揺れない）。
-function AvatarInner({ user, size, border }: { user?: User; size: number; border: object }) {
+function AvatarInner({ user, size, border, blur }: { user?: User; size: number; border: object; blur?: boolean }) {
   const wrap = { width: size, height: size, borderRadius: size / 2 };
   if (user?.avatarImageUri) {
     return (
@@ -120,13 +120,14 @@ function AvatarInner({ user, size, border }: { user?: User; size: number; border
         source={{ uri: user.avatarImageUri }}
         style={[wrap, border, { backgroundColor: colors.surfaceSunken }]}
         resizeMode="cover"
+        blurRadius={blur ? 10 : undefined}
       />
     );
   }
   const initial = (user?.displayName ?? '').trim().charAt(0);
   return (
     <View style={[styles.avatar, wrap, border, { backgroundColor: colors.surfaceSunken }]}>
-      {initial ? (
+      {blur ? null : initial ? (
         <Text style={{ fontSize: size * 0.42, fontWeight: '800', color: colors.textDim }}>{initial}</Text>
       ) : (
         <Text style={{ fontSize: size * 0.5 }}>{user?.avatarEmoji ?? '🟡'}</Text>
@@ -139,10 +140,12 @@ export function Avatar({
   user,
   size = 38,
   ring = false,
+  blur = false,
 }: {
   user?: User;
   size?: number;
   ring?: boolean;
+  blur?: boolean;
 }) {
   if (ring) {
     return (
@@ -159,13 +162,13 @@ export function Avatar({
           size >= 40 && styles.avatarShadow,
         ]}
       >
-        <AvatarInner user={user} size={size - 4} border={{ borderWidth: 2, borderColor: colors.bg }} />
+        <AvatarInner user={user} size={size - 4} border={{ borderWidth: 2, borderColor: colors.bg }} blur={blur} />
       </View>
     );
   }
   return (
     <View style={size >= 40 ? styles.avatarShadow : undefined}>
-      <AvatarInner user={user} size={size} border={{ borderWidth: 1, borderColor: colors.hairline }} />
+      <AvatarInner user={user} size={size} border={{ borderWidth: 1, borderColor: colors.hairline }} blur={blur} />
     </View>
   );
 }
