@@ -119,7 +119,14 @@ export function PreviewScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surfaceMedia },
-  scrimTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 160, backgroundColor: 'rgba(0,0,0,0.32)' },
+  scrimTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 150,
+    experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
+  } as any,
   top: {
     position: 'absolute',
     top: 0,
@@ -130,7 +137,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: space.lg,
   },
-  heading: { color: colors.onMedia, fontSize: font.title, fontWeight: '900' },
+  heading: { color: colors.onMedia, fontSize: font.title, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   soundChip: {
     flexDirection: 'row',
     alignItems: 'center',

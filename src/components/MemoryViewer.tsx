@@ -86,8 +86,22 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
 
 const styles = StyleSheet.create({
   container: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surfaceMedia },
-  scrimTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 120, backgroundColor: 'rgba(0,0,0,0.3)' },
-  scrimBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 180, backgroundColor: 'rgba(0,0,0,0.4)' },
+  scrimTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 120,
+    experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
+  } as any,
+  scrimBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 200,
+    experimental_backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)',
+  } as any,
   top: {
     position: 'absolute',
     top: 0,
@@ -111,7 +125,7 @@ const styles = StyleSheet.create({
   close: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
   counter: { color: colors.onMedia, fontSize: font.small, fontWeight: '800' },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.lg, alignItems: 'center', gap: space.sm },
-  date: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800' },
+  date: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   nav: { flexDirection: 'row', gap: space.md },
   navBtn: {
     width: 44,

@@ -208,8 +208,22 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surfaceMedia },
   card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surfaceMedia },
-  shadeTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 120, backgroundColor: 'rgba(0,0,0,0.25)' },
-  shadeBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 320, backgroundColor: 'rgba(0,0,0,0.35)' },
+  shadeTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 130,
+    experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
+  } as any,
+  shadeBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 280,
+    experimental_backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 100%)',
+  } as any,
   top: {
     position: 'absolute',
     top: 0,
@@ -239,9 +253,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   author: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
-  authorName: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800' },
+  authorName: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 4 },
-  metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
+  metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.md, gap: space.sm },
   skip: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs },
 

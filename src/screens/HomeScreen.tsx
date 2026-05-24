@@ -189,9 +189,23 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  scrimFull: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },
-  scrimTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 170, backgroundColor: 'rgba(0,0,0,0.30)' },
-  scrimBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 300, backgroundColor: 'rgba(0,0,0,0.48)' },
+  scrimFull: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.38)' },
+  scrimTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+    experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%)',
+  } as any,
+  scrimBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 260,
+    experimental_backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0) 100%)',
+  } as any,
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -236,8 +250,8 @@ const styles = StyleSheet.create({
   memorySub: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
   center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
   heroRail: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
-  heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
-  heroMeta: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700', marginTop: 3, fontFamily: fonts.ui },
+  heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  heroMeta: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700', marginTop: 3, fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   big: { fontSize: font.display, fontWeight: '900', lineHeight: 58, fontFamily: fonts.display },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui },
   lockChip: {
