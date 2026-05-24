@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons';
 import { Post } from '../types';
 
@@ -58,8 +59,8 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
       </View>
 
       <View style={styles.weekRow}>
-        {WEEKDAYS.map((w, i) => (
-          <Text key={w} style={[styles.weekday, i === 0 && { color: '#C98B7A' }, i === 6 && { color: '#7A93C9' }]}>
+        {WEEKDAYS.map((w) => (
+          <Text key={w} style={styles.weekday}>
             {w}
           </Text>
         ))}
@@ -82,7 +83,6 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
               <View style={[styles.dayInner, isToday && styles.dayToday, has && styles.dayHas]}>
                 <Text style={[styles.dayNum, has && styles.dayNumHas, isToday && styles.dayNumToday]}>{d}</Text>
               </View>
-              {has && <View style={styles.dot} />}
             </Pressable>
           );
         })}
@@ -98,20 +98,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairline,
     padding: space.md,
-    boxShadow: '0 10px 28px rgba(44,36,22,0.10)',
+    boxShadow: shadow.card,
   },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.sm },
   nav: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
-  title: { color: colors.text, fontSize: font.lead, fontWeight: '900' },
+  title: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display },
   weekRow: { flexDirection: 'row', marginBottom: 4 },
   weekday: { flex: 1, textAlign: 'center', color: colors.textFaint, fontSize: font.tiny, fontWeight: '800' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 2 },
-  dayInner: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  dayInner: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   dayHas: { backgroundColor: colors.limeSoft },
   dayToday: { borderWidth: 1.5, borderColor: colors.text },
   dayNum: { color: colors.textDim, fontSize: font.small, fontWeight: '700' },
   dayNumHas: { color: colors.text, fontWeight: '900' },
   dayNumToday: { color: colors.text },
-  dot: { position: 'absolute', bottom: 3, width: 5, height: 5, borderRadius: 2.5, backgroundColor: colors.limeDust },
 });

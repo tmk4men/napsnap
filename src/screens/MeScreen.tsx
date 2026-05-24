@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Card, GhostButton, Remaining, useTick } from '../components/ui';
@@ -220,7 +220,17 @@ const styles = StyleSheet.create({
   connNum: { color: colors.text, fontSize: font.body, fontWeight: '900' },
   connLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700' },
 
-  hl: { width: 132, height: 168, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunken, justifyContent: 'flex-end' },
+  hl: {
+    width: 132,
+    height: 168,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceSunken,
+    justifyContent: 'flex-end',
+    borderWidth: 1,
+    borderColor: colors.mediaChipBorder,
+    boxShadow: shadow.chip,
+  },
   hlImg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   hlScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.28)' },
   hlLabel: { color: colors.onMedia, fontSize: font.small, fontWeight: '900', paddingHorizontal: 10, paddingTop: 8 },

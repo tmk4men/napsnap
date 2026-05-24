@@ -6,7 +6,7 @@ import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
 import { Avatar, GhostButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
-import { ChevronDownIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
+import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { CaptionView } from '../components/Caption';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -78,6 +78,21 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     } catch {}
   };
 
+  // 下スワイプの記号をふわっとバウンスさせる（説明文の代わり）
+  const bounce = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounce, { toValue: 1, duration: 750, useNativeDriver: NATIVE }),
+        Animated.timing(bounce, { toValue: 0, duration: 750, useNativeDriver: NATIVE }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, []);
+  const bounceY = bounce.interpolate({ inputRange: [0, 1], outputRange: [0, 5] });
+  const bounceOpacity = bounce.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.85] });
+
   const ty = useRef(new Animated.Value(0)).current;
   const postRef = useRef(post);
   postRef.current = post;
@@ -138,12 +153,12 @@ export function FeedScreen({ nav }: { nav: Nav }) {
         <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />
         <View style={styles.shadeTop} pointerEvents="none" />
         <View style={styles.shadeBottom} pointerEvents="none" />
-        {open && post.caption && <CaptionView caption={post.caption} />}
+        {open && post.caption && <CaptionView caption={post.caption} safeTop={84} safeBottom={220} />}
 
         {/* 上部 */}
         <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
           <Pressable onPress={nav.closeOverlay} style={styles.close} hitSlop={12}>
-            <Text style={styles.closeText}>✕</Text>
+            <CloseIcon size={18} color={colors.onMedia} />
           </Pressable>
           <View style={styles.topRight}>
             <Pressable
@@ -178,10 +193,12 @@ export function FeedScreen({ nav }: { nav: Nav }) {
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md }]}>
         <ReactionBar onReact={doReact} />
         <Pressable onPress={doSkip} style={styles.skip} hitSlop={10}>
-          <ChevronDownIcon size={24} color={colors.onMediaDim} />
-          <View style={{ marginTop: -14 }}>
-            <ChevronDownIcon size={24} color={colors.onMediaDim} />
-          </View>
+          <Animated.View style={{ alignItems: 'center', transform: [{ translateY: bounceY }], opacity: bounceOpacity }}>
+            <ChevronDownIcon size={24} color={colors.onMedia} />
+            <View style={{ marginTop: -14 }}>
+              <ChevronDownIcon size={24} color={colors.onMedia} />
+            </View>
+          </Animated.View>
         </Pressable>
       </View>
     </View>

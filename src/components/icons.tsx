@@ -80,6 +80,26 @@ export function SpeakerOffIcon({ size = 18, color = colors.text }: IconProps) {
   );
 }
 
+// --- 閉じる ---
+export function CloseIcon({ size = 18, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M6 6l12 12M18 6L6 18" stroke={color} strokeWidth={2.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// --- カメラ内外切替 ---
+export function FlipCameraIcon({ size = 20, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M4 7.5A1.5 1.5 0 0 1 5.5 6H8l1.2-1.6h5.6L16 6h2.5A1.5 1.5 0 0 1 20 7.5V17a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17z" stroke={color} strokeWidth={1.8} fill="none" strokeLinejoin="round" />
+      <Path d="M9.5 12.2A2.6 2.6 0 0 1 14 10.6m.5 1.2A2.6 2.6 0 0 1 10 13.4" stroke={color} strokeWidth={1.8} fill="none" strokeLinecap="round" />
+      <Path d="M14.4 9.6l.2 1.4-1.4-.1M9.6 14.4l-.2-1.4 1.4.1" stroke={color} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 // --- カメラ ---
 export function CameraIcon({ size = 22, color = colors.text }: IconProps) {
   return (

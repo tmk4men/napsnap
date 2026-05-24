@@ -39,6 +39,6 @@ export function RootNavigator() {
 
 const styles = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  brand: { color: colors.text, fontSize: 44, fontWeight: '700', letterSpacing: 0.5, fontFamily: fonts.brand },
+  brand: { color: colors.text, fontSize: 46, fontWeight: '700', fontFamily: fonts.brand },
   bar: { width: 28, height: 5, borderRadius: 3, backgroundColor: colors.lime, marginTop: space.sm },
 });

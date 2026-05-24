@@ -21,13 +21,13 @@ export function TabBar({
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + space.sm }]}>
-      <Tab onPress={() => onChange('home')}>
-        <HouseIcon size={25} color={active === 'home' ? colors.text : colors.textFaint} />
+      <Tab active={active === 'home'} onPress={() => onChange('home')}>
+        <HouseIcon size={24} color={active === 'home' ? colors.text : colors.textFaint} />
       </Tab>
 
-      <Tab onPress={() => onChange('kept')}>
+      <Tab active={active === 'kept'} onPress={() => onChange('kept')}>
         <View>
-          <BookmarkIcon size={24} color={active === 'kept' ? colors.text : colors.textFaint} filled={active === 'kept'} />
+          <BookmarkIcon size={23} color={active === 'kept' ? colors.text : colors.textFaint} filled={active === 'kept'} />
           {keptCount > 0 && (
             <View style={styles.dot}>
               <Text style={styles.dotText}>{keptCount}</Text>
@@ -36,17 +36,17 @@ export function TabBar({
         </View>
       </Tab>
 
-      <Tab onPress={() => onChange('me')}>
-        <Avatar user={me} size={26} ring={active === 'me'} />
+      <Tab active={active === 'me'} onPress={() => onChange('me')}>
+        <Avatar user={me} size={28} ring={active === 'me'} />
       </Tab>
     </View>
   );
 }
 
-function Tab({ children, onPress }: { children: React.ReactNode; onPress: () => void }) {
+function Tab({ children, active, onPress }: { children: React.ReactNode; active: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.item, pressed && { opacity: 0.6 }]}>
-      <View style={styles.iconBox}>{children}</View>
+      <View style={[styles.iconBox, active && styles.iconBoxActive]}>{children}</View>
     </Pressable>
   );
 }
@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
     borderTopColor: colors.line,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  iconBox: { height: 28, alignItems: 'center', justifyContent: 'center' },
+  iconBox: { width: 54, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
+  iconBoxActive: { backgroundColor: colors.limeSoft },
   dot: {
     position: 'absolute',
     top: -5,

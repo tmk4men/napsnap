@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
+import { CameraIcon, CloseIcon, FlipCameraIcon } from '../components/icons';
 import { Waveform } from '../components/Waveform';
 import { Nav } from '../navigation/nav';
 import { demoCapture } from '../lib/images';
@@ -161,14 +162,14 @@ export function CameraScreen({ nav }: { nav: Nav }) {
         <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing={facing} />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.noCam]}>
-          <Text style={styles.noCamEmoji}>🪟</Text>
+          <CameraIcon size={46} color={colors.onMediaDim} />
           <Text style={styles.noCamText}>カメラが使えない環境でも、{'\n'}デモ写真で体験できる。</Text>
         </View>
       )}
 
       <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <Pressable onPress={nav.closeOverlay} style={styles.close} hitSlop={12}>
-          <Text style={styles.closeText}>✕</Text>
+          <CloseIcon size={18} color={colors.onMedia} />
         </Pressable>
         <View style={styles.guidePill}>
           <View style={styles.guideDot} />
@@ -180,7 +181,7 @@ export function CameraScreen({ nav }: { nav: Nav }) {
             style={styles.flip}
             hitSlop={12}
           >
-            <Text style={styles.flipIcon}>⟲</Text>
+            <FlipCameraIcon size={18} color={colors.onMedia} />
             <Text style={styles.flipLabel}>{facing === 'back' ? '外' : '内'}</Text>
           </Pressable>
         ) : (

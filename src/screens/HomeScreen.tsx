@@ -25,7 +25,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     () => feedQueue(s),
     [s.posts, s.feedStates, s.following, s.currentUserId]
   );
-  // 自分の期限内の投稿（ホームにも出す）
   const myActive = useMemo(
     () =>
       s.posts
@@ -34,16 +33,15 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     [s.posts, s.currentUserId]
   );
 
-  const count = queue.length; // フォロー中の見れる数
+  const count = queue.length;
   const followedLatest = queue[0];
-  // ヒーロー＝自分＋フォロー中で最新の1枚
   const heroPost = [myActive[0], followedLatest]
     .filter((p): p is Post => !!p)
     .sort((a, b) => b.createdAt - a.createdAt)[0];
   const heroIsMine = !!heroPost && heroPost.userId === s.currentUserId;
   const heroAuthor = heroIsMine ? me : userById(s.users, heroPost?.userId);
 
-  const mediaMode = !open && !!followedLatest; // ロック中はフォロー投稿をぼかし
+  const mediaMode = !open && !!followedLatest;
   const openHero = open && !!heroPost;
   const showImage = mediaMode || openHero;
   const heroImage = mediaMode ? followedLatest?.imageUrl : heroPost?.imageUrl;
@@ -51,15 +49,21 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const onPhoto = showImage;
   const textColor = onPhoto ? colors.onMedia : colors.text;
   const dimColor = onPhoto ? colors.onMediaDim : colors.textDim;
-  const metaColor = onPhoto ? colors.onMedia : colors.text;
 
   return (
     <View style={[styles.container, showImage && { backgroundColor: colors.surfaceMedia }]}>
       {showImage && (
         <>
           <Image source={{ uri: heroImage }} style={StyleSheet.absoluteFill} blurRadius={mediaMode ? 28 : 0} resizeMode="cover" />
-          <View style={styles.scrim} />
-          {openHero && heroPost?.caption && <CaptionView caption={heroPost.caption} />}
+          {mediaMode ? (
+            <View style={styles.scrimFull} />
+          ) : (
+            <>
+              <View style={styles.scrimTop} />
+              <View style={styles.scrimBottom} />
+            </>
+          )}
+          {openHero && heroPost?.caption && <CaptionView caption={heroPost.caption} safeTop={92} safeBottom={150} />}
         </>
       )}
 
@@ -78,24 +82,14 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         </View>
       </View>
 
-      {/* 中央 */}
+      {/* 中央（ヒーローのときは下のレールに出すので空） */}
       <View style={styles.center}>
         {open ? (
-          heroPost ? (
-            <>
-              {heroAuthor && (
-                <View style={styles.heroWho}>
-                  <Avatar user={heroAuthor} size={32} />
-                  <Text style={styles.heroWhoText}>{heroIsMine ? 'あなたの今' : `${heroAuthor.displayName} たちの今`}</Text>
-                </View>
-              )}
-              <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
-            </>
-          ) : (
+          heroPost ? null : (
             <>
               <Text style={[styles.big, { color: textColor }]}>{copy.allSeenTitle}</Text>
               <View style={{ height: space.md }} />
-              <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
+              <Remaining expiresAt={s.accessPass!.expiresAt} color={colors.text} size={15} />
             </>
           )
         ) : followedLatest ? (
@@ -111,6 +105,19 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           <Text style={[styles.big, { color: textColor }]}>{copy.lockedEmpty}</Text>
         )}
       </View>
+
+      {/* ヒーローの投稿メタ（下部レール） */}
+      {openHero && heroPost && heroAuthor && (
+        <View style={[styles.heroRail, { bottom: insets.bottom + 88 }]} pointerEvents="none">
+          <Avatar user={heroAuthor} size={32} />
+          <View style={{ marginLeft: space.sm }}>
+            <Text style={styles.heroWhoText}>{heroIsMine ? 'あなたの今' : `${heroAuthor.displayName} たちの今`}</Text>
+            <View style={{ marginTop: 3 }}>
+              <Remaining expiresAt={heroPost.expiresAt} color={colors.onMediaDim} size={12} />
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* 下部CTA */}
       <View style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
@@ -130,23 +137,25 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.34)' },
+  scrimFull: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.34)' },
+  scrimTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 170, backgroundColor: 'rgba(0,0,0,0.30)' },
+  scrimBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 300, backgroundColor: 'rgba(0,0,0,0.48)' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: space.lg,
   },
-  brand: { fontSize: 25, fontWeight: '700', letterSpacing: 0.5, fontFamily: fonts.brand },
+  brand: { fontSize: 26, fontWeight: '700', fontFamily: fonts.brand },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   camBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   camBtnLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
   camBtnMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
   center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
-  heroWho: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginBottom: space.md },
-  heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800' },
+  heroRail: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
+  heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
   big: { fontSize: font.display, fontWeight: '900', lineHeight: 58, fontFamily: fonts.display },
-  sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5 },
+  sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui },
   lockChip: {
     flexDirection: 'row',
     alignItems: 'center',

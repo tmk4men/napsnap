@@ -22,8 +22,6 @@ export function ResponsiveFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <View style={[styles.page, styles.pageGradient as object]}>
-      <View style={styles.glow} pointerEvents="none" />
-
       <View style={styles.device}>
         <View style={[styles.screen, { width: SCREEN_WIDTH, height: screenHeight }]}>
           {children}
@@ -49,18 +47,8 @@ const styles = StyleSheet.create({
   },
   // web のみ効く線形グラデ（未対応環境では backgroundColor にフォールバック）
   pageGradient: {
-    experimental_backgroundImage:
-      'linear-gradient(150deg, #24221B 0%, #34301F 52%, #1A1813 100%)',
+    experimental_backgroundImage: 'linear-gradient(150deg, #24221B 0%, #1F1D18 100%)',
   } as any,
-  // 端末背後の淡いライムの光
-  glow: {
-    position: 'absolute',
-    width: 520,
-    height: 520,
-    borderRadius: 260,
-    backgroundColor: 'rgba(217,247,74,0.06)',
-    boxShadow: '0 0 220px 120px rgba(217,247,74,0.05)',
-  },
   device: {
     backgroundColor: colors.deviceShell,
     borderRadius: radius.xl + 16,
@@ -87,6 +75,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#08080a',
   },
   brandRow: { marginTop: space.lg, alignItems: 'center', gap: 4 },
-  brand: { color: 'rgba(255,253,247,0.94)', fontSize: 23, fontWeight: '700', letterSpacing: 0.5, fontFamily: fonts.brand },
+  brand: { color: 'rgba(255,253,247,0.94)', fontSize: 24, fontWeight: '700', fontFamily: fonts.brand },
   tagline: { color: 'rgba(255,253,247,0.40)', fontSize: font.small, letterSpacing: 0.5 },
 });

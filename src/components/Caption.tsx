@@ -4,24 +4,43 @@ import { colors, font, radius, space } from '../theme';
 import { CAPTION_FONTS, captionFont } from '../lib/fonts';
 import { PostCaption } from '../types';
 
-// 文字に使える色（3種）。
+// 文字に使える色（3種）。テーマのアクセントに合わせる。
 export const CAPTION_COLORS = [
-  { key: 'white', color: '#FFFDF7' },
-  { key: 'ink', color: '#1A1A14' },
-  { key: 'lime', color: '#E4FF54' },
+  { key: 'white', color: colors.onMedia },
+  { key: 'ink', color: colors.text },
+  { key: 'lime', color: colors.lime },
 ] as const;
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
-const shadowFor = (color: string) => (color === '#1A1A14' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)');
+function isDark(hex: string) {
+  const c = hex.replace('#', '');
+  if (c.length < 6) return false;
+  const r = parseInt(c.slice(0, 2), 16);
+  const g = parseInt(c.slice(2, 4), 16);
+  const b = parseInt(c.slice(4, 6), 16);
+  return 0.299 * r + 0.587 * g + 0.114 * b < 140;
+}
+const shadowFor = (color: string) => (isDark(color) ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.5)');
 
 // 表示用：写真の上の x,y（0..1, 中心）に文字を重ねる。サイズを測って中央合わせ。
-export function CaptionView({ caption }: { caption: PostCaption }) {
+// safe* は端や上下UIに文字が食い込まないようクランプする余白。
+export function CaptionView({
+  caption,
+  safeTop = 24,
+  safeBottom = 24,
+  safeX = 16,
+}: {
+  caption: PostCaption;
+  safeTop?: number;
+  safeBottom?: number;
+  safeX?: number;
+}) {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [txt, setTxt] = useState({ w: 0, h: 0 });
   if (!caption?.text) return null;
   const f = captionFont(caption.fontKey);
-  const left = caption.x * box.w - txt.w / 2;
-  const top = caption.y * box.h - txt.h / 2;
+  const left = clamp(caption.x * box.w - txt.w / 2, safeX, Math.max(safeX, box.w - txt.w - safeX));
+  const top = clamp(caption.y * box.h - txt.h / 2, safeTop, Math.max(safeTop, box.h - txt.h - safeBottom));
   return (
     <View
       style={StyleSheet.absoluteFill}

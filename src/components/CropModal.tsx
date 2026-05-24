@@ -1,7 +1,8 @@
 import React, { useEffect, useReducer, useRef } from 'react';
 import { Image, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 
 const V = 300; // トリミング枠の一辺
 const OUT = 256; // 出力サイズ
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: space.lg,
   },
-  title: { color: colors.onMedia, fontSize: font.title, fontWeight: '900' },
+  title: { color: colors.onMedia, fontSize: font.title, fontWeight: '900', fontFamily: fonts.display },
   hint: { color: colors.onMediaDim, fontSize: font.small, marginTop: 4, marginBottom: space.lg },
   stage: { width: V, height: V, alignItems: 'center', justifyContent: 'center' },
   viewport: {
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     height: V,
     overflow: 'hidden',
     backgroundColor: '#000',
-    borderRadius: radius.sm,
+    borderRadius: V / 2,
   },
   circleGuide: {
     position: 'absolute',
@@ -184,8 +185,7 @@ const styles = StyleSheet.create({
     height: V,
     borderRadius: V / 2,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.85)',
-    boxShadow: '0 0 0 9999px rgba(20,19,15,0.55)',
+    borderColor: 'rgba(255,255,255,0.5)',
   },
   sliderWrap: { width: V, height: 40, justifyContent: 'center', marginTop: space.xl },
   track: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
@@ -203,6 +203,6 @@ const styles = StyleSheet.create({
   btn: { borderRadius: radius.pill, paddingHorizontal: 28, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
   cancel: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
   cancelText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800' },
-  ok: { backgroundColor: colors.lime },
+  ok: { backgroundColor: colors.lime, boxShadow: shadow.button },
   okText: { color: colors.limeInk, fontSize: font.body, fontWeight: '900' },
 });

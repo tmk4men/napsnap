@@ -72,7 +72,7 @@ export function PreviewScreen({
       <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <View style={styles.scrimTop} pointerEvents="none" />
 
-      {hasCaption && !editing && <CaptionView caption={caption} />}
+      {hasCaption && !editing && <CaptionView caption={caption} safeTop={84} safeBottom={200} />}
 
       {!editing && (
         <View style={[styles.top, { paddingTop: insets.top + space.md }]}>
@@ -90,6 +90,7 @@ export function PreviewScreen({
 
       {!editing && (
         <View style={[styles.sheet, { paddingBottom: insets.bottom + space.md }]}>
+          <View style={styles.grabber} />
           <Pressable onPress={() => setEditing(true)} style={({ pressed }) => [styles.textBtn, pressed && styles.textBtnPressed]}>
             <TextIcon size={16} color={colors.text} />
             <Text style={styles.textBtnLabel}>{hasCaption ? '文字を編集' : '文字を入れる'}</Text>
@@ -156,6 +157,7 @@ const styles = StyleSheet.create({
     gap: space.xs,
     boxShadow: '0 -10px 30px rgba(0,0,0,0.22)',
   },
+  grabber: { width: 36, height: 4, borderRadius: 2, backgroundColor: colors.line, alignSelf: 'center', marginBottom: space.sm },
   textBtn: {
     flexDirection: 'row',
     alignItems: 'center',

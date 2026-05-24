@@ -162,7 +162,7 @@ export function AccountSetupScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
-  brand: { color: colors.text, fontSize: 26, fontWeight: '700', letterSpacing: 0.5, marginBottom: space.md, fontFamily: fonts.brand },
+  brand: { color: colors.text, fontSize: 28, fontWeight: '700', marginBottom: space.md, fontFamily: fonts.brand },
   title: { color: colors.text, fontSize: font.hero, fontWeight: '900', lineHeight: 48, fontFamily: fonts.display },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 

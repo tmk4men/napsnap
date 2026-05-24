@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { Avatar } from './ui';
-import { TraceMark } from './icons';
+import { CloseIcon, TraceMark } from './icons';
 import { User } from '../types';
 
 type Tab = 'following' | 'followers';
@@ -40,7 +41,7 @@ export function ConnectionsOverlay({
           </Pressable>
         </View>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
-          <Text style={styles.closeText}>✕</Text>
+          <CloseIcon size={18} color={colors.text} />
         </Pressable>
       </View>
 
@@ -86,28 +87,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
-  tabs: { flexDirection: 'row', gap: space.xs, flex: 1 },
-  tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: colors.surface },
-  tabActive: { backgroundColor: colors.text },
-  tabText: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
-  tabTextActive: { color: colors.bg },
-  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
+  tabs: { flexDirection: 'row', gap: 4, flex: 1, backgroundColor: colors.surfaceSunken, borderRadius: radius.pill, padding: 4 },
+  tab: { flex: 1, paddingVertical: 8, borderRadius: radius.pill, alignItems: 'center' },
+  tabActive: { backgroundColor: colors.surfaceRaised, boxShadow: shadow.chip },
+  tabText: { color: colors.textDim, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
+  tabTextActive: { color: colors.text },
+  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   closeText: { color: colors.text, fontSize: 18, fontWeight: '700' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, padding: space.xl },
-  emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: '700' },
+  emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.lg,
-    padding: space.sm,
-    marginBottom: space.sm,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    boxShadow: shadow.chip,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
   },
-  name: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-  handle: { color: colors.textDim, fontSize: font.small, marginTop: 1 },
+  name: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  handle: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
   followBtn: {
     borderRadius: radius.pill,
     paddingHorizontal: 14,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { colors, radius } from '../theme';
+import { colors } from '../theme';
 import { REACTIONS } from '../copy';
 import { ReactionType } from '../types';
 import { ReactionIcon } from './icons';
@@ -33,11 +33,11 @@ export function ReactionBar({
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'center', gap: 14 },
+  row: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
   item: {
-    width: 62,
-    height: 62,
-    borderRadius: radius.md,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(18,17,14,0.55)',
@@ -45,8 +45,9 @@ const styles = StyleSheet.create({
     borderColor: colors.mediaChipBorder,
   },
   itemActive: {
-    backgroundColor: 'rgba(217,247,74,0.16)',
-    borderColor: 'rgba(217,247,74,0.55)',
+    backgroundColor: 'rgba(217,247,74,0.18)',
+    borderColor: 'rgba(217,247,74,0.6)',
+    boxShadow: '0 8px 20px rgba(217,247,74,0.18)',
   },
-  pressed: { opacity: 0.85, transform: [{ scale: 0.94 }] },
+  pressed: { opacity: 0.9, transform: [{ scale: 0.92 }] },
 });

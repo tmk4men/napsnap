@@ -121,7 +121,7 @@ export function KeptScreen() {
         <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />
         <View style={styles.shadeTop} pointerEvents="none" />
         <View style={styles.shadeBottom} pointerEvents="none" />
-        {current.post.caption && <CaptionView caption={current.post.caption} />}
+        {current.post.caption && <CaptionView caption={current.post.caption} safeTop={84} safeBottom={130} />}
 
         {/* 上部：何件中いくつ＋あなたの反応 */}
         <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>

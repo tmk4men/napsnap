@@ -4,7 +4,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { CaptionView } from './Caption';
-import { ChevronLeftIcon, ChevronRightIcon, SpeakerOnIcon } from './icons';
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SpeakerOnIcon } from './icons';
 import { Post } from '../types';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 
@@ -43,11 +43,11 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
       <View style={styles.scrimTop} pointerEvents="none" />
       <View style={styles.scrimBottom} pointerEvents="none" />
 
-      {post.caption && <CaptionView caption={post.caption} />}
+      {post.caption && <CaptionView caption={post.caption} safeTop={84} safeBottom={130} />}
 
       <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <Pressable onPress={onClose} style={styles.iconBtn} hitSlop={12}>
-          <Text style={styles.close}>✕</Text>
+          <CloseIcon size={18} color={colors.onMedia} />
         </Pressable>
         {posts.length > 1 && (
           <Text style={styles.counter}>
