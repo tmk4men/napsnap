@@ -55,3 +55,33 @@ export function makeFollowPosts(people: User[]): Post[] {
   }
   return posts;
 }
+
+// 自分の「思い出」（過去の投稿）。カレンダー＆ハイライト用に、1年前/1ヶ月前/1週間前など
+// 過去の日付で自分の投稿を仕込む。すべて期限切れ＝フィード/ホームには出ず、アーカイブにだけ残る。
+export function makeMyMemories(meId: string): Post[] {
+  const DAY = 24 * HOUR;
+  const t = Date.now();
+  const plan: { daysAgo: number; seed: string; cap?: { text: string; fontKey: string; color: string; pos: 'top' | 'center' | 'bottom' } }[] = [
+    { daysAgo: 365, seed: 'me-y1', cap: { text: '一年前の\nわたしの机', fontKey: 'hand', color: '#FFFDF7', pos: 'bottom' } },
+    { daysAgo: 30, seed: 'me-m1', cap: { text: 'しずかな朝', fontKey: 'mincho', color: '#FFFDF7', pos: 'top' } },
+    { daysAgo: 7, seed: 'me-w1', cap: { text: 'おつかれ', fontKey: 'maru', color: '#E4FF54', pos: 'center' } },
+    { daysAgo: 2, seed: 'me-d2' },
+    { daysAgo: 3, seed: 'me-d3', cap: { text: '夜ふかし', fontKey: 'hand', color: '#FFFDF7', pos: 'bottom' } },
+    { daysAgo: 12, seed: 'me-d12' },
+    { daysAgo: 40, seed: 'me-d40' },
+    { daysAgo: 95, seed: 'me-d95', cap: { text: 'あの日の窓', fontKey: 'mincho', color: '#1A1A14', pos: 'top' } },
+    { daysAgo: 200, seed: 'me-d200' },
+  ];
+  return plan.map((p) => {
+    const createdAt = t - p.daysAgo * DAY + 9 * HOUR; // だいたい午前中に投稿した体
+    return {
+      id: uid('p_'),
+      userId: meId,
+      imageUrl: lifeImage(p.seed),
+      caption: p.cap,
+      audioSeed: p.seed,
+      createdAt,
+      expiresAt: createdAt + POST_TTL_HOURS * HOUR,
+    };
+  });
+}

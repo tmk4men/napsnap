@@ -2,12 +2,13 @@ import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
 import { CameraIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { currentUser, feedQueue, isPassOpen } from '../selectors';
+import { currentUser, feedQueue, isPassOpen, userById } from '../selectors';
 
 export function HomeScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
@@ -22,17 +23,27 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const count = queue.length;
   const latest = queue[0];
   const me = currentUser(s);
+  const heroAuthor = userById(s.users, latest?.userId);
 
-  // ロック中で投稿がある → 相手画像をモザイク（ぼかし）にして見せる
-  const mediaMode = !open && !!latest;
-  const textColor = mediaMode ? colors.onMedia : colors.text;
-  const dimColor = mediaMode ? colors.onMediaDim : colors.textDim;
+  // ロック中：相手画像をモザイク。オープン中で投稿あり：そのまま最新を出して「最初から誰かの投稿」を見せる。
+  const mediaMode = !open && !!latest; // ぼかし
+  const openHero = open && count > 0 && !!latest; // くっきり
+  const showImage = mediaMode || openHero;
+  const onPhoto = showImage;
+  const textColor = onPhoto ? colors.onMedia : colors.text;
+  const dimColor = onPhoto ? colors.onMediaDim : colors.textDim;
+  const metaColor = onPhoto ? colors.onMedia : colors.text;
 
   return (
-    <View style={[styles.container, mediaMode && { backgroundColor: colors.surfaceMedia }]}>
-      {mediaMode && (
+    <View style={[styles.container, showImage && { backgroundColor: colors.surfaceMedia }]}>
+      {showImage && (
         <>
-          <Image source={{ uri: latest.imageUrl }} style={StyleSheet.absoluteFill} blurRadius={28} resizeMode="cover" />
+          <Image
+            source={{ uri: latest.imageUrl }}
+            style={StyleSheet.absoluteFill}
+            blurRadius={mediaMode ? 28 : 0}
+            resizeMode="cover"
+          />
           <View style={styles.scrim} />
         </>
       )}
@@ -43,7 +54,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <View style={styles.headerRight}>
           <Pressable
             onPress={nav.openCamera}
-            style={[styles.camBtn, mediaMode ? styles.camBtnMedia : styles.camBtnLight]}
+            style={[styles.camBtn, onPhoto ? styles.camBtnMedia : styles.camBtnLight]}
             hitSlop={10}
           >
             <CameraIcon size={20} color={textColor} />
@@ -57,16 +68,22 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         {open ? (
           count > 0 ? (
             <>
+              {heroAuthor && (
+                <View style={styles.heroWho}>
+                  <Avatar user={heroAuthor} size={28} />
+                  <Text style={styles.heroWhoText}>{heroAuthor.displayName} たちの今</Text>
+                </View>
+              )}
               <Text style={[styles.big, { color: textColor }]}>{count}件、{'\n'}見れる</Text>
               <View style={{ height: space.md }} />
-              <Remaining expiresAt={s.accessPass!.expiresAt} color={colors.text} size={15} />
+              <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
             </>
           ) : (
             <>
               <Text style={[styles.big, { color: textColor }]}>{copy.allSeenTitle}</Text>
               <Text style={[styles.sub, { color: dimColor }]}>{copy.allSeenSub}</Text>
               <View style={{ height: space.md }} />
-              <Remaining expiresAt={s.accessPass!.expiresAt} color={colors.text} size={15} />
+              <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
             </>
           )
         ) : latest ? (
@@ -104,20 +121,22 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.32)' },
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.34)' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: space.lg,
   },
-  brand: { fontSize: font.body, fontWeight: '900', letterSpacing: 2 },
+  brand: { fontSize: 25, fontWeight: '700', letterSpacing: 0.5, fontFamily: fonts.brand },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   camBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   camBtnLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
   camBtnMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
   center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
-  big: { fontSize: font.display, fontWeight: '900', lineHeight: 58 },
+  heroWho: { flexDirection: 'row', alignItems: 'center', gap: space.xs, marginBottom: space.md },
+  heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800' },
+  big: { fontSize: font.display, fontWeight: '900', lineHeight: 58, fontFamily: fonts.display },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5 },
   lockChip: {
     flexDirection: 'row',

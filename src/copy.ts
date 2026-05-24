@@ -21,7 +21,6 @@ export function reactionMeta(type: ReactionType) {
 export const copy = {
   // アカウント設定
   setupNameTitle: 'なまえと\nアイコン',
-  setupNameSub: '顔はいらない。呼ばれる名前だけ。',
   setupNamePlaceholder: 'なまえ',
   setupNext: 'つぎへ',
   setupFollowTitle: 'だれの今を\n見る？',

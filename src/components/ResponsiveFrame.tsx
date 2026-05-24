@@ -1,6 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 
 // napsnap はスマホ前提のSNS。GitHub Pages のデモはPCブラウザでも開かれるため、
 // 広い画面では「本物の端末」風モックに収めてプロダクトショットに見せる。狭い画面では全幅。
@@ -86,6 +87,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#08080a',
   },
   brandRow: { marginTop: space.lg, alignItems: 'center', gap: 4 },
-  brand: { color: 'rgba(255,253,247,0.92)', fontSize: font.body, fontWeight: '900', letterSpacing: 2 },
+  brand: { color: 'rgba(255,253,247,0.94)', fontSize: 23, fontWeight: '700', letterSpacing: 0.5, fontFamily: fonts.brand },
   tagline: { color: 'rgba(255,253,247,0.40)', fontSize: font.small, letterSpacing: 0.5 },
 });

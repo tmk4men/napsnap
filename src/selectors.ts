@@ -91,4 +91,56 @@ export function followedActivePostCount(s: Snapshot): number {
   return followedActivePosts(s).length;
 }
 
+// 自分の全投稿（期限に関係なくローカルに残る「思い出」）。新しい順。
+export function myArchive(s: Pick<Store, 'currentUserId' | 'posts'>): Post[] {
+  const { currentUserId } = s;
+  if (!currentUserId) return [];
+  return s.posts
+    .filter((p) => p.userId === currentUserId)
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+function dayStart(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+export interface Highlight {
+  label: string;
+  post: Post;
+}
+
+// 「1年前の今日」「1ヶ月前」「1週間前」に近い自分の投稿をハイライトとして返す。
+export function memoryHighlights(s: Pick<Store, 'currentUserId' | 'posts'>): Highlight[] {
+  const archive = myArchive(s);
+  const today = dayStart(Date.now());
+  const DAY = 24 * HOUR;
+  const defs = [
+    { label: '1年前の今日', days: 365, tol: 3 },
+    { label: '1ヶ月前', days: 30, tol: 2 },
+    { label: '1週間前', days: 7, tol: 1 },
+  ];
+  const out: Highlight[] = [];
+  const used = new Set<string>();
+  for (const def of defs) {
+    const target = today - def.days * DAY;
+    let best: Post | null = null;
+    let bestDiff = Infinity;
+    for (const p of archive) {
+      if (used.has(p.id)) continue;
+      const diff = Math.abs(dayStart(p.createdAt) - target);
+      if (diff <= def.tol * DAY && diff < bestDiff) {
+        best = p;
+        bestDiff = diff;
+      }
+    }
+    if (best) {
+      out.push({ label: def.label, post: best });
+      used.add(best.id);
+    }
+  }
+  return out;
+}
+
 export type { ViewRecord };

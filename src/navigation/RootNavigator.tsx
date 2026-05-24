@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors, font, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { AccountSetupScreen } from '../screens/AccountSetupScreen';
 import { AppShell } from './AppShell';
 import { useStore } from '../store';
@@ -38,6 +39,6 @@ export function RootNavigator() {
 
 const styles = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  brand: { color: colors.text, fontSize: font.title, fontWeight: '900', letterSpacing: 3 },
+  brand: { color: colors.text, fontSize: 44, fontWeight: '700', letterSpacing: 0.5, fontFamily: fonts.brand },
   bar: { width: 28, height: 5, borderRadius: 3, backgroundColor: colors.lime, marginTop: space.sm },
 });

@@ -27,7 +27,13 @@ if (html.includes('<!-- ogp:start -->')) {
   process.exit(0);
 }
 
+const FONTS_HREF =
+  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&display=swap';
+
 const tags = `  <!-- ogp:start -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link id="napsnap-fonts" rel="stylesheet" href="${FONTS_HREF}" />
     <meta name="description" content="${DESC}" />
     <meta name="theme-color" content="#FFF8E8" />
     <link rel="canonical" href="${SITE_URL}/" />

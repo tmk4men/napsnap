@@ -1,17 +1,21 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Card, GhostButton, Remaining, useTick } from '../components/ui';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
+import { MemoryCalendar } from '../components/MemoryCalendar';
+import { MemoryViewer } from '../components/MemoryViewer';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { currentUser, myPosts } from '../selectors';
+import { currentUser, memoryHighlights, myArchive, myPosts } from '../selectors';
 import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickAvatarImage } from '../lib/avatar';
+import { Post } from '../types';
 
 export function MeScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
@@ -23,7 +27,11 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const { play, playingId } = useClipPlayer();
   const me = currentUser(s);
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
+  const archive = useMemo(() => myArchive(s), [s.posts, s.currentUserId]);
+  const highlights = useMemo(() => memoryHighlights(s), [s.posts, s.currentUserId]);
   const people = s.users.filter((u) => u.isMock);
+
+  const [viewing, setViewing] = useState<Post[] | null>(null);
 
   async function changePhoto() {
     const uri = await pickAvatarImage();
@@ -54,13 +62,43 @@ export function MeScreen({ nav }: { nav: Nav }) {
           </View>
         </View>
 
-        {/* 自分の投稿 */}
+        {/* ハイライト（1年前/1ヶ月前/1週間前） */}
+        {highlights.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>思い出</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: space.sm, paddingVertical: 2 }}
+            >
+              {highlights.map((h) => (
+                <Pressable key={h.post.id} onPress={() => setViewing([h.post])} style={styles.hl}>
+                  <Image source={{ uri: h.post.imageUrl }} style={styles.hlImg} resizeMode="cover" />
+                  <View style={styles.hlScrim} />
+                  <Text style={styles.hlLabel}>{h.label}</Text>
+                  {!!h.post.caption?.text && (
+                    <Text style={styles.hlCap} numberOfLines={1}>
+                      {h.post.caption.text.replace(/\n/g, ' ')}
+                    </Text>
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {/* カレンダー */}
+        <Text style={styles.sectionLabel}>きろく・{archive.length}</Text>
+        <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
+
+        {/* いま出している投稿（24h以内） */}
+        <Text style={styles.sectionLabel}>いま出してる</Text>
         {mine.length === 0 ? (
           <View style={styles.empty}>
             <TraceMark size={48} />
             <Text style={styles.emptyTitle}>{copy.emptyMine}</Text>
             <Text style={styles.emptySub}>{copy.emptyMineSub}</Text>
-            <View style={{ height: space.lg }} />
+            <View style={{ height: space.md }} />
             <GhostButton label={copy.shoot} onPress={nav.openCamera} />
           </View>
         ) : (
@@ -139,6 +177,8 @@ export function MeScreen({ nav }: { nav: Nav }) {
         <View style={{ height: space.lg }} />
         <GhostButton label="デモを最初からやり直す" onPress={resetDemo} />
       </ScrollView>
+
+      {viewing && <MemoryViewer posts={viewing} onClose={() => setViewing(null)} />}
     </View>
   );
 }
@@ -160,9 +200,16 @@ const styles = StyleSheet.create({
     borderWidth: 2.5,
     borderColor: colors.bg,
   },
-  name: { color: colors.text, fontSize: font.title, fontWeight: '900' },
+  name: { color: colors.text, fontSize: font.title, fontWeight: '900', fontFamily: fonts.display },
   handle: { color: colors.textDim, fontSize: font.body, marginTop: 2, fontWeight: '600' },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xl, gap: space.xs },
+
+  hl: { width: 132, height: 168, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceSunken, justifyContent: 'flex-end' },
+  hlImg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  hlScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.28)' },
+  hlLabel: { color: colors.onMedia, fontSize: font.small, fontWeight: '900', paddingHorizontal: 10, paddingTop: 8 },
+  hlCap: { color: colors.onMediaDim, fontSize: font.tiny, fontWeight: '700', paddingHorizontal: 10, paddingBottom: 10, paddingTop: 2 },
+
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.lg, gap: space.xs },
   emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
   card: { padding: space.md, marginBottom: space.md },

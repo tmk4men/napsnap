@@ -6,6 +6,7 @@ import { colors, font, radius, space } from '../theme';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
 import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
+import { CaptionView } from '../components/Caption';
 import { useStore } from '../store';
 import { keptPosts, userById } from '../selectors';
 import { timeAgo } from '../lib/time';
@@ -28,10 +29,11 @@ export function KeptScreen() {
   const hasSound = postHasSound(current?.post);
   const player = useAudioPlayer(audioSrc ?? null);
   const [muted, setMuted] = useState(false);
+  // 表示時に1回だけ再生（自動ループしない）。もう一度は画像タップで。
   useEffect(() => {
     if (!audioSrc) return;
     try {
-      player.loop = true;
+      player.loop = false;
       player.muted = muted;
       player.seekTo(0);
       player.play();
@@ -48,7 +50,18 @@ export function KeptScreen() {
     setMuted(next);
     try {
       player.muted = next;
-      if (!next) player.play();
+      if (!next) {
+        player.seekTo(0);
+        player.play();
+      }
+    } catch {}
+  };
+
+  const replaySound = () => {
+    if (!hasSound || muted) return;
+    try {
+      player.seekTo(0);
+      player.play();
     } catch {}
   };
 
@@ -105,8 +118,10 @@ export function KeptScreen() {
     <View style={styles.container} onLayout={(e) => (hRef.current = e.nativeEvent.layout.height)}>
       <Animated.View style={[styles.card, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
         <Image source={{ uri: current.post.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-        <View style={styles.shadeTop} />
-        <View style={styles.shadeBottom} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />
+        <View style={styles.shadeTop} pointerEvents="none" />
+        <View style={styles.shadeBottom} pointerEvents="none" />
+        {current.post.caption && <CaptionView caption={current.post.caption} />}
 
         {/* 上部：何件中いくつ＋あなたの反応 */}
         <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
@@ -133,7 +148,7 @@ export function KeptScreen() {
         </View>
 
         {/* 下部：投稿者＋残り */}
-        <View style={styles.author}>
+        <View style={styles.author} pointerEvents="none">
           <Avatar user={author} size={40} />
           <View style={{ marginLeft: space.sm, flex: 1 }}>
             <Text style={styles.authorName}>{author?.displayName ?? '友達'}</Text>
@@ -144,7 +159,7 @@ export function KeptScreen() {
           </View>
         </View>
 
-        <Text style={styles.swipeHint}>↑↓ めくる</Text>
+        <Text style={styles.swipeHint} pointerEvents="none">↑↓ めくる</Text>
       </Animated.View>
     </View>
   );

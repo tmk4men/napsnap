@@ -7,6 +7,7 @@ import { copy } from '../copy';
 import { Avatar, GhostButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
 import { ChevronDownIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
+import { CaptionView } from '../components/Caption';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { feedQueue, isPassOpen, userById } from '../selectors';
@@ -40,10 +41,11 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   const player = useAudioPlayer(audioSrc ?? null);
   const [muted, setMuted] = useState(false);
 
+  // 表示時に1回だけ再生（自動ループはしない）。もう一度聞きたいときは画像タップ。
   useEffect(() => {
     if (!audioSrc || !open) return;
     try {
-      player.loop = true;
+      player.loop = false;
       player.muted = muted;
       player.seekTo(0);
       player.play();
@@ -60,7 +62,19 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     setMuted(next);
     try {
       player.muted = next;
-      if (!next) player.play();
+      if (!next) {
+        player.seekTo(0);
+        player.play();
+      }
+    } catch {}
+  };
+
+  // 画像タップで音をもう一度（自動ループしない代わりの再生手段）
+  const replaySound = () => {
+    if (!hasSound || muted) return;
+    try {
+      player.seekTo(0);
+      player.play();
     } catch {}
   };
 
@@ -120,8 +134,11 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           resizeMode="cover"
           blurRadius={open ? 0 : 40}
         />
-        <View style={styles.shadeTop} />
-        <View style={styles.shadeBottom} />
+        {/* 画像タップで音を再生（スワイプはこの下の pan が拾う） */}
+        <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />
+        <View style={styles.shadeTop} pointerEvents="none" />
+        <View style={styles.shadeBottom} pointerEvents="none" />
+        {open && post.caption && <CaptionView caption={post.caption} />}
 
         {/* 上部 */}
         <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
@@ -145,7 +162,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
         </View>
 
         {/* 投稿者＋残り時間（時計） */}
-        <View style={[styles.author, { bottom: insets.bottom + 224 }]}>
+        <View style={[styles.author, { bottom: insets.bottom + 224 }]} pointerEvents="none">
           <Avatar user={author} size={44} />
           <View style={{ marginLeft: space.sm, flex: 1 }}>
             <Text style={styles.authorName}>{author?.displayName ?? '友達'}</Text>

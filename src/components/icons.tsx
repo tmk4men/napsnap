@@ -148,6 +148,51 @@ export function ImageIcon({ size = 18, color = colors.text }: IconProps) {
   );
 }
 
+// --- カレンダー ---
+export function CalendarIcon({ size = 22, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M4 6h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z"
+        stroke={color}
+        strokeWidth={1.9}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <Line x1={3} y1={10} x2={21} y2={10} stroke={color} strokeWidth={1.9} />
+      <Line x1={8} y1={3.5} x2={8} y2={6.5} stroke={color} strokeWidth={1.9} strokeLinecap="round" />
+      <Line x1={16} y1={3.5} x2={16} y2={6.5} stroke={color} strokeWidth={1.9} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// --- 文字（Aa） ---
+export function TextIcon({ size = 18, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M3 18L8 6l5 12M4.6 14.2h6.8" stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M20.5 11.2a2.7 2.7 0 0 0-4.6 1.9c0 1.5 1.2 2.6 2.7 2.6 1 0 1.6-.4 1.9-1V18" stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+// --- 左右シェブロン（カレンダーの月送り） ---
+export function ChevronLeftIcon({ size = 20, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M15 6l-6 6 6 6" stroke={color} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function ChevronRightIcon({ size = 20, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M9 6l6 6-6 6" stroke={color} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 // --- 空状態の抽象マーク（生活の“痕跡”＝短い斜線＋1点） ---
 export function TraceMark({ size = 44, color = colors.line, dot = colors.limeDust }: IconProps & { dot?: string }) {
   return (

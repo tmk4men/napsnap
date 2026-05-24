@@ -21,11 +21,20 @@ export interface Group {
   createdAt: number;
 }
 
+// 画像に入れる文字（投稿前にユーザーが付ける）。焼き込みではなく表示時にオーバーレイする。
+export interface PostCaption {
+  text: string;
+  fontKey: string; // CAPTION_FONTS のキー
+  color: string; // 文字色
+  pos: 'top' | 'center' | 'bottom';
+}
+
 export interface Post {
   id: string;
   userId: string;
   groupId?: string; // 旧グループ概念の名残（フォローモデルでは未使用）
   imageUrl: string;
+  caption?: PostCaption;
   // シャッター押下直後に録音した2.5秒の音声。自分の投稿は録音URI。
   audioUrl?: string;
   // モック友達投稿用：デモ環境音をシードから生成するための種（Webでのみ鳴る）。

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
 import { ImageIcon, PencilIcon } from '../components/icons';
@@ -58,7 +59,6 @@ export function AccountSetupScreen() {
         <Text style={styles.brand}>napsnap</Text>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           <Text style={styles.title}>{copy.setupNameTitle}</Text>
-          <Text style={styles.sub}>{copy.setupNameSub}</Text>
 
           {/* 大きいアバタープレビュー＋写真を選ぶ */}
           <View style={styles.avatarStage}>
@@ -152,8 +152,8 @@ export function AccountSetupScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
-  brand: { color: colors.text, fontSize: font.body, fontWeight: '900', letterSpacing: 2, marginBottom: space.lg },
-  title: { color: colors.text, fontSize: font.hero, fontWeight: '900', lineHeight: 48 },
+  brand: { color: colors.text, fontSize: 26, fontWeight: '700', letterSpacing: 0.5, marginBottom: space.md, fontFamily: fonts.brand },
+  title: { color: colors.text, fontSize: font.hero, fontWeight: '900', lineHeight: 48, fontFamily: fonts.display },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 
   avatarStage: { alignItems: 'center', marginTop: space.xl, gap: space.md },

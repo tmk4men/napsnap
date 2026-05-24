@@ -2,11 +2,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { AccessPass, FeedState, Post, Reaction, ReactionType, User, ViewRecord } from './types';
+import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, User, ViewRecord } from './types';
 import { uid } from './lib/id';
 import { HOUR, isActive, now } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTIONS } from './copy';
-import { makeFollowPosts } from './seed';
+import { makeFollowPosts, makeMyMemories } from './seed';
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -38,7 +38,7 @@ interface Actions {
   completeAccountSetup: (input: AccountSetupInput) => void;
   updateProfileImage: (uri: string) => void;
   toggleFollow: (userId: string) => void;
-  addPost: (imageUrl: string, audioUrl?: string) => string;
+  addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption) => string;
   markViewed: (postId: string) => void;
   reactToPost: (postId: string, type: ReactionType) => void;
   skipPost: (postId: string) => void;
@@ -112,7 +112,7 @@ export const useStore = create<Store>()(
             currentUserId: id,
             users: [me, ...people],
             following: followingIds,
-            posts: makeFollowPosts(followed),
+            posts: [...makeFollowPosts(followed), ...makeMyMemories(id)],
             views: [],
             reactions: [],
             feedStates: [],
@@ -143,7 +143,7 @@ export const useStore = create<Store>()(
           set({ following: next, posts: nextPosts });
         },
 
-        addPost: (imageUrl, audioUrl) => {
+        addPost: (imageUrl, audioUrl, caption) => {
           const { currentUserId } = get();
           if (!currentUserId) return '';
           const createdAt = now();
@@ -151,6 +151,7 @@ export const useStore = create<Store>()(
             id: uid('p_'),
             userId: currentUserId,
             imageUrl,
+            caption,
             audioUrl,
             createdAt,
             expiresAt: createdAt + POST_TTL_HOURS * HOUR,
