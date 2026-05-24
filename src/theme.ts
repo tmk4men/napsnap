@@ -1,16 +1,24 @@
-// napsnap のビジュアルトーン（企画書 8章）
-// 外側はシンプル、中身は少しゆるい。余白多め・丸み・黒/白/ライム。
-
+// napsnap 最終カラーパレット（ライト基調・生活感のあるクリーム）。
 export const colors = {
-  black: '#050505',
-  ink: '#0E0E0E', // カード等の少し明るい黒
-  surface: '#161616',
-  white: '#F7F7F2',
-  lime: '#DFFF2F',
-  gray: '#8A8A8A',
-  grayDim: '#555555',
-  warn: '#FF3B3B',
-  cream: '#FFF8E8',
+  bg: '#FFF8E8', // ベース背景 Warm Off White
+  text: '#1E1E1E', // メイン文字 Soft Black
+  textDim: '#8C8676', // 補助文字（生活感のある灰）
+  textFaint: '#B4AD9C', // さらに薄い灰
+  lime: '#DFFF2F', // アクセント Trace Lime（解除・反応・撮影OK・通知ドット）
+  limeInk: '#1E1E1E', // ライム上の文字
+  card: '#EDE8DC', // サブ背景 Dust Gray（カード・区切り・非アクティブ）
+  line: '#E3DDCD', // 区切り線
+  warn: '#FF4B4B', // 警告 Human Red（人検知時のみ）
+
+  // 写真の上で使う固定色（テーマに依らず白＋暗いスクリム）
+  onMedia: '#FFFFFF',
+  onMediaDim: 'rgba(255,255,255,0.75)',
+  scrimTop: 'rgba(0,0,0,0.35)',
+  scrimBottom: 'rgba(0,0,0,0.55)',
+  mediaChip: 'rgba(0,0,0,0.5)',
+
+  // PCで端末枠の外側
+  backdrop: '#26241F',
 } as const;
 
 export const space = {
@@ -30,7 +38,6 @@ export const radius = {
 } as const;
 
 export const font = {
-  // システムフォントに任せる（顔出し圧を出さない、素っ気なさ重視）
   hero: 40,
   title: 26,
   lead: 18,

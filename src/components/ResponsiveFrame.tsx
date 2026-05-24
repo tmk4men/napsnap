@@ -27,20 +27,20 @@ export function ResponsiveFrame({ children }: { children: React.ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, backgroundColor: colors.black },
+  fill: { flex: 1, backgroundColor: colors.bg },
   page: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: colors.backdrop,
     alignItems: 'center',
     justifyContent: 'center',
   },
   frame: {
-    backgroundColor: colors.black,
+    backgroundColor: colors.bg,
     borderRadius: radius.lg + 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+    borderColor: 'rgba(0,0,0,0.15)',
+    boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
   },
-  caption: { color: colors.grayDim, fontSize: font.small, marginTop: 16 },
+  caption: { color: 'rgba(255,255,255,0.45)', fontSize: font.small, marginTop: 16 },
 });

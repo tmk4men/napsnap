@@ -46,16 +46,16 @@ export function TabBar({
 const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    backgroundColor: colors.ink,
+    backgroundColor: colors.bg,
     paddingTop: space.sm,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderTopColor: colors.line,
   },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  icon: { fontSize: 20, color: colors.grayDim },
-  activeIcon: { color: colors.lime },
-  label: { fontSize: font.tiny, color: colors.grayDim, fontWeight: '700' },
-  activeLabel: { color: colors.white },
+  icon: { fontSize: 20, color: colors.textFaint },
+  activeIcon: { color: colors.text },
+  label: { fontSize: font.tiny, color: colors.textFaint, fontWeight: '700' },
+  activeLabel: { color: colors.text },
   dot: {
     position: 'absolute',
     top: -4,
@@ -68,5 +68,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  dotText: { fontSize: 10, fontWeight: '900', color: colors.black },
+  dotText: { fontSize: 10, fontWeight: '900', color: colors.limeInk },
 });

@@ -6,7 +6,7 @@ import { REACTION_TTL_HOURS } from './copy';
 
 type Snapshot = Pick<
   Store,
-  'currentUserId' | 'group' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass'
+  'currentUserId' | 'following' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass'
 >;
 
 export function isPassOpen(s: Pick<Store, 'accessPass'>): boolean {
@@ -22,23 +22,23 @@ export function currentUser(s: Pick<Store, 'currentUserId' | 'users'>): User | u
   return userById(s.users, s.currentUserId);
 }
 
-// 閲覧フィードのキュー：友達の投稿のうち、まだ流してもいない・反応もしていない・期限内のもの。
-export function feedQueue(s: Snapshot): Post[] {
-  const { currentUserId, group } = s;
-  if (!group) return [];
-  const acted = new Set(s.feedStates.map((f) => f.postId)); // skipped か reacted
+// フォロー中の人の、期限内の投稿（自分以外）を新しい順で。
+export function followedActivePosts(s: Snapshot): Post[] {
+  const { currentUserId, following } = s;
   return s.posts
     .filter(
-      (p) =>
-        p.groupId === group.id &&
-        p.userId !== currentUserId &&
-        isActive(p.expiresAt) &&
-        !acted.has(p.id)
+      (p) => p.userId !== currentUserId && following.includes(p.userId) && isActive(p.expiresAt)
     )
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 
-// 「残した」：自分が反応した投稿のうち、反応が24時間以内のもの。自由に上下スクロール可。
+// 閲覧フィードのキュー：フォロー中の投稿のうち、まだ流してもいない・反応もしていないもの。
+export function feedQueue(s: Snapshot): Post[] {
+  const acted = new Set(s.feedStates.map((f) => f.postId));
+  return followedActivePosts(s).filter((p) => !acted.has(p.id));
+}
+
+// 「残した」：自分が反応した投稿のうち、反応が24時間以内のもの。
 export function keptPosts(s: Snapshot): { post: Post; reaction: Reaction }[] {
   const { currentUserId } = s;
   if (!currentUserId) return [];
@@ -55,7 +55,7 @@ export function keptPosts(s: Snapshot): { post: Post; reaction: Reaction }[] {
 
 export interface MyPostSummary {
   post: Post;
-  viewers: { user: User; reaction?: Reaction }[];
+  viewers: { user: User; reaction: Reaction | undefined }[];
   viewCount: number;
   reactionCount: number;
 }
@@ -69,12 +69,12 @@ export function myPosts(s: Snapshot): MyPostSummary[] {
     .sort((a, b) => b.createdAt - a.createdAt)
     .map((post) => {
       const views = s.views.filter((v) => v.postId === post.id && v.viewerId !== currentUserId);
-      const reactions = s.reactions.filter(
-        (r) => r.postId === post.id && r.userId !== currentUserId
-      );
+      const reactions = s.reactions.filter((r) => r.postId === post.id && r.userId !== currentUserId);
       const reactionByUser = new Map(reactions.map((r) => [r.userId, r] as const));
-      // 足跡（見た人）一覧。反応した人は反応つきで。
-      const viewerIds = new Set<string>([...views.map((v) => v.viewerId), ...reactions.map((r) => r.userId)]);
+      const viewerIds = new Set<string>([
+        ...views.map((v) => v.viewerId),
+        ...reactions.map((r) => r.userId),
+      ]);
       const viewers = [...viewerIds]
         .map((uidStr) => {
           const user = s.users.find((u) => u.id === uidStr);
@@ -82,23 +82,13 @@ export function myPosts(s: Snapshot): MyPostSummary[] {
           return { user, reaction: reactionByUser.get(uidStr) };
         })
         .filter((x): x is { user: User; reaction: Reaction | undefined } => x !== null)
-        // 反応した人を上に
         .sort((a, b) => (b.reaction ? 1 : 0) - (a.reaction ? 1 : 0));
-      return {
-        post,
-        viewers,
-        viewCount: viewerIds.size,
-        reactionCount: reactions.length,
-      };
+      return { post, viewers, viewCount: viewerIds.size, reactionCount: reactions.length };
     });
 }
 
-export function friendActivePostCount(s: Snapshot): number {
-  const { currentUserId, group } = s;
-  if (!group) return 0;
-  return s.posts.filter(
-    (p) => p.groupId === group.id && p.userId !== currentUserId && isActive(p.expiresAt)
-  ).length;
+export function followedActivePostCount(s: Snapshot): number {
+  return followedActivePosts(s).length;
 }
 
 export type { ViewRecord };

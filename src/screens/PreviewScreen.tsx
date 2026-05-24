@@ -3,18 +3,21 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
-import { copy, PASS_HOURS } from '../copy';
+import { copy } from '../copy';
 import { GhostButton, PrimaryButton } from '../components/ui';
+import { SpeakerOnIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 
 export function PreviewScreen({
   uri,
   audioUri,
+  canRetake,
   nav,
 }: {
   uri: string;
   audioUri?: string;
+  canRetake: boolean;
   nav: Nav;
 }) {
   const insets = useSafeAreaInsets();
@@ -40,64 +43,48 @@ export function PreviewScreen({
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.md }]}>
-      <Text style={styles.heading}>この1枚を出す？</Text>
+      <Text style={styles.heading}>{copy.previewTitle}</Text>
       <View style={styles.imageWrap}>
         <Image source={{ uri }} style={styles.image} resizeMode="cover" />
-        {/* 音の確認チップ（写真の上に重ねる） */}
         <Pressable
           onPress={playClip}
           disabled={!audioUri}
           style={[styles.soundChip, status.playing && styles.soundChipOn, !audioUri && styles.soundChipOff]}
         >
-          <Text style={[styles.soundText, status.playing && { color: colors.black }]}>
-            {!audioUri ? `🔇 ${copy.noMic}` : status.playing ? `◼ ${copy.previewPlaying}` : `▶ ${copy.previewPlay}`}
+          <SpeakerOnIcon size={16} color={status.playing ? colors.limeInk : colors.onMedia} />
+          <Text style={[styles.soundText, status.playing && { color: colors.limeInk }]}>
+            {!audioUri ? copy.noMic : status.playing ? copy.previewPlaying : copy.previewPlay}
           </Text>
         </Pressable>
       </View>
-      <Text style={styles.note}>
-        シャッターの瞬間＋直後2.5秒の音が一緒に残る。{'\n'}
-        出すと{PASS_HOURS}時間だけ友達の痕跡がひらく（投稿は24時間で消える）。
-      </Text>
+      <Text style={styles.note}>{copy.previewNote}</Text>
       <View style={{ paddingBottom: insets.bottom + space.md, gap: space.xs }}>
         <PrimaryButton label={copy.post} onPress={post} />
-        <GhostButton label={copy.retake} onPress={nav.openCamera} />
+        {canRetake && <GhostButton label={copy.retake} onPress={nav.retake} />}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.black, paddingHorizontal: space.lg },
-  heading: {
-    color: colors.white,
-    fontSize: font.title,
-    fontWeight: '900',
-    marginBottom: space.md,
-  },
-  imageWrap: {
-    flex: 1,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-  },
+  container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
+  heading: { color: colors.text, fontSize: font.title, fontWeight: '900', marginBottom: space.md },
+  imageWrap: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.card },
   image: { width: '100%', height: '100%' },
   soundChip: {
     position: 'absolute',
     left: space.md,
     bottom: space.md,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.mediaChip,
     borderRadius: radius.pill,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
   },
   soundChipOn: { backgroundColor: colors.lime },
-  soundChipOff: { backgroundColor: 'rgba(255,255,255,0.12)' },
-  soundText: { color: colors.white, fontSize: font.body, fontWeight: '800' },
-  note: {
-    color: colors.gray,
-    fontSize: font.body,
-    textAlign: 'center',
-    lineHeight: font.body * 1.6,
-    paddingVertical: space.lg,
-  },
+  soundChipOff: { backgroundColor: colors.mediaChip },
+  soundText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800' },
+  note: { color: colors.textDim, fontSize: font.body, textAlign: 'center', lineHeight: font.body * 1.6, paddingVertical: space.lg },
 });

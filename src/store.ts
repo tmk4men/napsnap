@@ -2,25 +2,30 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { AccessPass, FeedState, Group, Post, Reaction, ReactionType, User, ViewRecord } from './types';
-import { uid, inviteCode } from './lib/id';
+import { AccessPass, FeedState, Post, Reaction, ReactionType, User, ViewRecord } from './types';
+import { uid } from './lib/id';
 import { HOUR, isActive, now } from './lib/time';
-import { lifeImage } from './lib/images';
 import { PASS_HOURS, POST_TTL_HOURS, REACTIONS } from './copy';
-import { DEFAULT_GROUP_NAME, makeFriendPosts, makeMockFriends } from './seed';
-
-const AVATAR_EMOJIS = ['🟡', '🌿', '🪟', '🍵', '🛏️', '🥡', '🧦', '🌙'];
-const AVATAR_COLORS = ['#DFFF2F', '#7FB3FF', '#FFB37F', '#C79BFF', '#7FE0C0', '#FF9BB3'];
+import { makeFollowPosts } from './seed';
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+export interface AccountSetupInput {
+  displayName: string;
+  handle: string;
+  avatarEmoji: string;
+  avatarColor: string;
+  people: User[]; // フォロー候補（モックの人）
+  followingIds: string[]; // フォローする人のid
 }
 
 interface PersistedState {
   onboarded: boolean;
   currentUserId: string | null;
   users: User[];
-  group: Group | null;
+  following: string[];
   posts: Post[];
   views: ViewRecord[];
   reactions: Reaction[];
@@ -29,15 +34,13 @@ interface PersistedState {
 }
 
 interface Actions {
-  completeOnboarding: (displayName: string) => void;
-  createGroup: (name: string) => void;
-  joinGroup: (code: string) => void;
-  leaveGroup: () => void;
+  completeAccountSetup: (input: AccountSetupInput) => void;
+  toggleFollow: (userId: string) => void;
   addPost: (imageUrl: string, audioUrl?: string) => string;
   markViewed: (postId: string) => void;
   reactToPost: (postId: string, type: ReactionType) => void;
   skipPost: (postId: string) => void;
-  refreshFriendPostsIfStale: () => void;
+  refreshFollowPostsIfStale: () => void;
   resetDemo: () => void;
 }
 
@@ -47,7 +50,7 @@ const initial: PersistedState = {
   onboarded: false,
   currentUserId: null,
   users: [],
-  group: null,
+  following: [],
   posts: [],
   views: [],
   reactions: [],
@@ -58,26 +61,20 @@ const initial: PersistedState = {
 export const useStore = create<Store>()(
   persist(
     (set, get) => {
-      // 自分の投稿に対して、モック友達が少し遅れて足跡＆リアクションを残す。
-      // 「12人が見た / 5人が反応した」の体験を実際に再現するための演出。
+      // 自分の投稿に、フォロワー（デモのモックの人）が少し遅れて足跡＆反応を残す演出。
       function scheduleEngagement(postId: string) {
-        const friends = get().users.filter((u) => u.isMock);
-        const shuffled = [...friends].sort(() => Math.random() - 0.5);
+        const followers = get().users.filter((u) => u.isMock && get().following.includes(u.id));
+        const shuffled = [...followers].sort(() => Math.random() - 0.5);
         shuffled.forEach((f, i) => {
           const delay = 800 + i * 700 + Math.random() * 500;
           setTimeout(() => {
             const s = get();
-            if (!s.posts.some((p) => p.id === postId)) return; // 投稿が消えていたら何もしない
-            // 足跡（重複しない）
+            if (!s.posts.some((p) => p.id === postId)) return;
             if (!s.views.some((v) => v.postId === postId && v.viewerId === f.id)) {
               set((st) => ({
-                views: [
-                  ...st.views,
-                  { id: uid('v_'), postId, viewerId: f.id, viewedAt: now() },
-                ],
+                views: [...st.views, { id: uid('v_'), postId, viewerId: f.id, viewedAt: now() }],
               }));
             }
-            // 6割くらいの確率で反応
             if (Math.random() < 0.6) {
               const type = pick(REACTIONS).type;
               set((st) => ({
@@ -91,78 +88,61 @@ export const useStore = create<Store>()(
         });
       }
 
-      function seedGroup(name: string, code?: string) {
-        const me = get().currentUserId;
-        const friends = makeMockFriends();
-        const groupId = uid('g_');
-        const group: Group = {
-          id: groupId,
-          name: name.trim() || DEFAULT_GROUP_NAME,
-          inviteCode: code?.trim().toUpperCase() || inviteCode(),
-          memberIds: [...(me ? [me] : []), ...friends.map((f) => f.id)],
-          createdAt: now(),
-        };
-        const friendPosts = makeFriendPosts(friends, groupId);
-        set((st) => ({
-          users: [...st.users.filter((u) => !u.isMock), ...friends],
-          group,
-          posts: [...st.posts.filter((p) => p.groupId !== groupId), ...friendPosts],
-        }));
-      }
-
       return {
         ...initial,
 
-        completeOnboarding: (displayName) => {
+        completeAccountSetup: ({ displayName, handle, avatarEmoji, avatarColor, people, followingIds }) => {
           const id = uid('u_');
-          const user: User = {
+          const me: User = {
             id,
+            handle: handle.trim().replace(/^@/, '') || 'me',
             displayName: displayName.trim() || 'なまえ',
-            avatarEmoji: pick(AVATAR_EMOJIS),
-            avatarColor: pick(AVATAR_COLORS),
+            avatarEmoji,
+            avatarColor,
             createdAt: now(),
           };
-          set((st) => ({
+          const followed = people.filter((p) => followingIds.includes(p.id));
+          set({
             onboarded: true,
             currentUserId: id,
-            users: [...st.users.filter((u) => u.id !== id), user],
-          }));
-        },
-
-        createGroup: (name) => seedGroup(name),
-
-        // モック先行のため、参加もデモグループ生成と同じ扱い（コードだけ引き継ぐ）。
-        joinGroup: (code) => seedGroup(DEFAULT_GROUP_NAME, code),
-
-        leaveGroup: () => {
-          set({
-            group: null,
-            posts: [],
+            users: [me, ...people],
+            following: followingIds,
+            posts: makeFollowPosts(followed),
             views: [],
             reactions: [],
             feedStates: [],
             accessPass: null,
-            users: get().users.filter((u) => !u.isMock),
           });
         },
 
+        toggleFollow: (userId) => {
+          const { following, users, posts } = get();
+          if (following.includes(userId)) {
+            set({ following: following.filter((f) => f !== userId) });
+            return;
+          }
+          const next = [...following, userId];
+          const person = users.find((u) => u.id === userId);
+          let nextPosts = posts;
+          if (person && !posts.some((p) => p.userId === userId && isActive(p.expiresAt))) {
+            nextPosts = [...posts, ...makeFollowPosts([person])];
+          }
+          set({ following: next, posts: nextPosts });
+        },
+
         addPost: (imageUrl, audioUrl) => {
-          const { currentUserId, group } = get();
-          if (!currentUserId || !group) return '';
+          const { currentUserId } = get();
+          if (!currentUserId) return '';
           const createdAt = now();
           const post: Post = {
             id: uid('p_'),
             userId: currentUserId,
-            groupId: group.id,
             imageUrl,
             audioUrl,
             createdAt,
             expiresAt: createdAt + POST_TTL_HOURS * HOUR,
           };
-          const pass: AccessPass = {
-            openedAt: createdAt,
-            expiresAt: createdAt + PASS_HOURS * HOUR,
-          };
+          const pass: AccessPass = { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR };
           set((st) => ({ posts: [...st.posts, post], accessPass: pass }));
           scheduleEngagement(post.id);
           return post.id;
@@ -173,10 +153,7 @@ export const useStore = create<Store>()(
           if (!currentUserId) return;
           if (views.some((v) => v.postId === postId && v.viewerId === currentUserId)) return;
           set((st) => ({
-            views: [
-              ...st.views,
-              { id: uid('v_'), postId, viewerId: currentUserId, viewedAt: now() },
-            ],
+            views: [...st.views, { id: uid('v_'), postId, viewerId: currentUserId, viewedAt: now() }],
           }));
         },
 
@@ -204,38 +181,34 @@ export const useStore = create<Store>()(
           }));
         },
 
-        // デモが古くなって友達の投稿が全部期限切れなら、新しい時刻で再生成する。
-        refreshFriendPostsIfStale: () => {
-          const { group, posts, currentUserId } = get();
-          if (!group) return;
-          const activeFriendPosts = posts.filter(
-            (p) => p.userId !== currentUserId && isActive(p.expiresAt)
+        // デモが古くなってフォロー中の投稿が全部期限切れなら、新しい時刻で作り直す。
+        refreshFollowPostsIfStale: () => {
+          const { following, posts, currentUserId, users } = get();
+          const activeFollowed = posts.filter(
+            (p) => p.userId !== currentUserId && following.includes(p.userId) && isActive(p.expiresAt)
           );
-          if (activeFriendPosts.length > 0) return;
-          const friends = get().users.filter((u) => u.isMock);
-          if (friends.length === 0) return;
-          const fresh = makeFriendPosts(friends, group.id);
+          if (activeFollowed.length > 0) return;
+          const followedPeople = users.filter((u) => u.isMock && following.includes(u.id));
+          if (followedPeople.length === 0) return;
+          const fresh = makeFollowPosts(followedPeople);
           const freshIds = new Set(fresh.map((p) => p.id));
           set((st) => ({
             posts: [...st.posts.filter((p) => p.userId === currentUserId), ...fresh],
-            // 再生成した投稿は未閲覧に戻す
             feedStates: st.feedStates.filter((f) => !freshIds.has(f.postId)),
           }));
         },
 
-        resetDemo: () => {
-          set({ ...initial });
-        },
+        resetDemo: () => set({ ...initial }),
       };
     },
     {
-      name: 'napsnap-store-v1',
+      name: 'napsnap-store-v2',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,
         currentUserId: s.currentUserId,
         users: s.users,
-        group: s.group,
+        following: s.following,
         posts: s.posts,
         views: s.views,
         reactions: s.reactions,

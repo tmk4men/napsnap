@@ -4,11 +4,12 @@ export type ReactionType = 'saw' | 'lol' | 'feel' | 'whoa' | 'love' | 'nap';
 
 export interface User {
   id: string;
+  handle: string; // @ユーザーID（人が決める）
   displayName: string;
   avatarEmoji: string;
   avatarColor: string;
   createdAt: number;
-  isMock?: boolean; // デモ用のモック友達
+  isMock?: boolean; // デモ用のモックの人
 }
 
 export interface Group {
@@ -22,7 +23,7 @@ export interface Group {
 export interface Post {
   id: string;
   userId: string;
-  groupId: string;
+  groupId?: string; // 旧グループ概念の名残（フォローモデルでは未使用）
   imageUrl: string;
   // シャッター押下直後に録音した2.5秒の音声。自分の投稿は録音URI。
   audioUrl?: string;

@@ -1,20 +1,17 @@
-// napsnap のUI文言（企画書 8章のトーンに合わせる）。
-// 「素敵な瞬間を共有しよう」系は使わない。素っ気なく、交換感を出す。
+// napsnap のUI文言。短く・素っ気なく・押し付けない。
+// 「ひらいてる/閉じてる」みたいな説明調はやめ、状態は見た目（モザイク/音）で伝える。
 
 import { ReactionType } from './types';
 
 export const PASS_HOURS = 6;
 export const POST_TTL_HOURS = 24;
 export const REACTION_TTL_HOURS = 24;
-export const MAX_MEMBERS = 8;
 
+// リアクションは3種に絞る。表示はSVGアイコン（emojiはテキスト箇所のフォールバック用）。
 export const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
-  { type: 'saw', emoji: '👀', label: '見た' },
-  { type: 'lol', emoji: '😂', label: '笑う' },
-  { type: 'feel', emoji: '🫠', label: 'わかる' },
-  { type: 'whoa', emoji: '🌀', label: 'やば' },
   { type: 'love', emoji: '🫶', label: 'すき' },
-  { type: 'nap', emoji: '🟡', label: 'nap' },
+  { type: 'lol', emoji: '😂', label: 'わら' },
+  { type: 'whoa', emoji: '⚡️', label: 'やば' },
 ];
 
 export function reactionMeta(type: ReactionType) {
@@ -22,41 +19,65 @@ export function reactionMeta(type: ReactionType) {
 }
 
 export const copy = {
-  onboarding: [
-    {
-      title: '人が映ると\n撮れない、日常SNS。',
-      sub: '顔も、人も主役じゃない。\n机・飯・足元・寝床。生活の痕跡だけ。',
-    },
-    {
-      title: '1枚撮ると、\n6時間だけひらく。',
-      sub: '友達の痕跡はロックされてる。\n君の1枚で、6時間だけ見える。',
-    },
-    {
-      title: '反応した投稿だけ、\n24時間残る。',
-      sub: '1枚ずつ、一方通行で見る。\n流したら戻れない。反応したものだけ残る。',
-    },
-  ],
-  lockTitle: '閉じてる',
-  lockSub: '1枚撮ると、6時間だけ友達の痕跡が見える。',
-  openTitle: 'ひらいてる',
-  shoot: '今を撮る',
-  shootAgain: 'もう1枚撮る',
+  // アカウント設定
+  setupNameTitle: 'なまえと\nアイコン',
+  setupNameSub: '顔はいらない。呼ばれる名前だけ。',
+  setupNamePlaceholder: 'なまえ',
+  setupNext: 'つぎへ',
+  setupFollowTitle: 'だれの今を\n見る？',
+  setupFollowSub: 'フォローした人の投稿だけ、届く。',
+  setupStart: 'はじめる',
+  setupBack: 'もどる',
+
+  // ホーム：ロック中（相手の画像はモザイク・音は鳴らない）
+  lockedHeadline: 'まだ、見えない',
+  lockedSub: '1枚出すと、6時間みんなが見える。',
+  lockedEmpty: 'まだ誰も出してない',
+  lockedEmptySub: '最初の1枚を出してみる。',
+  shoot: '撮る',
+  revealChip: '撮ると、見える',
+
+  // ホーム：オープン
+  see: '見る',
+  allSeenTitle: '今日はここまで',
+  allSeenSub: 'また誰かが出したら、増える。',
+
+  // カメラ
   cameraGuide: '人間なしで、今を1枚',
   cameraSoundHint: 'シャッターの瞬間＋2.5秒の音が残る',
   faceBlocked: '顔は禁止',
-  maybeHuman: '人が映ってるかも',
   recording: '録音中',
-  recordingHint: 'いまの音を残してる…',
-  previewPlay: '音を聞く（2.5秒）',
-  previewPlaying: '再生中…',
-  noMic: '音なし（マイク未許可）',
-  post: 'これを出す',
+  recordingHint: 'いまの音を残してる',
+  noMic: '音なし',
+
+  // プレビュー
+  previewTitle: 'これでいく？',
+  previewNote: 'この1枚と2.5秒の音が残る。出すと6時間みんなが見える。24時間で消える。',
+  previewPlay: '音を聞く',
+  previewPlaying: '再生中',
+  post: '出す',
   retake: '撮り直す',
-  feedDone: '全部見た',
-  emptyKept: 'まだ何も残してない',
-  emptyKeptSub: 'フィードで反応した痕跡が、ここに24時間だけ残る。',
-  emptyMine: 'まだ1枚も出してない',
-  emptyMineSub: '君が1枚出すと、友達の6時間がひらく。',
+
+  // フィード
+  cantUndo: '流したら戻れない',
+  swipeAway: '反応せず流す',
+  feedDoneTitle: 'ぜんぶ見た',
+  feedDoneSub: 'また誰かが出したら、ここに増える。',
+  close: 'とじる',
+
+  // 残した
+  keptSub: '反応したものが、24時間だけ残る。',
+  emptyKept: 'まだ、何もない',
+  emptyKeptSub: 'フィードで反応した痕跡が、ここに残る。',
+
+  // 自分
+  emptyMine: 'まだ出してない',
+  emptyMineSub: '1枚出すと、6時間みんなが見える。',
+  following: 'フォロー中',
+  noFollowing: '誰もフォローしてない',
+  saw: '見た',
+  reacted: '反応した',
+  expiresIn: 'で消える',
 } as const;
 
 export const tabs = {

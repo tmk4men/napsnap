@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import {
   RecordingPresets,
   getRecordingPermissionsAsync,
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
 import { GhostButton } from '../components/ui';
+import { Waveform } from '../components/Waveform';
 import { Nav } from '../navigation/nav';
 import { demoCapture } from '../lib/images';
 import { RECORD_SECONDS } from '../lib/audio';
@@ -28,15 +29,14 @@ export function CameraScreen({ nav }: { nav: Nav }) {
   const [phase, setPhase] = useState<Phase>('live');
   const [frozenUri, setFrozenUri] = useState<string | null>(null);
   const [withSound, setWithSound] = useState(true);
+  const [facing, setFacing] = useState<CameraType>('back');
   const progress = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dot = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) requestPermission();
   }, [permission]);
 
-  // マイク権限は先に確保しておく（最初のシャッターで途切れず録音できるように）
   useEffect(() => {
     (async () => {
       try {
@@ -50,7 +50,6 @@ export function CameraScreen({ nav }: { nav: Nav }) {
     })();
   }, []);
 
-  // 後始末：録音中に閉じられたら止める
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -67,7 +66,6 @@ export function CameraScreen({ nav }: { nav: Nav }) {
     setFrozenUri(photoUri);
     setPhase('recording');
 
-    // マイクが未許可なら一度だけ確認
     let micOk = micGranted;
     if (!micOk) {
       try {
@@ -92,20 +90,12 @@ export function CameraScreen({ nav }: { nav: Nav }) {
     }
 
     if (recording) {
-      // 2.5秒のゲージ＋録音ドットの点滅
       progress.setValue(0);
       Animated.timing(progress, {
         toValue: 1,
         duration: RECORD_SECONDS * 1000,
         useNativeDriver: false,
       }).start();
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(dot, { toValue: 0.2, duration: 450, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 1, duration: 450, useNativeDriver: true }),
-        ])
-      ).start();
-
       timeoutRef.current = setTimeout(async () => {
         let audioUri: string | undefined;
         try {
@@ -118,8 +108,7 @@ export function CameraScreen({ nav }: { nav: Nav }) {
         nav.onCaptured(photoUri, audioUri);
       }, RECORD_SECONDS * 1000);
     } else {
-      // マイクが無い場合は写真だけ。少しだけ見せてから進む。
-      timeoutRef.current = setTimeout(() => nav.onCaptured(photoUri, undefined), 600);
+      timeoutRef.current = setTimeout(() => nav.onCaptured(photoUri, undefined), 700);
     }
   }
 
@@ -135,37 +124,28 @@ export function CameraScreen({ nav }: { nav: Nav }) {
     startCapture(uri);
   }
 
-  // ---- 録音フェーズ：静止画＋ゲージ ----
+  // ---- 録音フェーズ：静止画＋波形＋ゲージ ----
   if (phase === 'recording' && frozenUri) {
     return (
       <View style={styles.container}>
         <Image source={{ uri: frozenUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
         <View style={styles.recShade} />
-        <View style={[styles.recTop, { paddingTop: insets.top + space.lg }]}>
+        <View style={styles.recCenter}>
           {withSound ? (
-            <View style={styles.recPill}>
-              <Animated.View style={[styles.recDot, { opacity: dot }]} />
-              <Text style={styles.recText}>{copy.recording}</Text>
-            </View>
+            <Waveform color={colors.lime} />
           ) : (
-            <View style={[styles.recPill, styles.mutePill]}>
-              <Text style={styles.recText}>{copy.noMic}</Text>
+            <View style={styles.muteChip}>
+              <Text style={styles.muteText}>{copy.noMic}</Text>
             </View>
           )}
         </View>
         {withSound && (
           <View style={[styles.recBottom, { paddingBottom: insets.bottom + space.xxl }]}>
-            <Text style={styles.recHint}>{copy.recordingHint}</Text>
             <View style={styles.barTrack}>
               <Animated.View
                 style={[
                   styles.barFill,
-                  {
-                    width: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0%', '100%'],
-                    }),
-                  },
+                  { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
                 ]}
               />
             </View>
@@ -179,13 +159,11 @@ export function CameraScreen({ nav }: { nav: Nav }) {
   return (
     <View style={styles.container}>
       {granted ? (
-        <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing="back" />
+        <CameraView ref={camRef} style={StyleSheet.absoluteFill} facing={facing} />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.noCam]}>
           <Text style={styles.noCamEmoji}>🪟</Text>
-          <Text style={styles.noCamText}>
-            カメラが使えない環境でも、{'\n'}デモ写真で体験できる。
-          </Text>
+          <Text style={styles.noCamText}>カメラが使えない環境でも、{'\n'}デモ写真で体験できる。</Text>
         </View>
       )}
 
@@ -196,7 +174,18 @@ export function CameraScreen({ nav }: { nav: Nav }) {
         <View style={styles.guidePill}>
           <Text style={styles.guideText}>{copy.cameraGuide}</Text>
         </View>
-        <View style={{ width: 36 }} />
+        {granted ? (
+          <Pressable
+            onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+            style={styles.flip}
+            hitSlop={12}
+          >
+            <Text style={styles.flipIcon}>⟲</Text>
+            <Text style={styles.flipLabel}>{facing === 'back' ? '外' : '内'}</Text>
+          </Pressable>
+        ) : (
+          <View style={{ width: 44 }} />
+        )}
       </View>
 
       <View pointerEvents="none" style={styles.frame}>
@@ -208,13 +197,7 @@ export function CameraScreen({ nav }: { nav: Nav }) {
           <View style={styles.shutterInner} />
         </Pressable>
         {granted && (
-          <GhostButton
-            label="カメラが使えない時はデモ写真で"
-            onPress={() => startCapture(demoCapture())}
-          />
-        )}
-        {!granted && permission && !permission.canAskAgain && Platform.OS !== 'web' && (
-          <Text style={styles.permNote}>設定でカメラを許可すると実際に撮影できる</Text>
+          <GhostButton label="カメラが使えない時はデモ写真で" onPress={() => startCapture(demoCapture())} />
         )}
       </View>
     </View>
@@ -222,10 +205,10 @@ export function CameraScreen({ nav }: { nav: Nav }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.black },
+  container: { flex: 1, backgroundColor: '#000' },
   noCam: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#101010' },
   noCamEmoji: { fontSize: 56, marginBottom: space.md },
-  noCamText: { color: colors.gray, fontSize: font.body, textAlign: 'center', lineHeight: 22 },
+  noCamText: { color: colors.onMediaDim, fontSize: font.body, textAlign: 'center', lineHeight: 22 },
   top: {
     position: 'absolute',
     top: 0,
@@ -240,17 +223,25 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.mediaChip,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeText: { color: colors.white, fontSize: 18, fontWeight: '700' },
-  guidePill: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  closeText: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
+  flip: {
+    minWidth: 44,
+    height: 36,
+    borderRadius: 18,
+    paddingHorizontal: 10,
+    backgroundColor: colors.mediaChip,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
+  flipIcon: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
+  flipLabel: { color: colors.lime, fontSize: font.small, fontWeight: '800' },
+  guidePill: { backgroundColor: colors.mediaChip, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8 },
   guideText: { color: colors.lime, fontSize: font.small, fontWeight: '800' },
   frame: {
     position: 'absolute',
@@ -265,50 +256,25 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: space.md,
   },
-  frameHint: { color: 'rgba(255,255,255,0.6)', fontSize: font.small, fontWeight: '600' },
-  bottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    gap: space.xs,
-  },
+  frameHint: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', gap: space.xs },
   shutterOuter: {
     width: 78,
     height: 78,
     borderRadius: 39,
     borderWidth: 4,
-    borderColor: colors.white,
+    borderColor: colors.onMedia,
     alignItems: 'center',
     justifyContent: 'center',
   },
   shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.lime },
-  permNote: { color: colors.gray, fontSize: font.small, marginTop: space.xs },
 
   // 録音フェーズ
-  recShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)' },
-  recTop: { position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center' },
-  recPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: radius.pill,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  mutePill: { backgroundColor: 'rgba(255,255,255,0.12)' },
-  recDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.warn },
-  recText: { color: colors.white, fontSize: font.body, fontWeight: '800' },
+  recShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },
+  recCenter: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  muteChip: { backgroundColor: colors.mediaChip, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 10 },
+  muteText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800' },
   recBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', paddingHorizontal: space.xl },
-  recHint: { color: colors.white, fontSize: font.body, marginBottom: space.md, fontWeight: '600' },
-  barTrack: {
-    width: '100%',
-    height: 8,
-    borderRadius: radius.pill,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    overflow: 'hidden',
-  },
+  barTrack: { width: '100%', height: 6, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
   barFill: { height: '100%', backgroundColor: colors.lime, borderRadius: radius.pill },
 });

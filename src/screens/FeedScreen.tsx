@@ -1,24 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  Image,
-  PanResponder,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, Image, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
-import { Avatar, GhostButton, Pill, PrimaryButton, useTick } from '../components/ui';
+import { Avatar, GhostButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
+import { ChevronDownIcon, SpeakerOffIcon, SpeakerOnIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { feedQueue, isPassOpen, userById } from '../selectors';
-import { formatRemaining, timeAgo } from '../lib/time';
+import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { ReactionType } from '../types';
 
@@ -33,26 +25,23 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   const reactToPost = useStore((st) => st.reactToPost);
   const skipPost = useStore((st) => st.skipPost);
 
-  const queue = useMemo(
-    () => feedQueue(s),
-    [s.posts, s.feedStates, s.group, s.currentUserId]
-  );
+  const open = isPassOpen(s);
+  const queue = useMemo(() => feedQueue(s), [s.posts, s.feedStates, s.following, s.currentUserId]);
   const post = queue[0];
   const author = userById(s.users, post?.userId);
 
-  // 表示した瞬間に足跡を残す
   useEffect(() => {
     if (post) markViewed(post.id);
   }, [post?.id]);
 
-  // この投稿の2.5秒の音をループ再生（ミュート切替可）
+  // この投稿の2.5秒の音をループ再生（ロック中は鳴らさない）
   const audioSrc = useMemo(() => resolvePostAudioSource(post), [post?.id]);
-  const hasSound = postHasSound(post);
+  const hasSound = postHasSound(post) && open;
   const player = useAudioPlayer(audioSrc ?? null);
   const [muted, setMuted] = useState(false);
 
   useEffect(() => {
-    if (!audioSrc) return;
+    if (!audioSrc || !open) return;
     try {
       player.loop = true;
       player.muted = muted;
@@ -64,22 +53,20 @@ export function FeedScreen({ nav }: { nav: Nav }) {
         player.pause();
       } catch {}
     };
-  }, [audioSrc]);
+  }, [audioSrc, open]);
 
   const toggleSound = () => {
     const next = !muted;
     setMuted(next);
     try {
       player.muted = next;
-      if (!next) player.play(); // 自動再生がブロックされていた場合の保険（タップ起点で再生）
+      if (!next) player.play();
     } catch {}
   };
 
   const ty = useRef(new Animated.Value(0)).current;
   const postRef = useRef(post);
   postRef.current = post;
-
-  // 投稿が切り替わったら位置をリセット
   useEffect(() => {
     ty.setValue(0);
   }, [post?.id]);
@@ -113,32 +100,30 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 
   if (!post) {
     return (
-      <View style={[styles.container, styles.center, { padding: space.lg }]}>
-        <Text style={styles.doneEmoji}>🟡</Text>
-        <Text style={styles.doneTitle}>{copy.feedDone}</Text>
-        <Text style={styles.doneSub}>
-          友達の痕跡は全部見た。{'\n'}
-          {isPassOpen(s)
-            ? `パスは残り ${formatRemaining(s.accessPass!.expiresAt)}。`
-            : 'また1枚出すと、6時間ひらく。'}
-        </Text>
-        <View style={{ height: space.lg }} />
-        <PrimaryButton label="もう1枚撮る" onPress={nav.openCamera} />
-        <GhostButton label="とじる" onPress={nav.closeOverlay} />
+      <View style={[styles.done, { paddingTop: insets.top, paddingBottom: insets.bottom + space.lg }]}>
+        <View style={styles.doneCenter}>
+          <View style={styles.doneMark} />
+          <Text style={styles.doneTitle}>{copy.feedDoneTitle}</Text>
+          <Text style={styles.doneSub}>{copy.feedDoneSub}</Text>
+        </View>
+        <GhostButton label={copy.close} onPress={nav.closeOverlay} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[styles.card, { transform: [{ translateY: ty }] }]}
-        {...responder.panHandlers}
-      >
-        <Image source={{ uri: post.imageUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-        <View style={styles.shade} />
+      <Animated.View style={[styles.card, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
+        <Image
+          source={{ uri: post.imageUrl }}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+          blurRadius={open ? 0 : 40}
+        />
+        <View style={styles.shadeTop} />
+        <View style={styles.shadeBottom} />
 
-        {/* 上部：閉じる＋残り＋残数 */}
+        {/* 上部 */}
         <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
           <Pressable onPress={nav.closeOverlay} style={styles.close} hitSlop={12}>
             <Text style={styles.closeText}>✕</Text>
@@ -146,23 +131,29 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           <View style={styles.topRight}>
             <Pressable
               onPress={hasSound ? toggleSound : undefined}
-              style={[styles.soundToggle, !hasSound && styles.soundToggleOff]}
+              style={[styles.iconBtn, !hasSound && { opacity: 0.4 }]}
               hitSlop={8}
             >
-              <Text style={styles.soundToggleText}>
-                {!hasSound ? '🔇' : muted ? '🔇' : '🔊'}
-              </Text>
+              {hasSound && !muted ? (
+                <SpeakerOnIcon size={18} color={colors.onMedia} />
+              ) : (
+                <SpeakerOffIcon size={18} color={colors.onMedia} />
+              )}
             </Pressable>
-            <Pill tone="dark">残り {queue.length}</Pill>
+            <Pill tone="media">のこり {queue.length}</Pill>
           </View>
         </View>
 
-        {/* 投稿者 */}
-        <View style={[styles.author, { bottom: insets.bottom + 220 }]}>
+        {/* 投稿者＋残り時間（時計） */}
+        <View style={[styles.author, { bottom: insets.bottom + 224 }]}>
           <Avatar user={author} size={44} />
-          <View style={{ marginLeft: space.sm }}>
+          <View style={{ marginLeft: space.sm, flex: 1 }}>
             <Text style={styles.authorName}>{author?.displayName ?? '友達'}</Text>
-            <Text style={styles.time}>{timeAgo(post.createdAt)}・流したら戻れない</Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaText}>{timeAgo(post.createdAt)}</Text>
+              <Remaining expiresAt={post.expiresAt} color={colors.onMedia} size={12} />
+            </View>
+            <Text style={styles.hint}>{copy.cantUndo}</Text>
           </View>
         </View>
       </Animated.View>
@@ -171,7 +162,8 @@ export function FeedScreen({ nav }: { nav: Nav }) {
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md }]}>
         <ReactionBar onReact={doReact} />
         <Pressable onPress={doSkip} style={styles.skip} hitSlop={8}>
-          <Text style={styles.skipText}>↓ 反応せず流す</Text>
+          <ChevronDownIcon size={16} color={colors.onMediaDim} />
+          <Text style={styles.skipText}>{copy.swipeAway}</Text>
         </Pressable>
       </View>
     </View>
@@ -179,10 +171,10 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.black },
-  center: { alignItems: 'center', justifyContent: 'center' },
-  card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface },
-  shade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.18)' },
+  container: { flex: 1, backgroundColor: '#000' },
+  card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#111' },
+  shadeTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 120, backgroundColor: 'rgba(0,0,0,0.25)' },
+  shadeBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 320, backgroundColor: 'rgba(0,0,0,0.35)' },
   top: {
     position: 'absolute',
     top: 0,
@@ -197,42 +189,33 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.mediaChip,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  closeText: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
   topRight: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  soundToggle: {
+  iconBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.mediaChip,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  soundToggleOff: { opacity: 0.5 },
-  soundToggleText: { fontSize: 16 },
-  author: { position: 'absolute', left: space.lg, flexDirection: 'row', alignItems: 'center' },
-  authorName: { color: colors.white, fontSize: font.lead, fontWeight: '800' },
-  time: { color: 'rgba(255,255,255,0.75)', fontSize: font.small, marginTop: 2 },
-  bottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: space.md,
-    gap: space.sm,
-  },
-  skip: { alignItems: 'center', paddingVertical: space.sm },
-  skipText: { color: 'rgba(255,255,255,0.7)', fontSize: font.body, fontWeight: '700' },
-  doneEmoji: { fontSize: 56, marginBottom: space.md },
-  doneTitle: { color: colors.white, fontSize: font.title, fontWeight: '900' },
-  doneSub: {
-    color: colors.gray,
-    fontSize: font.body,
-    textAlign: 'center',
-    marginTop: space.sm,
-    lineHeight: font.body * 1.6,
-  },
+  author: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
+  authorName: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800' },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 4 },
+  metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
+  hint: { color: colors.onMediaDim, fontSize: font.tiny, marginTop: 3 },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.md, gap: space.sm },
+  skip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: space.sm },
+  skipText: { color: colors.onMediaDim, fontSize: font.body, fontWeight: '700' },
+
+  // done
+  done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
+  doneCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  doneMark: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.lime, marginBottom: space.lg },
+  doneTitle: { color: colors.text, fontSize: font.title, fontWeight: '900' },
+  doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', marginTop: space.sm },
 });

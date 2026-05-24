@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { colors, font, radius, space } from '../theme';
 import { User } from '../types';
+import { ClockIcon } from './icons';
+import { formatClock } from '../lib/time';
 
 export function PrimaryButton({
   label,
@@ -50,10 +52,7 @@ export function GhostButton({
   style?: StyleProp<ViewStyle>;
 }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.ghost, pressed && styles.pressed, style]}
-    >
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.ghost, pressed && styles.pressed, style]}>
       <Text style={[styles.ghostLabel, tone === 'danger' && { color: colors.warn }]}>{label}</Text>
     </Pressable>
   );
@@ -64,31 +63,52 @@ export function Pill({
   tone = 'default',
 }: {
   children: React.ReactNode;
-  tone?: 'default' | 'lime' | 'dark';
+  tone?: 'default' | 'lime' | 'media';
 }) {
   return (
     <View
       style={[
         styles.pill,
         tone === 'lime' && { backgroundColor: colors.lime },
-        tone === 'dark' && { backgroundColor: 'rgba(0,0,0,0.55)' },
+        tone === 'media' && { backgroundColor: colors.mediaChip },
       ]}
     >
-      <Text style={[styles.pillText, tone === 'lime' && { color: colors.black }]}>{children}</Text>
+      <Text
+        style={[
+          styles.pillText,
+          tone === 'lime' && { color: colors.limeInk },
+          tone === 'media' && { color: colors.onMedia },
+        ]}
+      >
+        {children}
+      </Text>
     </View>
   );
 }
 
 export function Avatar({ user, size = 38 }: { user?: User; size?: number }) {
-  const bg = user?.avatarColor ?? colors.grayDim;
+  const bg = user?.avatarColor ?? colors.card;
   return (
-    <View
-      style={[
-        styles.avatar,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: bg },
-      ]}
-    >
+    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2, backgroundColor: bg }]}>
       <Text style={{ fontSize: size * 0.5 }}>{user?.avatarEmoji ?? '🟡'}</Text>
+    </View>
+  );
+}
+
+// 時計マーク＋残り時間だけ（例: ⏱ 23:41）
+export function Remaining({
+  expiresAt,
+  color = colors.text,
+  size = 13,
+}: {
+  expiresAt: number;
+  color?: string;
+  size?: number;
+}) {
+  return (
+    <View style={styles.remaining}>
+      <ClockIcon size={size} color={color} />
+      <Text style={[styles.remainingText, { color, fontSize: size }]}>{formatClock(expiresAt)}</Text>
     </View>
   );
 }
@@ -96,12 +116,11 @@ export function Avatar({ user, size = 38 }: { user?: User; size?: number }) {
 export function Spinner() {
   return (
     <View style={styles.center}>
-      <ActivityIndicator color={colors.lime} />
+      <ActivityIndicator color={colors.text} />
     </View>
   );
 }
 
-// 1秒ごとに再レンダリングして残り時間表示を生かす
 export function useTick(intervalMs = 1000) {
   const [, setN] = useState(0);
   useEffect(() => {
@@ -110,7 +129,6 @@ export function useTick(intervalMs = 1000) {
   }, [intervalMs]);
 }
 
-// 一度だけ実行する副作用（StrictModeでも実害ない範囲）
 export function useOnce(fn: () => void) {
   const done = useRef(false);
   useEffect(() => {
@@ -130,25 +148,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryDisabled: { backgroundColor: colors.surface },
-  primaryLabel: { color: colors.black, fontSize: font.lead, fontWeight: '800' },
-  primaryLabelDisabled: { color: colors.grayDim },
-  ghost: {
-    paddingVertical: 14,
-    paddingHorizontal: space.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ghostLabel: { color: colors.gray, fontSize: font.body, fontWeight: '600' },
-  pressed: { opacity: 0.7 },
+  primaryDisabled: { backgroundColor: colors.card },
+  primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '800' },
+  primaryLabelDisabled: { color: colors.textFaint },
+  ghost: { paddingVertical: 14, paddingHorizontal: space.lg, alignItems: 'center', justifyContent: 'center' },
+  ghostLabel: { color: colors.textDim, fontSize: font.body, fontWeight: '700' },
+  pressed: { opacity: 0.75 },
   pill: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
     alignSelf: 'flex-start',
   },
-  pillText: { color: colors.white, fontSize: font.small, fontWeight: '700' },
+  pillText: { color: colors.text, fontSize: font.small, fontWeight: '800' },
   avatar: { alignItems: 'center', justifyContent: 'center' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  remaining: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  remainingText: { fontWeight: '800' },
 });

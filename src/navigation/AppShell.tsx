@@ -19,6 +19,7 @@ export function AppShell() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [draftUri, setDraftUri] = useState<string | null>(null);
   const [draftAudio, setDraftAudio] = useState<string | undefined>(undefined);
+  const [retakeUsed, setRetakeUsed] = useState(false); // 撮り直しは1回だけ
 
   const s = useStore();
   const keptCount = useMemo(() => keptPosts(s).length, [s.reactions, s.posts, s.currentUserId]);
@@ -28,12 +29,22 @@ export function AppShell() {
       setOverlay(null);
       setTab(t);
     },
-    openCamera: () => setOverlay('camera'),
+    openCamera: () => {
+      setRetakeUsed(false);
+      setDraftUri(null);
+      setDraftAudio(undefined);
+      setOverlay('camera');
+    },
+    retake: () => {
+      setRetakeUsed(true);
+      setOverlay('camera');
+    },
     openFeed: () => setOverlay('feed'),
     closeOverlay: () => {
       setOverlay(null);
       setDraftUri(null);
       setDraftAudio(undefined);
+      setRetakeUsed(false);
     },
     onCaptured: (uri, audioUri) => {
       setDraftUri(uri);
@@ -43,6 +54,7 @@ export function AppShell() {
     onPosted: () => {
       setDraftUri(null);
       setDraftAudio(undefined);
+      setRetakeUsed(false);
       setOverlay('feed'); // 投稿でパスがひらく → そのままフィードへ
     },
   };
@@ -60,7 +72,7 @@ export function AppShell() {
         <View style={StyleSheet.absoluteFill}>
           {overlay === 'camera' && <CameraScreen nav={nav} />}
           {overlay === 'preview' && draftUri && (
-            <PreviewScreen uri={draftUri} audioUri={draftAudio} nav={nav} />
+            <PreviewScreen uri={draftUri} audioUri={draftAudio} canRetake={!retakeUsed} nav={nav} />
           )}
           {overlay === 'feed' && <FeedScreen nav={nav} />}
         </View>
@@ -70,6 +82,6 @@ export function AppShell() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.black },
+  root: { flex: 1, backgroundColor: colors.bg },
   content: { flex: 1 },
 });
