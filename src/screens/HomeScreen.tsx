@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
@@ -6,10 +6,11 @@ import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
 import { CaptionView } from '../components/Caption';
-import { CameraIcon } from '../components/icons';
+import { ActivityOverlay } from '../components/ActivityOverlay';
+import { BellIcon, CameraIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { currentUser, feedQueue, isPassOpen, userById } from '../selectors';
+import { activityItems, currentUser, feedQueue, isPassOpen, userById } from '../selectors';
 import { isActive } from '../lib/time';
 import { Post } from '../types';
 
@@ -18,8 +19,20 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   useTick();
 
   const s = useStore();
+  const markActivitySeen = useStore((st) => st.markActivitySeen);
   const open = isPassOpen(s);
   const me = currentUser(s);
+
+  const [showActivity, setShowActivity] = useState(false);
+  const activity = useMemo(
+    () => activityItems(s),
+    [s.posts, s.views, s.reactions, s.following, s.currentUserId]
+  );
+  const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length;
+  const openActivity = () => {
+    setShowActivity(true);
+    markActivitySeen();
+  };
 
   const queue = useMemo(
     () => feedQueue(s),
@@ -74,9 +87,21 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           <Pressable
             onPress={nav.openCamera}
             style={[styles.camBtn, onPhoto ? styles.camBtnMedia : styles.camBtnLight]}
-            hitSlop={10}
+            hitSlop={8}
           >
             <CameraIcon size={20} color={textColor} />
+          </Pressable>
+          <Pressable
+            onPress={openActivity}
+            style={[styles.camBtn, onPhoto ? styles.camBtnMedia : styles.camBtnLight]}
+            hitSlop={8}
+          >
+            <BellIcon size={19} color={textColor} />
+            {unread > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unread}</Text>
+              </View>
+            )}
           </Pressable>
           <Avatar user={me} size={36} />
         </View>
@@ -131,6 +156,18 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           <PrimaryButton label={copy.shoot} onPress={nav.openCamera} />
         )}
       </View>
+
+      {showActivity && (
+        <ActivityOverlay
+          items={activity}
+          passOpen={open}
+          onClose={() => setShowActivity(false)}
+          onShoot={() => {
+            setShowActivity(false);
+            nav.openCamera();
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -151,6 +188,21 @@ const styles = StyleSheet.create({
   camBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   camBtnLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
   camBtnMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
+  bellBadge: {
+    position: 'absolute',
+    top: -3,
+    right: -3,
+    minWidth: 17,
+    height: 17,
+    borderRadius: radius.pill,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: colors.bg,
+  },
+  bellBadgeText: { color: colors.limeInk, fontSize: 10, fontWeight: '900' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
   heroRail: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
   heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },

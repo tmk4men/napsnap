@@ -32,6 +32,7 @@ interface PersistedState {
   reactions: Reaction[];
   feedStates: FeedState[];
   accessPass: AccessPass | null;
+  lastSeenActivityAt: number; // アクティビティ（通知）を最後に見た時刻
 }
 
 interface Actions {
@@ -42,6 +43,7 @@ interface Actions {
   markViewed: (postId: string) => void;
   reactToPost: (postId: string, type: ReactionType) => void;
   skipPost: (postId: string) => void;
+  markActivitySeen: () => void;
   refreshFollowPostsIfStale: () => void;
   resetDemo: () => void;
 }
@@ -58,6 +60,7 @@ const initial: PersistedState = {
   reactions: [],
   feedStates: [],
   accessPass: null,
+  lastSeenActivityAt: 0,
 };
 
 export const useStore = create<Store>()(
@@ -105,8 +108,7 @@ export const useStore = create<Store>()(
             createdAt: now(),
           };
           const followed = people.filter((p) => followingIds.includes(p.id));
-          // 最初からフォロー中の投稿が見えるよう、アクセスパスを開けた状態で始める。
-          const openedAt = now();
+          // 相互アンロック：最初はパスを閉じておき、1枚出すと6時間だけ開く。
           set({
             onboarded: true,
             currentUserId: id,
@@ -116,7 +118,8 @@ export const useStore = create<Store>()(
             views: [],
             reactions: [],
             feedStates: [],
-            accessPass: { openedAt, expiresAt: openedAt + PASS_HOURS * HOUR },
+            accessPass: null,
+            lastSeenActivityAt: now(),
           });
         },
 
@@ -195,6 +198,8 @@ export const useStore = create<Store>()(
           }));
         },
 
+        markActivitySeen: () => set({ lastSeenActivityAt: now() }),
+
         // デモが古くなってフォロー中の投稿が全部期限切れなら、新しい時刻で作り直す。
         refreshFollowPostsIfStale: () => {
           const { following, posts, currentUserId, users } = get();
@@ -206,12 +211,9 @@ export const useStore = create<Store>()(
           if (followedPeople.length === 0) return;
           const fresh = makeFollowPosts(followedPeople);
           const freshIds = new Set(fresh.map((p) => p.id));
-          const openedAt = now();
           set((st) => ({
             posts: [...st.posts.filter((p) => p.userId === currentUserId), ...fresh],
             feedStates: st.feedStates.filter((f) => !freshIds.has(f.postId)),
-            // デモを作り直したら、その投稿がすぐ見えるようにパスも開け直す。
-            accessPass: { openedAt, expiresAt: openedAt + PASS_HOURS * HOUR },
           }));
         },
 
@@ -219,7 +221,7 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v5',
+      name: 'napsnap-store-v6',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,
@@ -231,6 +233,7 @@ export const useStore = create<Store>()(
         reactions: s.reactions,
         feedStates: s.feedStates,
         accessPass: s.accessPass,
+        lastSeenActivityAt: s.lastSeenActivityAt,
       }),
     }
   )

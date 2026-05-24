@@ -222,6 +222,22 @@ export function CalendarIcon({ size = 22, color = colors.text }: IconProps) {
   );
 }
 
+// --- 通知（ベル） ---
+export function BellIcon({ size = 22, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M6.2 9.5a5.8 5.8 0 0 1 11.6 0c0 4.3 1.7 5.6 2.2 6H4c.5-.4 2.2-1.7 2.2-6z"
+        stroke={color}
+        strokeWidth={1.9}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <Path d="M10 19a2 2 0 0 0 4 0" stroke={color} strokeWidth={1.9} fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 // --- 文字（Aa） ---
 export function TextIcon({ size = 18, color = colors.text }: IconProps) {
   return (

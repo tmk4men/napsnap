@@ -91,6 +91,44 @@ export function followedActivePostCount(s: Snapshot): number {
   return followedActivePosts(s).length;
 }
 
+// アクティビティ（通知）：自分の投稿への反応/足跡＋フォロー中の新着痕跡。
+export interface ActivityItem {
+  id: string;
+  kind: 'react' | 'view' | 'post';
+  user?: User;
+  at: number;
+  postImage?: string;
+}
+
+export function activityItems(s: Snapshot): ActivityItem[] {
+  const me = s.currentUserId;
+  if (!me) return [];
+  const myPostIds = new Set(s.posts.filter((p) => p.userId === me).map((p) => p.id));
+  const imageOf = (postId: string) => s.posts.find((p) => p.id === postId)?.imageUrl;
+  const out: ActivityItem[] = [];
+  const reactedPair = new Set<string>();
+
+  for (const r of s.reactions) {
+    if (r.userId !== me && myPostIds.has(r.postId)) {
+      reactedPair.add(`${r.userId}_${r.postId}`);
+      out.push({ id: 'r_' + r.id, kind: 'react', user: userById(s.users, r.userId), at: r.createdAt, postImage: imageOf(r.postId) });
+    }
+  }
+  for (const v of s.views) {
+    if (v.viewerId !== me && myPostIds.has(v.postId) && !reactedPair.has(`${v.viewerId}_${v.postId}`)) {
+      out.push({ id: 'v_' + v.id, kind: 'view', user: userById(s.users, v.viewerId), at: v.viewedAt, postImage: imageOf(v.postId) });
+    }
+  }
+  for (const p of followedActivePosts(s)) {
+    out.push({ id: 'p_' + p.id, kind: 'post', user: userById(s.users, p.userId), at: p.createdAt, postImage: p.imageUrl });
+  }
+  return out.sort((a, b) => b.at - a.at).slice(0, 40);
+}
+
+export function unreadActivityCount(s: Snapshot & Pick<Store, 'lastSeenActivityAt'>): number {
+  return activityItems(s).filter((i) => i.at > s.lastSeenActivityAt).length;
+}
+
 // 自分の全投稿（期限に関係なくローカルに残る「思い出」）。新しい順。
 export function myArchive(s: Pick<Store, 'currentUserId' | 'posts'>): Post[] {
   const { currentUserId } = s;
