@@ -13,6 +13,7 @@ import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
 import { CameraIcon, CloseIcon, FlipCameraIcon } from '../components/icons';
 import { Waveform } from '../components/Waveform';
+import { preloadDetector } from '../lib/faceCheck';
 import { Nav } from '../navigation/nav';
 import { demoCapture } from '../lib/images';
 import { RECORD_SECONDS } from '../lib/audio';
@@ -32,6 +33,11 @@ export function CameraScreen({ nav }: { nav: Nav }) {
   const [facing, setFacing] = useState<CameraType>('back');
   const progress = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // 顔検知モデルを先読みしてプレビューの待ちを減らす
+    preloadDetector();
+  }, []);
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) requestPermission();

@@ -123,6 +123,7 @@ export function AccountSetupScreen() {
     <View style={[styles.container, { paddingTop: insets.top + space.xl }]}>
       <Text style={styles.brand}>napsnap</Text>
       <Text style={styles.title}>{copy.setupFollowTitle}</Text>
+      <Text style={styles.followHint}>{copy.setupFollowSub}</Text>
 
       <ScrollView style={{ flex: 1, marginTop: space.lg }} showsVerticalScrollIndicator={false}>
         {people.map((p) => {
@@ -164,6 +165,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   brand: { color: colors.text, fontSize: 28, fontWeight: '700', marginBottom: space.md, fontFamily: fonts.brand },
   title: { color: colors.text, fontSize: font.hero, fontWeight: '900', lineHeight: 48, fontFamily: fonts.display },
+  followHint: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, fontFamily: fonts.ui },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 
   avatarStage: { alignItems: 'center', marginTop: space.xl, gap: space.md },

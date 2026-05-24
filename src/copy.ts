@@ -23,6 +23,7 @@ export const copy = {
   setupNamePlaceholder: 'name',
   setupNext: 'つぎへ',
   setupFollowTitle: 'だれの今を見る？',
+  setupFollowSub: 'あなたが1枚出すと、この人たちの“今”がひらく。',
   setupStart: 'はじめる',
   setupBack: 'もどる',
 

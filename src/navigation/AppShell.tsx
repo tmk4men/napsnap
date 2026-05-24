@@ -64,7 +64,7 @@ export function AppShell() {
     <View style={styles.root}>
       <View style={styles.content}>
         {tab === 'home' && <HomeScreen nav={nav} />}
-        {tab === 'kept' && <KeptScreen />}
+        {tab === 'kept' && <KeptScreen nav={nav} />}
         {tab === 'me' && <MeScreen nav={nav} />}
       </View>
       <TabBar active={tab} onChange={nav.setTab} keptCount={keptCount} me={me} />

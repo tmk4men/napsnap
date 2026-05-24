@@ -58,15 +58,27 @@ function loadImage(uri: string): Promise<any> {
   });
 }
 
-// 画像中の顔の数を返す。失敗時は 0（＝ブロックしない、フェイルオープン）。
-export async function countFaces(uri: string): Promise<number> {
-  if (!WEB) return 0;
+export interface FaceResult {
+  ok: boolean; // 検知を実行できたか（false=モデル読込/解析に失敗）
+  faces: number; // 検知できた顔の数
+}
+
+// カメラ起動時などに先読みしてプレビューでの待ち時間を減らす（Webのみ・失敗は無視）。
+export function preloadDetector() {
+  if (!WEB) return;
+  getDetector().catch(() => {});
+}
+
+// 顔検知。ok=true は実行できた（faces で判定）、ok=false は実行できず（＝判定不能）。
+// ネイティブ本番は端末側に差し替える前提で、ここでは ok:true / faces:0（=素通り）。
+export async function detectFaces(uri: string): Promise<FaceResult> {
+  if (!WEB) return { ok: true, faces: 0 };
   try {
     const detector = await getDetector();
     const img = await loadImage(uri);
     const res = detector.detect(img);
-    return res?.detections?.length ?? 0;
+    return { ok: true, faces: res?.detections?.length ?? 0 };
   } catch {
-    return 0;
+    return { ok: false, faces: 0 };
   }
 }

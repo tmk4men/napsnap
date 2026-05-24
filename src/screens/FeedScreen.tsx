@@ -4,7 +4,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
-import { Avatar, GhostButton, Pill, Remaining, useTick } from '../components/ui';
+import { Avatar, GhostButton, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
 import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { CaptionView } from '../components/Caption';
@@ -32,8 +32,8 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   const author = userById(s.users, post?.userId);
 
   useEffect(() => {
-    if (post) markViewed(post.id);
-  }, [post?.id]);
+    if (post && open) markViewed(post.id);
+  }, [post?.id, open]);
 
   // この投稿の2.5秒の音をループ再生（ロック中は鳴らさない）
   const audioSrc = useMemo(() => resolvePostAudioSource(post), [post?.id]);
@@ -135,7 +135,10 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           <Text style={styles.doneTitle}>{copy.feedDoneTitle}</Text>
           <Text style={styles.doneSub}>{copy.feedDoneSub}</Text>
         </View>
-        <GhostButton label={copy.close} onPress={nav.closeOverlay} />
+        <View style={{ gap: space.xs }}>
+          <PrimaryButton label="残したを見る" onPress={() => nav.setTab('kept')} />
+          <GhostButton label={copy.close} onPress={nav.closeOverlay} />
+        </View>
       </View>
     );
   }
@@ -189,17 +192,26 @@ export function FeedScreen({ nav }: { nav: Nav }) {
         </View>
       </Animated.View>
 
-      {/* 下部：リアクション＋流す */}
+      {/* 下部：パスが開いていればリアクション＋流す。切れていたら再ロック */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md }]}>
-        <ReactionBar onReact={doReact} />
-        <Pressable onPress={doSkip} style={styles.skip} hitSlop={10}>
-          <Animated.View style={{ alignItems: 'center', transform: [{ translateY: bounceY }], opacity: bounceOpacity }}>
-            <ChevronDownIcon size={24} color={colors.onMedia} />
-            <View style={{ marginTop: -14 }}>
-              <ChevronDownIcon size={24} color={colors.onMedia} />
-            </View>
-          </Animated.View>
-        </Pressable>
+        {open ? (
+          <>
+            <ReactionBar onReact={doReact} />
+            <Pressable onPress={doSkip} style={styles.skip} hitSlop={10}>
+              <Animated.View style={{ alignItems: 'center', transform: [{ translateY: bounceY }], opacity: bounceOpacity }}>
+                <ChevronDownIcon size={24} color={colors.onMedia} />
+                <View style={{ marginTop: -14 }}>
+                  <ChevronDownIcon size={24} color={colors.onMedia} />
+                </View>
+              </Animated.View>
+            </Pressable>
+          </>
+        ) : (
+          <View style={styles.relock}>
+            <Text style={styles.relockText}>6時間が終わった。もう1枚でひらく。</Text>
+            <PrimaryButton label={copy.shoot} onPress={nav.openCamera} />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -258,6 +270,16 @@ const styles = StyleSheet.create({
   metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.md, gap: space.sm },
   skip: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs },
+  relock: { gap: space.sm },
+  relockText: {
+    color: colors.onMediaDim,
+    fontSize: font.small,
+    fontWeight: '700',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
 
   // done
   done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },

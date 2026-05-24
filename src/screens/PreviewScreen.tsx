@@ -10,7 +10,7 @@ import { SpeakerOnIcon, TextIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { PostCaption } from '../types';
-import { countFaces } from '../lib/faceCheck';
+import { detectFaces, FaceResult } from '../lib/faceCheck';
 
 const DEFAULT_CAPTION: PostCaption = { text: '', fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.5 };
 
@@ -35,19 +35,20 @@ export function PreviewScreen({
   const hasCaption = caption.text.trim().length > 0;
 
   // 投稿前の顔チェック（Web=MediaPipe / ネイティブは本番で端末側に差し替え）
-  const [faces, setFaces] = useState<number | null>(null);
+  const [face, setFace] = useState<FaceResult | null>(null);
   useEffect(() => {
     let alive = true;
-    setFaces(null);
-    countFaces(uri).then((n) => {
-      if (alive) setFaces(n);
+    setFace(null);
+    detectFaces(uri).then((r) => {
+      if (alive) setFace(r);
     });
     return () => {
       alive = false;
     };
   }, [uri]);
-  const checking = faces === null;
-  const hasFace = (faces ?? 0) > 0;
+  const checking = face === null;
+  const hasFace = !!face?.ok && face.faces > 0; // 顔ありで確定 → ブロック
+  const checkFailed = !!face && !face.ok; // 判定できなかった → 出せるが注意書き
   const canPost = !checking && !hasFace;
 
   function postIt() {
@@ -103,6 +104,8 @@ export function PreviewScreen({
             </View>
           ) : checking ? (
             <Text style={styles.checking}>顔がないか確認中…</Text>
+          ) : checkFailed ? (
+            <Text style={styles.checking}>顔チェックできなかった（そのまま出せます）</Text>
           ) : null}
 
           {hasFace ? (

@@ -4,7 +4,8 @@ import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy, reactionMeta } from '../copy';
-import { Avatar, Remaining, useTick } from '../components/ui';
+import { Avatar, GhostButton, Remaining, useTick } from '../components/ui';
+import { Nav } from '../navigation/nav';
 import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { CaptionView } from '../components/Caption';
 import { useStore } from '../store';
@@ -14,7 +15,7 @@ import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 
 const NATIVE = Platform.OS !== 'web';
 
-export function KeptScreen() {
+export function KeptScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
   useTick(30000);
   const s = useStore();
@@ -107,6 +108,8 @@ export function KeptScreen() {
         <TraceMark size={48} />
         <Text style={styles.emptyTitle}>{copy.emptyKept}</Text>
         <Text style={styles.emptySub}>{copy.emptyKeptSub}</Text>
+        <View style={{ height: space.md }} />
+        <GhostButton label={copy.shoot} onPress={nav.openCamera} />
       </View>
     );
   }
