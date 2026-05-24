@@ -158,7 +158,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
                   <Text style={styles.meStatText}>·</Text>
                   <Text style={styles.meStatText}>{reactionCount} 反応</Text>
                   <View style={{ marginLeft: 'auto' }}>
-                    <Remaining expiresAt={post.expiresAt} color={colors.textDim} size={12} />
+                    <Remaining expiresAt={post.expiresAt} color={colors.warn} size={12} />
                   </View>
                 </View>
                 <View style={styles.meSound}>

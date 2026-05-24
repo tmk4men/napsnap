@@ -152,7 +152,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
               <Text style={styles.metaDot}>·</Text>
               <Text style={styles.metaAgo}>{timeAgo(current.post.createdAt)}</Text>
               <View style={{ marginLeft: 6 }}>
-                <Remaining expiresAt={current.post.expiresAt} color={colors.textDim} size={12} />
+                <Remaining expiresAt={current.post.expiresAt} color={colors.warn} size={12} />
               </View>
             </View>
           </Pressable>

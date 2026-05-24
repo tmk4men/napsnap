@@ -275,6 +275,15 @@ export function SearchIcon({ size = 18, color = colors.text }: IconProps) {
   );
 }
 
+// --- ハンバーガーメニュー ---
+export function MenuIcon({ size = 22, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M4 7h16M4 12h16M4 17h16" stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 // --- 通知（ベル） ---
 export function BellIcon({ size = 22, color = colors.text }: IconProps) {
   return (

@@ -76,6 +76,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   const ty = useRef(new Animated.Value(0)).current;
   const sizeRef = useRef({ w: 0, h: 0 });
   const [stageW, setStageW] = useState(0);
+  const [stageH, setStageH] = useState(0);
   const idxRef = useRef(safeIndex);
   idxRef.current = safeIndex;
   const lenRef = useRef(posts.length);
@@ -111,7 +112,8 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   ).current;
 
   const author = current ? userById(s.users, current.userId) : undefined;
-  const cardW = Math.min(Math.max(0, stageW - 72), 300);
+  // 横幅と、縦に収まる高さの両方から決める。下にリアクションボタン用の余白を残す。
+  const cardW = Math.max(0, Math.min(stageW - 72, Math.floor((stageH - 150) / 1.31), 300));
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.sm }]}>
@@ -135,6 +137,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
           const { width, height } = e.nativeEvent.layout;
           sizeRef.current = { w: width, h: height };
           setStageW(width);
+          setStageH(height);
         }}
       >
         {posts.length === 0 ? (
@@ -201,7 +204,7 @@ const styles = StyleSheet.create({
   },
   joinText: { color: colors.limeInk, fontSize: font.small, fontWeight: '900', fontFamily: fonts.ui },
   stage: { flex: 1, overflow: 'hidden' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingBottom: 96 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaName: { color: colors.text, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
   metaDot: { color: colors.textFaint, fontSize: font.small },

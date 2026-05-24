@@ -8,7 +8,8 @@ import { Avatar, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } f
 import { ChekiCard } from '../components/ChekiCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
-import { BellIcon, CameraIcon, ChevronRightIcon } from '../components/icons';
+import { HamburgerMenu } from '../components/HamburgerMenu';
+import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { activityItems, currentUser, feedQueue, isPassOpen, memoryHighlights, userById } from '../selectors';
@@ -21,6 +22,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
   const s = useStore();
   const markActivitySeen = useStore((st) => st.markActivitySeen);
+  const resetDemo = useStore((st) => st.resetDemo);
   const open = isPassOpen(s);
   const me = currentUser(s);
 
@@ -55,6 +57,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const cardW = Math.max(0, Math.min(stage.w - 16, Math.floor((stage.h - 56) / 1.31), 380));
 
   const [showActivity, setShowActivity] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
   const openActivity = () => {
     setShowActivity(true);
@@ -79,6 +82,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             )}
           </Pressable>
           <Avatar user={me} size={36} />
+          <Pressable onPress={() => setShowMenu(true)} style={styles.iconBtn} hitSlop={8}>
+            <MenuIcon size={20} color={colors.text} />
+          </Pressable>
         </View>
       </View>
 
@@ -123,7 +129,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                 <>
                   <Text style={styles.metaName}>{heroIsMine ? 'あなたの今' : `${displayAuthor?.displayName} たちの今`}</Text>
                   <View style={{ marginLeft: 6 }}>
-                    <Remaining expiresAt={displayPost.expiresAt} color={colors.textDim} size={12} />
+                    <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
                   </View>
                 </>
               ) : (
@@ -183,6 +189,17 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         />
       )}
       {viewingMemory && <MemoryViewer posts={viewingMemory} onClose={() => setViewingMemory(null)} />}
+      {showMenu && (
+        <HamburgerMenu
+          onClose={() => setShowMenu(false)}
+          items={[
+            { label: '通知', onPress: openActivity },
+            { label: 'さがす', onPress: () => nav.setTab('search') },
+            { label: '自分', onPress: () => nav.setTab('me') },
+            { label: 'デモを最初からやり直す', onPress: resetDemo, danger: true },
+          ]}
+        />
+      )}
     </View>
   );
 }

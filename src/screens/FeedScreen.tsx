@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, GhostButton, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
+import { Avatar, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
 import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
@@ -135,8 +135,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           <Text style={styles.doneSub}>{copy.feedDoneSub}</Text>
         </View>
         <View style={{ gap: space.xs }}>
-          <PrimaryButton label="残したを見る" onPress={() => nav.setTab('kept')} />
-          <GhostButton label={copy.close} onPress={nav.closeOverlay} />
+          <PrimaryButton label={copy.close} onPress={nav.closeOverlay} />
         </View>
       </View>
     );
@@ -189,7 +188,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.metaAgo}>{timeAgo(post.createdAt)}</Text>
                   <View style={{ marginLeft: 6 }}>
-                    <Remaining expiresAt={post.expiresAt} color={colors.textDim} size={12} />
+                    <Remaining expiresAt={post.expiresAt} color={colors.warn} size={12} />
                   </View>
                 </>
               ) : (
