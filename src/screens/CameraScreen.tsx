@@ -17,11 +17,13 @@ import { preloadDetector } from '../lib/faceCheck';
 import { Nav } from '../navigation/nav';
 import { demoCapture } from '../lib/images';
 import { RECORD_SECONDS } from '../lib/audio';
+import { topicByKey } from '../topics';
 
 type Phase = 'live' | 'recording';
 
-export function CameraScreen({ nav }: { nav: Nav }) {
+export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string }) {
   const insets = useSafeAreaInsets();
+  const topic = topicByKey(topicKey);
   const [permission, requestPermission] = useCameraPermissions();
   const [micGranted, setMicGranted] = useState(false);
   const camRef = useRef<CameraView | null>(null);
@@ -179,7 +181,7 @@ export function CameraScreen({ nav }: { nav: Nav }) {
         </Pressable>
         <View style={styles.guidePill}>
           <View style={styles.guideDot} />
-          <Text style={styles.guideText}>{copy.cameraGuide}</Text>
+          <Text style={styles.guideText}>{topic ? `お題：${topic.prompt}` : copy.cameraGuide}</Text>
         </View>
         {granted ? (
           <Pressable

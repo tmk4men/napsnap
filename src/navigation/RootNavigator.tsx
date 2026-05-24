@@ -15,9 +15,12 @@ export function RootNavigator() {
     return unsub;
   }, []);
 
-  // 復帰時、フォロー中の投稿が全部期限切れなら作り直して常に体験できるようにする
+  // 復帰時、フォロー中／今日のお題の投稿が無ければ作り直して常に体験できるようにする
   useEffect(() => {
-    if (hydrated) useStore.getState().refreshFollowPostsIfStale();
+    if (hydrated) {
+      useStore.getState().refreshFollowPostsIfStale();
+      useStore.getState().refreshTopicPostsIfStale();
+    }
   }, [hydrated]);
 
   const onboarded = useStore((s) => s.onboarded);

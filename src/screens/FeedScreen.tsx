@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Image, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
 import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
-import { CaptionView } from '../components/Caption';
-import { MediaImage } from '../components/MediaImage';
+import { ChekiCard } from '../components/ChekiCard';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { feedQueue, isPassOpen, userById } from '../selectors';
@@ -36,13 +36,12 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     if (post && open) markViewed(post.id);
   }, [post?.id, open]);
 
-  // この投稿の2.5秒の音をループ再生（ロック中は鳴らさない）
+  // この投稿の2.5秒の音を表示時に1回再生（ロック中は鳴らさない）
   const audioSrc = useMemo(() => resolvePostAudioSource(post), [post?.id]);
   const hasSound = postHasSound(post) && open;
   const player = useAudioPlayer(audioSrc ?? null);
   const [muted, setMuted] = useState(false);
 
-  // 表示時に1回だけ再生（自動ループはしない）。もう一度聞きたいときは画像タップ。
   useEffect(() => {
     if (!audioSrc || !open) return;
     try {
@@ -69,8 +68,6 @@ export function FeedScreen({ nav }: { nav: Nav }) {
       }
     } catch {}
   };
-
-  // 画像タップで音をもう一度（自動ループしない代わりの再生手段）
   const replaySound = () => {
     if (!hasSound || muted) return;
     try {
@@ -79,7 +76,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     } catch {}
   };
 
-  // 下スワイプの記号をふわっとバウンスさせる（説明文の代わり）
+  // 下スワイプ記号のふわっとバウンス（説明文の代わり）
   const bounce = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const anim = Animated.loop(
@@ -96,11 +93,12 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 
   const ty = useRef(new Animated.Value(0)).current;
   const cardOpacity = useRef(new Animated.Value(1)).current;
+  const sizeRef = useRef({ w: 0, h: 0 });
+  const [stageW, setStageW] = useState(0);
   const postRef = useRef(post);
   postRef.current = post;
   useEffect(() => {
     ty.setValue(0);
-    // 新しい投稿がふわっと入る
     cardOpacity.setValue(0);
     Animated.timing(cardOpacity, { toValue: 1, duration: 300, useNativeDriver: NATIVE }).start();
   }, [post?.id]);
@@ -120,11 +118,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
       onPanResponderMove: (_, g) => ty.setValue(g.dy),
       onPanResponderRelease: (_, g) => {
         if (Math.abs(g.dy) > 90) {
-          Animated.timing(ty, {
-            toValue: g.dy < 0 ? -800 : 800,
-            duration: 160,
-            useNativeDriver: NATIVE,
-          }).start(() => doSkip());
+          Animated.timing(ty, { toValue: g.dy < 0 ? -800 : 800, duration: 160, useNativeDriver: NATIVE }).start(() => doSkip());
         } else {
           Animated.spring(ty, { toValue: 0, useNativeDriver: NATIVE }).start();
         }
@@ -148,66 +142,74 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     );
   }
 
+  const cardW = Math.min(Math.max(0, stageW - 72), 320);
+
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.card, { opacity: cardOpacity, transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
-        <MediaImage uri={post.imageUrl} blurRadius={open ? 0 : 40} />
-        {/* 画像タップで音を再生（スワイプはこの下の pan が拾う） */}
-        <Pressable style={StyleSheet.absoluteFill} onPress={replaySound} />
-        <View style={styles.shadeTop} pointerEvents="none" />
-        <View style={styles.shadeBottom} pointerEvents="none" />
-        {open && post.caption && <CaptionView caption={post.caption} safeTop={84} safeBottom={220} />}
-
-        {/* 上部 */}
-        <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
-          <Pressable onPress={nav.closeOverlay} style={styles.close} hitSlop={12}>
-            <CloseIcon size={18} color={colors.onMedia} />
+      {/* 上部 */}
+      <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
+        <Pressable onPress={nav.closeOverlay} style={styles.iconBtn} hitSlop={12}>
+          <CloseIcon size={18} color={colors.text} />
+        </Pressable>
+        <View style={styles.topRight}>
+          <Pressable onPress={hasSound ? toggleSound : undefined} style={[styles.iconBtn, !hasSound && { opacity: 0.4 }]} hitSlop={8}>
+            {hasSound && !muted ? <SpeakerOnIcon size={18} color={colors.text} /> : <SpeakerOffIcon size={18} color={colors.text} />}
           </Pressable>
-          <View style={styles.topRight}>
-            <Pressable
-              onPress={hasSound ? toggleSound : undefined}
-              style={[styles.iconBtn, !hasSound && { opacity: 0.4 }]}
-              hitSlop={8}
-            >
-              {hasSound && !muted ? (
-                <SpeakerOnIcon size={18} color={colors.onMedia} />
-              ) : (
-                <SpeakerOffIcon size={18} color={colors.onMedia} />
-              )}
-            </Pressable>
-            <Pill tone="media">のこり {queue.length}</Pill>
-          </View>
+          <Pill>のこり {queue.length}</Pill>
         </View>
+      </View>
 
-        {/* 投稿者＋残り時間（時計） */}
-        <View style={[styles.author, { bottom: insets.bottom + 224 }]} pointerEvents="none">
-          <Avatar user={author} size={44} blur={!open} />
-          <View style={{ marginLeft: space.sm, flex: 1 }}>
-            {open ? (
-              <>
-                <Text style={styles.authorName}>{author?.displayName ?? '友達'}</Text>
-                <View style={styles.metaRow}>
-                  <Text style={styles.metaText}>{timeAgo(post.createdAt)}</Text>
-                  <Remaining expiresAt={post.expiresAt} color={colors.onMedia} size={12} />
-                </View>
-              </>
-            ) : (
-              <View style={styles.redactBar} />
+      {/* チェキ */}
+      <View
+        style={styles.stage}
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          sizeRef.current = { w: width, h: height };
+          setStageW(width);
+        }}
+      >
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity: cardOpacity, transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
+          <Pressable style={styles.center} onPress={replaySound}>
+            {cardW > 0 && (
+              <ChekiCard
+                uri={post.imageUrl}
+                caption={open ? post.caption : undefined}
+                width={cardW}
+                date={open ? post.createdAt : undefined}
+                tiltSeed={post.id}
+                blur={!open}
+                redactStrip={!open}
+              />
             )}
-          </View>
-        </View>
-      </Animated.View>
+            <View style={styles.metaRow}>
+              <Avatar user={author} size={28} blur={!open} />
+              {open ? (
+                <>
+                  <Text style={styles.metaName}>{author?.displayName ?? '友達'}</Text>
+                  <Text style={styles.metaDot}>·</Text>
+                  <Text style={styles.metaAgo}>{timeAgo(post.createdAt)}</Text>
+                  <View style={{ marginLeft: 6 }}>
+                    <Remaining expiresAt={post.expiresAt} color={colors.textDim} size={12} />
+                  </View>
+                </>
+              ) : (
+                <View style={styles.redactBar} />
+              )}
+            </View>
+          </Pressable>
+        </Animated.View>
+      </View>
 
-      {/* 下部：パスが開いていればリアクション＋流す。切れていたら再ロック */}
+      {/* 下部 */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md }]}>
         {open ? (
           <>
             <ReactionBar onReact={doReact} />
             <Pressable onPress={doSkip} style={styles.skip} hitSlop={10}>
               <Animated.View style={{ alignItems: 'center', transform: [{ translateY: bounceY }], opacity: bounceOpacity }}>
-                <ChevronDownIcon size={24} color={colors.onMedia} />
+                <ChevronDownIcon size={24} color={colors.textDim} />
                 <View style={{ marginTop: -14 }}>
-                  <ChevronDownIcon size={24} color={colors.onMedia} />
+                  <ChevronDownIcon size={24} color={colors.textDim} />
                 </View>
               </Animated.View>
             </Pressable>
@@ -215,7 +217,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
         ) : (
           <View style={styles.relock}>
             <Text style={styles.relockText}>6時間が終わった。もう1枚でひらく。</Text>
-            <PrimaryButton label={copy.shoot} onPress={nav.openCamera} />
+            <PrimaryButton label={copy.shoot} onPress={() => nav.openCamera()} />
           </View>
         )}
       </View>
@@ -224,69 +226,35 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surfaceMedia },
-  card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surfaceMedia },
-  shadeTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 130,
-    experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
-  } as any,
-  shadeBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 280,
-    experimental_backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0) 100%)',
-  } as any,
+  container: { flex: 1, backgroundColor: colors.bg },
   top: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: space.md,
   },
-  close: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.mediaChip,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeText: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
-  topRight: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   iconBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.mediaChip,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  author: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
-  authorName: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 4 },
-  metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  redactBar: { width: 96, height: 14, borderRadius: 7, backgroundColor: 'rgba(255,253,247,0.5)' },
-  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.md, gap: space.sm },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  stage: { flex: 1, overflow: 'hidden' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  metaDot: { color: colors.textFaint, fontSize: font.small },
+  metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
+  redactBar: { width: 96, height: 13, borderRadius: 7, backgroundColor: colors.surfaceSunken },
+  bottom: { paddingHorizontal: space.md, gap: space.sm, alignItems: 'center' },
   skip: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs },
-  relock: { gap: space.sm },
-  relockText: {
-    color: colors.onMediaDim,
-    fontSize: font.small,
-    fontWeight: '700',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
+  relock: { gap: space.sm, alignSelf: 'stretch' },
+  relockText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', textAlign: 'center' },
 
   // done
   done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },

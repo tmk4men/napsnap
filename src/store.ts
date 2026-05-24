@@ -6,7 +6,8 @@ import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, User,
 import { uid } from './lib/id';
 import { HOUR, isActive, now } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTIONS } from './copy';
-import { makeFollowPosts, makeMyMemories, makeSeedReactions } from './seed';
+import { makeFollowPosts, makeMyMemories, makeSeedReactions, makeTopicPosts } from './seed';
+import { todaysTopic } from './topics';
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -42,12 +43,14 @@ interface Actions {
   updateProfileImage: (uri: string) => void;
   updateProfile: (displayName: string, handle: string) => void;
   toggleFollow: (userId: string) => void;
-  addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption) => string;
+  addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption, topicKey?: string) => string;
   markViewed: (postId: string) => void;
   reactToPost: (postId: string, type: ReactionType) => void;
+  reactToTopic: (postId: string, type: ReactionType) => void;
   skipPost: (postId: string) => void;
   markActivitySeen: () => void;
   refreshFollowPostsIfStale: () => void;
+  refreshTopicPostsIfStale: () => void;
   resetDemo: () => void;
 }
 
@@ -114,15 +117,17 @@ export const useStore = create<Store>()(
           };
           const followed = people.filter((p) => followingIds.includes(p.id));
           const followPosts = makeFollowPosts(followed);
+          // お題：今日のお題への、仲間の投稿を仕込む（モザイクなしの別世界）。
+          const topicSeed = makeTopicPosts(todaysTopic(), followed);
           // 相互アンロック：最初はパスを閉じておき、1枚出すと6時間だけ開く。
           set({
             onboarded: true,
             currentUserId: id,
             users: [me, ...people],
             following: followingIds,
-            posts: [...followPosts, ...makeMyMemories(id)],
+            posts: [...followPosts, ...topicSeed, ...makeMyMemories(id)],
             views: [],
-            reactions: makeSeedReactions(followPosts, people, id),
+            reactions: [...makeSeedReactions(followPosts, people, id), ...makeSeedReactions(topicSeed, people, id)],
             feedStates: [],
             accessPass: null,
             lastSeenActivityAt: now(),
@@ -168,21 +173,27 @@ export const useStore = create<Store>()(
           set({ following: next, posts: nextPosts });
         },
 
-        addPost: (imageUrl, audioUrl, caption) => {
+        addPost: (imageUrl, audioUrl, caption, topicKey) => {
           const { currentUserId } = get();
           if (!currentUserId) return '';
           const createdAt = now();
           const post: Post = {
             id: uid('p_'),
             userId: currentUserId,
+            topicKey,
             imageUrl,
             caption,
             audioUrl,
             createdAt,
             expiresAt: createdAt + POST_TTL_HOURS * HOUR,
           };
-          const pass: AccessPass = { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR };
-          set((st) => ({ posts: [...st.posts, post], accessPass: pass }));
+          if (topicKey) {
+            // お題は独立：ホームの相互アンロック（6h）は開かない。
+            set((st) => ({ posts: [...st.posts, post] }));
+          } else {
+            const pass: AccessPass = { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR };
+            set((st) => ({ posts: [...st.posts, post], accessPass: pass }));
+          }
           scheduleEngagement(post.id);
           return post.id;
         },
@@ -207,6 +218,18 @@ export const useStore = create<Store>()(
             feedStates: [
               ...st.feedStates.filter((f) => f.postId !== postId),
               { postId, status: 'reacted', updatedAt: now() },
+            ],
+          }));
+        },
+
+        // お題でのリアクション：反応は記録するが「残す」には入れない（feedStateも触らない）。
+        reactToTopic: (postId, type) => {
+          const { currentUserId } = get();
+          if (!currentUserId) return;
+          set((st) => ({
+            reactions: [
+              ...st.reactions.filter((r) => !(r.postId === postId && r.userId === currentUserId)),
+              { id: uid('r_'), postId, userId: currentUserId, type, createdAt: now() },
             ],
           }));
         },
@@ -239,11 +262,28 @@ export const useStore = create<Store>()(
           }));
         },
 
+        // 復帰時、今日のお題に仲間の投稿が無ければ（日付がかわった等）作り直す。
+        refreshTopicPostsIfStale: () => {
+          const { posts, following, users, currentUserId } = get();
+          const topic = todaysTopic();
+          const active = posts.filter(
+            (p) => p.topicKey === topic.key && p.userId !== currentUserId && isActive(p.expiresAt)
+          );
+          if (active.length > 0) return;
+          const followedPeople = users.filter((u) => u.isMock && following.includes(u.id));
+          if (followedPeople.length === 0) return;
+          const fresh = makeTopicPosts(topic, followedPeople);
+          set((st) => ({
+            posts: [...st.posts, ...fresh],
+            reactions: [...st.reactions, ...makeSeedReactions(fresh, users, currentUserId ?? '')],
+          }));
+        },
+
         resetDemo: () => set({ ...initial }),
       };
     },
     {
-      name: 'napsnap-store-v9',
+      name: 'napsnap-store-v10',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,

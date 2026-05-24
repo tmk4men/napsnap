@@ -34,6 +34,7 @@ export interface Post {
   id: string;
   userId: string;
   groupId?: string; // 旧グループ概念の名残（フォローモデルでは未使用）
+  topicKey?: string; // 「お題」への投稿ならそのお題キー（topics.ts）。ホーム/残すには出さない別世界。
   imageUrl: string;
   caption?: PostCaption;
   // シャッター押下直後に録音した2.5秒の音声。自分の投稿は録音URI。

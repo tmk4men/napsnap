@@ -5,8 +5,7 @@ import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
-import { CaptionView } from '../components/Caption';
-import { MediaImage } from '../components/MediaImage';
+import { ChekiCard } from '../components/ChekiCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { BellIcon, CameraIcon, ChevronRightIcon } from '../components/icons';
@@ -29,8 +28,8 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const myActive = useMemo(
     () =>
       s.posts
-        .filter((p) => p.userId === s.currentUserId && isActive(p.expiresAt))
-        .sort((a, b) => b.createdAt - a.createdAt),
+        .filter((p) => p.userId === s.currentUserId && !p.topicKey && isActive(p.expiresAt))
+        .sort((a, b) => a.expiresAt - b.expiresAt),
     [s.posts, s.currentUserId]
   );
   const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
@@ -38,21 +37,21 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length;
 
   const count = queue.length;
-  const followedLatest = queue[0];
-  const heroPost = [myActive[0], followedLatest].filter((p): p is Post => !!p).sort((a, b) => b.createdAt - a.createdAt)[0];
+  const followedLatest = queue[0]; // 残りが短い順の先頭
+  // ヒーロー：自分／フォロー中の中で「残りが短い」投稿を出す
+  const heroPost = [myActive[0], followedLatest].filter((p): p is Post => !!p).sort((a, b) => a.expiresAt - b.expiresAt)[0];
   const heroIsMine = !!heroPost && heroPost.userId === s.currentUserId;
 
-  const mediaMode = !open && !!followedLatest; // 未投稿：モザイク予告
+  const mediaMode = !open && !!followedLatest; // 未投稿：チェキをモザイク予告
   const openHero = open && !!heroPost; // 投稿済み：くっきり
-  const showImage = mediaMode || openHero;
+  const showCard = mediaMode || openHero;
 
   const displayPost = mediaMode ? followedLatest : openHero ? heroPost : undefined;
   const displayAuthor = displayPost ? (displayPost.userId === s.currentUserId ? me : userById(s.users, displayPost.userId)) : undefined;
   const reactionsOf = (id: string) => s.reactions.filter((r) => r.postId === id).length;
 
-  const onPhoto = showImage;
-  const textColor = onPhoto ? colors.onMedia : colors.text;
-  const dimColor = onPhoto ? colors.onMediaDim : colors.textDim;
+  const [stageW, setStageW] = useState(0);
+  const cardW = Math.min(Math.max(0, stageW - 96), 240);
 
   const [showActivity, setShowActivity] = useState(false);
   const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
@@ -62,31 +61,16 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   };
 
   return (
-    <View style={[styles.container, showImage && { backgroundColor: colors.surfaceMedia }]}>
-      {showImage && (
-        <>
-          <MediaImage uri={displayPost?.imageUrl} blurRadius={mediaMode ? 32 : 0} />
-          {mediaMode ? (
-            <View style={styles.scrimFull} />
-          ) : (
-            <>
-              <View style={styles.scrimTop} />
-              <View style={styles.scrimBottom} />
-            </>
-          )}
-          {openHero && heroPost?.caption && <CaptionView caption={heroPost.caption} safeTop={92} safeBottom={150} />}
-        </>
-      )}
-
+    <View style={styles.container}>
       {/* ヘッダー */}
       <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-        <Text style={[styles.brand, { color: textColor }]}>napsnap</Text>
+        <Text style={styles.brand}>napsnap</Text>
         <View style={styles.headerRight}>
-          <Pressable onPress={nav.openCamera} style={[styles.iconBtn, onPhoto ? styles.iconMedia : styles.iconLight]} hitSlop={8}>
-            <CameraIcon size={20} color={textColor} />
+          <Pressable onPress={() => nav.openCamera()} style={styles.iconBtn} hitSlop={8}>
+            <CameraIcon size={20} color={colors.text} />
           </Pressable>
-          <Pressable onPress={openActivity} style={[styles.iconBtn, onPhoto ? styles.iconMedia : styles.iconLight]} hitSlop={8}>
-            <BellIcon size={19} color={textColor} />
+          <Pressable onPress={openActivity} style={styles.iconBtn} hitSlop={8}>
+            <BellIcon size={19} color={colors.text} />
             {unread > 0 && (
               <View style={styles.bellBadge}>
                 <Text style={styles.bellBadgeText}>{unread}</Text>
@@ -114,60 +98,61 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         </Pressable>
       )}
 
-      {/* 中央 */}
-      <View style={styles.center}>
-        {open ? (
-          heroPost ? null : (
-            <>
-              <Text style={[styles.big, { color: textColor }]}>{copy.allSeenTitle}</Text>
-              <View style={{ height: space.md }} />
-              <Remaining expiresAt={s.accessPass!.expiresAt} color={colors.text} size={15} />
-            </>
-          )
-        ) : followedLatest ? (
-          <>
-            <View style={styles.lockChip}>
-              <View style={styles.lockDot} />
-              <Text style={styles.lockChipText}>{copy.revealChip}</Text>
-            </View>
-            <Text style={[styles.big, { color: textColor }]}>{copy.lockedHeadline}</Text>
-          </>
-        ) : s.following.length === 0 ? (
-          <>
-            <Text style={[styles.big, { color: textColor }]}>{copy.noFollowing}</Text>
-            <Text style={[styles.sub, { color: dimColor }]}>自分タブから、見たい人をフォロー。</Text>
-          </>
-        ) : (
-          <>
-            <Text style={[styles.big, { color: textColor }]}>{copy.lockedEmpty}</Text>
-            <Text style={[styles.sub, { color: dimColor }]}>誰かが出したら、通知に届く。</Text>
-          </>
-        )}
-      </View>
-
-      {/* 投稿メタ（下部レール）：投稿者＋（投稿済み=残り時間 / 未投稿=リアクション数） */}
-      {showImage && displayPost && displayAuthor && (
-        <View style={[styles.heroRail, { bottom: insets.bottom + 88 }]} pointerEvents="none">
-          <Avatar user={displayAuthor} size={32} blur={!openHero} />
-          <View style={{ marginLeft: space.sm }}>
-            {openHero ? (
-              <>
-                <Text style={styles.heroWhoText}>{heroIsMine ? 'あなたの今' : `${displayAuthor.displayName} たちの今`}</Text>
-                <View style={{ marginTop: 3 }}>
-                  <Remaining expiresAt={displayPost.expiresAt} color={colors.onMediaDim} size={12} />
-                </View>
-              </>
-            ) : (
-              <>
-                <View style={styles.redactBar} />
-                <Text style={styles.heroMeta}>
+      {/* 中央：チェキのヒーロー or メッセージ */}
+      <View style={styles.stage} onLayout={(e) => setStageW(e.nativeEvent.layout.width)}>
+        {showCard && displayPost ? (
+          <View style={styles.heroWrap}>
+            {mediaMode && (
+              <View style={styles.lockChip}>
+                <View style={styles.lockDot} />
+                <Text style={styles.lockChipText}>{copy.revealChip}</Text>
+              </View>
+            )}
+            {cardW > 0 && (
+              <ChekiCard
+                uri={displayPost.imageUrl}
+                caption={openHero ? displayPost.caption : undefined}
+                width={cardW}
+                date={openHero ? displayPost.createdAt : undefined}
+                tiltSeed={displayPost.id}
+                blur={mediaMode}
+                redactStrip={mediaMode}
+              />
+            )}
+            <View style={styles.metaRow}>
+              <Avatar user={displayAuthor} size={26} blur={mediaMode} />
+              {openHero ? (
+                <>
+                  <Text style={styles.metaName}>{heroIsMine ? 'あなたの今' : `${displayAuthor?.displayName} たちの今`}</Text>
+                  <View style={{ marginLeft: 6 }}>
+                    <Remaining expiresAt={displayPost.expiresAt} color={colors.textDim} size={12} />
+                  </View>
+                </>
+              ) : (
+                <Text style={styles.metaName}>
                   {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'だれかの今'}
                 </Text>
-              </>
-            )}
+              )}
+            </View>
           </View>
-        </View>
-      )}
+        ) : open ? (
+          <View style={styles.msg}>
+            <Text style={styles.big}>{copy.allSeenTitle}</Text>
+            <View style={{ height: space.md }} />
+            <Remaining expiresAt={s.accessPass!.expiresAt} color={colors.text} size={15} />
+          </View>
+        ) : s.following.length === 0 ? (
+          <View style={styles.msg}>
+            <Text style={styles.big}>{copy.noFollowing}</Text>
+            <Text style={styles.sub}>自分タブから、見たい人をフォロー。</Text>
+          </View>
+        ) : (
+          <View style={styles.msg}>
+            <Text style={styles.big}>{copy.lockedEmpty}</Text>
+            <Text style={styles.sub}>誰かが出したら、通知に届く。</Text>
+          </View>
+        )}
+      </View>
 
       {/* 下部CTA */}
       <View style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
@@ -175,10 +160,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           count > 0 ? (
             <PrimaryButton label={copy.see} onPress={nav.openFeed} />
           ) : (
-            <GhostButton label={copy.shoot} onPress={nav.openCamera} />
+            <GhostButton label={copy.shoot} onPress={() => nav.openCamera()} />
           )
         ) : (
-          <PrimaryButton label={copy.shoot} onPress={nav.openCamera} />
+          <PrimaryButton label={copy.shoot} onPress={() => nav.openCamera()} />
         )}
       </View>
 
@@ -200,34 +185,24 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  scrimFull: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.38)' },
-  scrimTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 140,
-    experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%)',
-  } as any,
-  scrimBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 260,
-    experimental_backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.58) 0%, rgba(0,0,0,0) 100%)',
-  } as any,
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: space.lg,
   },
-  brand: { fontSize: 26, fontWeight: '700', fontFamily: fonts.brand },
+  brand: { fontSize: 26, fontWeight: '700', fontFamily: fonts.brand, color: colors.text },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  iconBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  iconLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
-  iconMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
   bellBadge: {
     position: 'absolute',
     top: -3,
@@ -259,13 +234,13 @@ const styles = StyleSheet.create({
   memoryThumb: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },
   memoryLabel: { color: colors.text, fontSize: font.small, fontWeight: '900', fontFamily: fonts.ui },
   memorySub: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
-  heroRail: { position: 'absolute', left: space.lg, right: space.lg, flexDirection: 'row', alignItems: 'center' },
-  heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  heroMeta: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700', marginTop: 3, fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
-  redactBar: { width: 88, height: 13, borderRadius: 7, backgroundColor: 'rgba(255,253,247,0.5)' },
-  big: { fontSize: font.display, fontWeight: '800', lineHeight: 56, fontFamily: fonts.display },
-  sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui },
+  stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg },
+  heroWrap: { alignItems: 'center', gap: space.sm },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  msg: { alignItems: 'flex-start', alignSelf: 'stretch' },
+  big: { fontSize: font.display, fontWeight: '800', lineHeight: 56, fontFamily: fonts.display, color: colors.text },
+  sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui, color: colors.textDim },
   lockChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -274,7 +249,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    marginBottom: space.lg,
     borderWidth: 1,
     borderColor: colors.limeLine,
   },

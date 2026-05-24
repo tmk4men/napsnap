@@ -31,7 +31,7 @@ export function SoundBadge({
   hasSound,
   playing,
   onPress,
-  label = '2.5s',
+  label = '2s',
 }: {
   hasSound: boolean;
   playing?: boolean;

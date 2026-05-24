@@ -248,6 +248,23 @@ export function FootprintIcon({ size = 18, color = colors.text }: IconProps) {
   );
 }
 
+// --- タブ：お題（手書きメモの切れ端） ---
+export function NoteIcon({ size = 24, color = colors.text, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M6 3.5h8.5L19 8v9.5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"
+        stroke={color}
+        strokeWidth={1.9}
+        fill={filled ? color : 'none'}
+        strokeLinejoin="round"
+      />
+      <Path d="M14 3.6V8h4.4" stroke={color} strokeWidth={1.9} fill="none" strokeLinejoin="round" />
+      <Path d="M8 11.5h6M8 14.5h4" stroke={filled ? colors.bg : color} strokeWidth={1.7} fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 // --- 検索 ---
 export function SearchIcon({ size = 18, color = colors.text }: IconProps) {
   return (

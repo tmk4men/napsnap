@@ -40,7 +40,7 @@ export function ConnectionsOverlay({
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
         <View style={styles.tabs}>
           <Pressable onPress={() => setTab('following')} style={[styles.tab, tab === 'following' && styles.tabActive]}>
-            <Text style={[styles.tabText, tab === 'following' && styles.tabTextActive]}>フォロー中 {following.length}</Text>
+            <Text style={[styles.tabText, tab === 'following' && styles.tabTextActive]}>フォロー {following.length}</Text>
           </Pressable>
           <Pressable onPress={() => setTab('followers')} style={[styles.tab, tab === 'followers' && styles.tabActive]}>
             <Text style={[styles.tabText, tab === 'followers' && styles.tabTextActive]}>フォロワー {followers.length}</Text>

@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { Post } from '../types';
 
 // シャッター押下直後に録音する秒数（企画の新仕様）
-export const RECORD_SECONDS = 2.5;
+export const RECORD_SECONDS = 2;
 
 // --- デモ用の環境音生成 ---------------------------------------------------
 // バックエンドが無いため、モック友達の投稿には合成した環境音（やわらかいノイズ）を

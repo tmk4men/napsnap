@@ -1,5 +1,5 @@
 // 派生データの算出。コンポーネントは生の配列を select し、useMemo でこれらを呼ぶ。
-import { Post, Reaction, User, ViewRecord } from './types';
+import { Post, Reaction, ReactionType, User, ViewRecord } from './types';
 import type { Store } from './store';
 import { HOUR, isActive } from './lib/time';
 import { REACTION_TTL_HOURS } from './copy';
@@ -22,14 +22,37 @@ export function currentUser(s: Pick<Store, 'currentUserId' | 'users'>): User | u
   return userById(s.users, s.currentUserId);
 }
 
-// フォロー中の人の、期限内の投稿（自分以外）を新しい順で。
+// フォロー中の人の、期限内の投稿（自分以外）を「残りが短い順」で。
+// お題への投稿は別世界なのでホーム/フィードには出さない。
 export function followedActivePosts(s: Snapshot): Post[] {
   const { currentUserId, following } = s;
   return s.posts
     .filter(
-      (p) => p.userId !== currentUserId && following.includes(p.userId) && isActive(p.expiresAt)
+      (p) =>
+        !p.topicKey &&
+        p.userId !== currentUserId &&
+        following.includes(p.userId) &&
+        isActive(p.expiresAt)
     )
-    .sort((a, b) => b.createdAt - a.createdAt);
+    .sort((a, b) => a.expiresAt - b.expiresAt);
+}
+
+// 「お題」：今日のお題への、期限内の投稿（自分＋みんな）を「残りが短い順」で。
+// モザイクなしで誰でも見られる。上下スワイプで何度でも見返せる。
+export function topicPosts(s: Snapshot, topicKey: string): Post[] {
+  return s.posts
+    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt))
+    .sort((a, b) => a.expiresAt - b.expiresAt);
+}
+
+// ある投稿への、自分のリアクション種類（お題で「自分が押したやつ」を示す用）。
+export function myReaction(s: Pick<Store, 'currentUserId' | 'reactions'>, postId: string): ReactionType | undefined {
+  return s.reactions.find((r) => r.postId === postId && r.userId === s.currentUserId)?.type;
+}
+
+// 投稿のリアクション数。
+export function reactionCount(s: Pick<Store, 'reactions'>, postId: string): number {
+  return s.reactions.filter((r) => r.postId === postId).length;
 }
 
 // 閲覧フィードのキュー：フォロー中の投稿のうち、まだ流してもいない・反応もしていないもの。
@@ -48,7 +71,8 @@ export function keptPosts(s: Snapshot): { post: Post; reaction: Reaction }[] {
   const out: { post: Post; reaction: Reaction }[] = [];
   for (const r of mine) {
     const post = s.posts.find((p) => p.id === r.postId);
-    if (post) out.push({ post, reaction: r });
+    // お題への反応は「残す」に入れない（お題は流れる別世界）。
+    if (post && !post.topicKey) out.push({ post, reaction: r });
   }
   return out.sort((a, b) => b.reaction.createdAt - a.reaction.createdAt);
 }
@@ -65,7 +89,7 @@ export function myPosts(s: Snapshot): MyPostSummary[] {
   const { currentUserId } = s;
   if (!currentUserId) return [];
   return s.posts
-    .filter((p) => p.userId === currentUserId && isActive(p.expiresAt))
+    .filter((p) => p.userId === currentUserId && !p.topicKey && isActive(p.expiresAt))
     .sort((a, b) => b.createdAt - a.createdAt)
     .map((post) => {
       const views = s.views.filter((v) => v.postId === post.id && v.viewerId !== currentUserId);
@@ -146,7 +170,7 @@ export function myArchive(s: Pick<Store, 'currentUserId' | 'posts'>): Post[] {
   const { currentUserId } = s;
   if (!currentUserId) return [];
   return s.posts
-    .filter((p) => p.userId === currentUserId)
+    .filter((p) => p.userId === currentUserId && !p.topicKey)
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 

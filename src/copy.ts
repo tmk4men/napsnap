@@ -60,12 +60,19 @@ export const copy = {
   // 残した
   keptSub: '反応したものが、24時間だけ残る。',
   emptyKept: 'まだ、何もない',
-  emptyKeptSub: 'フィードで反応した痕跡が、ここに残る。',
+  emptyKeptSub: 'フィードでリアクションしたものが見返せる。',
+
+  // お題（人物以外・毎日かわる共通のお題。モザイクなし・上下スワイプで何度でも）
+  topicKicker: '今日のお題',
+  topicJoin: 'このお題に出す',
+  topicEmpty: 'まだ誰も出してない',
+  topicEmptySub: '最初の1枚を、出してみる。',
+  topicSwipeHint: '↑↓ めくる',
 
   // 自分
   emptyMine: 'まだ出してない',
-  emptyMineSub: '出すと、ここに残る。',
-  following: 'フォロー中',
+  emptyMineSub: '',
+  following: 'フォロー',
   noFollowing: '誰もフォローしてない',
   saw: '見た',
   reacted: '反応した',
@@ -74,6 +81,7 @@ export const copy = {
 
 export const tabs = {
   home: 'ホーム',
+  topic: 'お題',
   kept: '残した',
   me: '自分',
 } as const;

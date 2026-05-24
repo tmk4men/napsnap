@@ -6,6 +6,7 @@ import { uid } from './lib/id';
 import { avatarImage, lifeImage, TRACE_SEEDS } from './lib/images';
 import { HOUR } from './lib/time';
 import { POST_TTL_HOURS } from './copy';
+import { Topic, TOPIC_CAPTIONS } from './topics';
 
 export function makeMockPeople(): User[] {
   const base = [
@@ -54,6 +55,34 @@ export function makeFollowPosts(people: User[]): Post[] {
       expiresAt: createdAt + POST_TTL_HOURS * HOUR,
     });
   }
+  return posts;
+}
+
+// 「お題」への投稿（フォロー中のモック仲間が今日のお題に出した体）。
+// 残り時間がバラけるよう作成時刻を散らす＝「残りが短い順」表示のデモになる。すべて期限内。
+export function makeTopicPosts(topic: Topic, people: User[]): Post[] {
+  const t = Date.now();
+  const posts: Post[] = [];
+  // 何時間前に出したか（バラけさせる）。人が一巡したら使い回す。
+  const minutesAgoPlan = [35, 110, 200, 320, 470, 610];
+  minutesAgoPlan.forEach((minutesAgo, i) => {
+    const person = people[i % Math.max(1, people.length)];
+    if (!person) return;
+    const createdAt = t - minutesAgo * 60 * 1000;
+    const withCap = i % 2 === 0; // 半分くらいに手書きの一言
+    posts.push({
+      id: uid('p_'),
+      userId: person.id,
+      topicKey: topic.key,
+      imageUrl: lifeImage(`${topic.seed}-${person.id}-${i}`),
+      caption: withCap
+        ? { text: TOPIC_CAPTIONS[i % TOPIC_CAPTIONS.length], fontKey: 'hand', color: '#1A1A14', x: 0.5, y: 0.85 }
+        : undefined,
+      audioSeed: `${topic.seed}-${person.id}-${i}`,
+      createdAt,
+      expiresAt: createdAt + POST_TTL_HOURS * HOUR,
+    });
+  });
   return posts;
 }
 

@@ -46,6 +46,10 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
 
   return (
     <View style={styles.wrap}>
+      {/* 紙の質感（うっすら罫線の繊維＋やわらかな光沢） */}
+      <View pointerEvents="none" style={styles.paperLines} />
+      <View pointerEvents="none" style={styles.paperSheen} />
+
       <View style={styles.header}>
         <Pressable onPress={() => shift(-1)} hitSlop={10} style={styles.nav}>
           <ChevronLeftIcon size={18} color={colors.textDim} />
@@ -93,13 +97,32 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: '#FFFDF4', // 温かい紙の地色
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.hairline,
     padding: space.md,
     boxShadow: shadow.card,
+    overflow: 'hidden',
   },
+  paperLines: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    experimental_backgroundImage:
+      'repeating-linear-gradient(0deg, rgba(70,58,34,0.035) 0px, rgba(70,58,34,0.035) 1px, transparent 1px, transparent 26px)',
+  } as any,
+  paperSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    experimental_backgroundImage:
+      'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 42%, rgba(120,90,40,0.05) 100%)',
+  } as any,
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.sm },
   nav: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   title: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display },

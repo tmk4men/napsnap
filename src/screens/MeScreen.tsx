@@ -4,9 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, Card, GhostButton, Remaining, useTick } from '../components/ui';
+import { Avatar, GhostButton, Remaining, useTick } from '../components/ui';
 import { SoundBadge, useClipPlayer } from '../components/audio';
-import { FootprintIcon, PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
+import { ChekiCard } from '../components/ChekiCard';
+import { FootprintIcon, PencilIcon, TraceMark } from '../components/icons';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { ConnectionsOverlay } from '../components/ConnectionsOverlay';
@@ -19,6 +20,8 @@ import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
 import { Post } from '../types';
+
+const ME_ITEM_W = 210; // 「投稿」カルーセルのチェキ幅
 
 export function MeScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
@@ -84,7 +87,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
             <View style={styles.stats}>
               <Pressable onPress={() => setConn('following')} style={styles.connStat} hitSlop={6}>
                 <Text style={styles.connNum}>{followingUsers.length}</Text>
-                <Text style={styles.connLabel}>フォロー中</Text>
+                <Text style={styles.connLabel}>フォロー</Text>
               </Pressable>
               <Pressable onPress={() => setConn('followers')} style={styles.connStat} hitSlop={6}>
                 <Text style={styles.connNum}>{followers.length}</Text>
@@ -127,59 +130,50 @@ export function MeScreen({ nav }: { nav: Nav }) {
         <Text style={styles.sectionLabel}>きろく・{archive.length}</Text>
         <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
 
-        {/* いま出している投稿（24h以内） */}
-        <Text style={styles.sectionLabel}>いま出してる</Text>
+        {/* 投稿（24h以内）：カルーセルで左右にめくる。誰が押したかは出さず、数だけ。 */}
+        <Text style={styles.sectionLabel}>投稿</Text>
         {mine.length === 0 ? (
           <View style={styles.empty}>
             <TraceMark size={48} />
             <Text style={styles.emptyTitle}>{copy.emptyMine}</Text>
-            <Text style={styles.emptySub}>{copy.emptyMineSub}</Text>
             <View style={{ height: space.md }} />
-            <GhostButton label={copy.shoot} onPress={nav.openCamera} />
+            <GhostButton label={copy.shoot} onPress={() => nav.openCamera()} />
           </View>
         ) : (
-          mine.map(({ post, viewers, viewCount, reactionCount }) => (
-            <Card key={post.id} style={styles.card}>
-              <View style={styles.cardTop}>
-                <Image source={{ uri: post.imageUrl }} style={styles.thumb} resizeMode="cover" />
-                <View style={{ flex: 1, marginLeft: space.md }}>
-                  <Text style={styles.stat}>
-                    <Text style={styles.statNum}>{viewCount}</Text> 人が{copy.saw}
-                  </Text>
-                  <Text style={styles.stat}>
-                    <Text style={styles.statNum}>{reactionCount}</Text> 人が{copy.reacted}
-                  </Text>
-                  <View style={styles.cardMeta}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={ME_ITEM_W + space.md}
+            decelerationRate="fast"
+            contentContainerStyle={{ gap: space.md, paddingVertical: 4, paddingRight: space.lg }}
+          >
+            {mine.map(({ post, viewCount, reactionCount }) => (
+              <View key={post.id} style={{ width: ME_ITEM_W }}>
+                <ChekiCard uri={post.imageUrl} caption={post.caption} width={ME_ITEM_W} date={post.createdAt} tiltSeed={post.id} />
+                <View style={styles.meStatRow}>
+                  <View style={styles.meStat}>
+                    <FootprintIcon size={14} color={colors.textDim} />
+                    <Text style={styles.meStatText}>{viewCount}</Text>
+                  </View>
+                  <Text style={styles.meStatText}>·</Text>
+                  <Text style={styles.meStatText}>{reactionCount} 反応</Text>
+                  <View style={{ marginLeft: 'auto' }}>
                     <Remaining expiresAt={post.expiresAt} color={colors.textDim} size={12} />
-                    <SoundBadge
-                      hasSound={postHasSound(post)}
-                      playing={playingId === post.id}
-                      onPress={() => {
-                        const src = resolvePostAudioSource(post);
-                        if (src) play(post.id, src);
-                      }}
-                    />
                   </View>
                 </View>
-              </View>
-
-              {viewers.length > 0 && (
-                <View style={styles.viewers}>
-                  {viewers.map(({ user, reaction }) => (
-                    <View key={user.id} style={styles.viewerRow}>
-                      <Avatar user={user} size={26} />
-                      <Text style={styles.viewerName}>{user.displayName}</Text>
-                      {reaction ? (
-                        <ReactionIcon type={reaction.type} size={18} color={colors.text} />
-                      ) : (
-                        <FootprintIcon size={16} color={colors.textFaint} />
-                      )}
-                    </View>
-                  ))}
+                <View style={styles.meSound}>
+                  <SoundBadge
+                    hasSound={postHasSound(post)}
+                    playing={playingId === post.id}
+                    onPress={() => {
+                      const src = resolvePostAudioSource(post);
+                      if (src) play(post.id, src);
+                    }}
+                  />
                 </View>
-              )}
-            </Card>
-          ))
+              </View>
+            ))}
+          </ScrollView>
         )}
 
         <View style={{ height: space.xl }} />
@@ -282,6 +276,10 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.lg, gap: space.xs },
   emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
+  meStatRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space.sm, paddingHorizontal: 2 },
+  meStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  meStatText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  meSound: { marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 2 },
   card: { padding: space.md, marginBottom: space.md },
   cardTop: { flexDirection: 'row', alignItems: 'center' },
   thumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },

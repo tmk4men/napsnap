@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
 import { HomeScreen } from '../screens/HomeScreen';
+import { TopicScreen } from '../screens/TopicScreen';
 import { KeptScreen } from '../screens/KeptScreen';
 import { MeScreen } from '../screens/MeScreen';
 import { CameraScreen } from '../screens/CameraScreen';
@@ -21,6 +22,7 @@ export function AppShell() {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [draftUri, setDraftUri] = useState<string | null>(null);
   const [draftAudio, setDraftAudio] = useState<string | undefined>(undefined);
+  const [draftTopic, setDraftTopic] = useState<string | undefined>(undefined); // お題に出す時のキー
   const [retakeUsed, setRetakeUsed] = useState(false); // 撮り直しは1回だけ
 
   const s = useStore();
@@ -32,10 +34,11 @@ export function AppShell() {
       setOverlay(null);
       setTab(t);
     },
-    openCamera: () => {
+    openCamera: (topicKey) => {
       setRetakeUsed(false);
       setDraftUri(null);
       setDraftAudio(undefined);
+      setDraftTopic(topicKey);
       setOverlay('camera');
     },
     retake: () => {
@@ -47,6 +50,7 @@ export function AppShell() {
       setOverlay(null);
       setDraftUri(null);
       setDraftAudio(undefined);
+      setDraftTopic(undefined);
       setRetakeUsed(false);
     },
     onCaptured: (uri, audioUri) => {
@@ -55,10 +59,18 @@ export function AppShell() {
       setOverlay('preview');
     },
     onPosted: () => {
+      const wasTopic = !!draftTopic;
       setDraftUri(null);
       setDraftAudio(undefined);
+      setDraftTopic(undefined);
       setRetakeUsed(false);
-      setOverlay('feed'); // 投稿でパスがひらく → そのままフィードへ
+      if (wasTopic) {
+        // お題は独立：パスは開かない。お題タブへ戻る。
+        setOverlay(null);
+        setTab('topic');
+      } else {
+        setOverlay('feed'); // 投稿でパスがひらく → そのままフィードへ
+      }
     },
   };
 
@@ -67,6 +79,7 @@ export function AppShell() {
       <View style={styles.content}>
         <FadeIn key={tab} style={styles.content} dy={6} duration={200}>
           {tab === 'home' && <HomeScreen nav={nav} />}
+          {tab === 'topic' && <TopicScreen nav={nav} />}
           {tab === 'kept' && <KeptScreen nav={nav} />}
           {tab === 'search' && <SearchScreen />}
           {tab === 'me' && <MeScreen nav={nav} />}
@@ -76,9 +89,9 @@ export function AppShell() {
 
       {overlay !== null && (
         <FadeIn key={overlay} style={StyleSheet.absoluteFill} dy={0} duration={200}>
-          {overlay === 'camera' && <CameraScreen nav={nav} />}
+          {overlay === 'camera' && <CameraScreen nav={nav} topicKey={draftTopic} />}
           {overlay === 'preview' && draftUri && (
-            <PreviewScreen uri={draftUri} audioUri={draftAudio} canRetake={!retakeUsed} nav={nav} />
+            <PreviewScreen uri={draftUri} audioUri={draftAudio} topicKey={draftTopic} canRetake={!retakeUsed} nav={nav} />
           )}
           {overlay === 'feed' && <FeedScreen nav={nav} />}
         </FadeIn>

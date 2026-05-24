@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
-import { CaptionView } from './Caption';
-import { MediaImage } from './MediaImage';
+import { colors, font, space } from '../theme';
+import { fonts } from '../lib/fonts';
+import { ChekiCard } from './ChekiCard';
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SpeakerOnIcon } from './icons';
 import { Post } from '../types';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
@@ -15,7 +15,7 @@ function fmtDate(ts: number): string {
   return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}（${w}）`;
 }
 
-// 思い出（過去の自分の投稿）を全画面で見返す。画像タップで音を再生（自動再生はしない）。
+// 思い出（過去の自分の投稿）をチェキで見返す。写真タップで音を再生（自動再生はしない）。
 export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const [i, setI] = useState(0);
@@ -25,6 +25,8 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
   const audioSrc = useMemo(() => resolvePostAudioSource(post), [post?.id]);
   const player = useAudioPlayer(audioSrc ?? null);
   const hasSound = postHasSound(post);
+  const [stageW, setStageW] = useState(0);
+  const cardW = Math.min(Math.max(0, stageW - 72), 300);
 
   const playSound = () => {
     if (!audioSrc) return;
@@ -38,17 +40,9 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
 
   return (
     <View style={styles.container}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={playSound}>
-        <MediaImage uri={post.imageUrl} />
-      </Pressable>
-      <View style={styles.scrimTop} pointerEvents="none" />
-      <View style={styles.scrimBottom} pointerEvents="none" />
-
-      {post.caption && <CaptionView caption={post.caption} safeTop={84} safeBottom={130} />}
-
       <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <Pressable onPress={onClose} style={styles.iconBtn} hitSlop={12}>
-          <CloseIcon size={18} color={colors.onMedia} />
+          <CloseIcon size={18} color={colors.text} />
         </Pressable>
         {posts.length > 1 && (
           <Text style={styles.counter}>
@@ -57,11 +51,17 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
         )}
         {hasSound ? (
           <Pressable onPress={playSound} style={styles.iconBtn} hitSlop={8}>
-            <SpeakerOnIcon size={18} color={colors.onMedia} />
+            <SpeakerOnIcon size={18} color={colors.text} />
           </Pressable>
         ) : (
           <View style={{ width: 36 }} />
         )}
+      </View>
+
+      <View style={styles.stage} onLayout={(e) => setStageW(e.nativeEvent.layout.width)}>
+        <Pressable style={styles.center} onPress={playSound}>
+          {cardW > 0 && <ChekiCard uri={post.imageUrl} caption={post.caption} width={cardW} date={post.createdAt} tiltSeed={post.id} />}
+        </Pressable>
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.lg }]}>
@@ -69,14 +69,14 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
         {posts.length > 1 && (
           <View style={styles.nav}>
             <Pressable onPress={() => setI(Math.max(0, idx - 1))} disabled={idx === 0} style={[styles.navBtn, idx === 0 && styles.navOff]}>
-              <ChevronLeftIcon size={18} color={colors.onMedia} />
+              <ChevronLeftIcon size={18} color={colors.text} />
             </Pressable>
             <Pressable
               onPress={() => setI(Math.min(posts.length - 1, idx + 1))}
               disabled={idx === posts.length - 1}
               style={[styles.navBtn, idx === posts.length - 1 && styles.navOff]}
             >
-              <ChevronRightIcon size={18} color={colors.onMedia} />
+              <ChevronRightIcon size={18} color={colors.text} />
             </Pressable>
           </View>
         )}
@@ -86,28 +86,8 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
 }
 
 const styles = StyleSheet.create({
-  container: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surfaceMedia },
-  scrimTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 120,
-    experimental_backgroundImage: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)',
-  } as any,
-  scrimBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 200,
-    experimental_backgroundImage: 'linear-gradient(0deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)',
-  } as any,
+  container: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.bg },
   top: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -117,24 +97,25 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.mediaChip,
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: colors.mediaChipBorder,
+    borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  close: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
-  counter: { color: colors.onMedia, fontSize: font.small, fontWeight: '800' },
-  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.lg, alignItems: 'center', gap: space.sm },
-  date: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  counter: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
+  stage: { flex: 1, paddingHorizontal: space.lg },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  bottom: { paddingHorizontal: space.lg, alignItems: 'center', gap: space.sm },
+  date: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.ui },
   nav: { flexDirection: 'row', gap: space.md },
   navBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.mediaChip,
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: colors.mediaChipBorder,
+    borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
