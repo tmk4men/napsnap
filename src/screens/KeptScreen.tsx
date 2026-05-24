@@ -108,7 +108,6 @@ export function KeptScreen({ nav }: { nav: Nav }) {
     return (
       <View style={styles.empty}>
         <TraceMark size={48} />
-        <Text style={styles.emptyTitle}>{copy.emptyKept}</Text>
         <Text style={styles.emptySub}>{copy.emptyKeptSub}</Text>
         <View style={{ height: space.md }} />
         <GhostButton label={copy.shoot} onPress={nav.openCamera} />
