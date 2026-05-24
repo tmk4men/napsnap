@@ -222,6 +222,26 @@ export function CalendarIcon({ size = 22, color = colors.text }: IconProps) {
   );
 }
 
+// --- 空アバター用の中立アイコン（顔の特徴は描かない） ---
+export function UserIcon({ size = 22, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={12} cy={9} r={3.6} stroke={color} strokeWidth={1.8} fill="none" />
+      <Path d="M5.5 19.5c0-3.5 3-5.4 6.5-5.4s6.5 1.9 6.5 5.4" stroke={color} strokeWidth={1.8} fill="none" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// --- 検索 ---
+export function SearchIcon({ size = 18, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={11} cy={11} r={6.5} stroke={color} strokeWidth={1.9} fill="none" />
+      <Line x1={15.8} y1={15.8} x2={20.5} y2={20.5} stroke={color} strokeWidth={1.9} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
 // --- 通知（ベル） ---
 export function BellIcon({ size = 22, color = colors.text }: IconProps) {
   return (

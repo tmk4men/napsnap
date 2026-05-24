@@ -3,6 +3,7 @@ import { Animated, Image, PanResponder, Platform, Pressable, StyleSheet, Text, V
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, GhostButton, Remaining, useTick } from '../components/ui';
 import { Nav } from '../navigation/nav';
@@ -146,7 +147,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
             </Pressable>
           </View>
           <View style={styles.reactBadge}>
-            <ReactionIcon type={current.reaction.type} size={16} color={colors.limeInk} />
+            <ReactionIcon type={current.reaction.type} size={16} color={colors.lime} />
             <Text style={styles.reactLabel}>{meta.label}</Text>
           </View>
         </View>
@@ -214,12 +215,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: colors.lime,
+    backgroundColor: colors.mediaChip,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(207,234,69,0.4)',
   },
-  reactLabel: { color: colors.limeInk, fontSize: font.small, fontWeight: '900' },
+  reactLabel: { color: colors.lime, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
   author: { position: 'absolute', left: space.lg, right: space.lg, bottom: space.xl + space.md, flexDirection: 'row', alignItems: 'center' },
   authorName: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 3 },

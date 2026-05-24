@@ -131,7 +131,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
               <Text style={styles.lockChipText}>{copy.revealChip}</Text>
             </View>
             <Text style={[styles.big, { color: textColor }]}>{copy.lockedHeadline}</Text>
-            <Text style={[styles.sub, { color: dimColor }]}>{copy.lockedSub}</Text>
           </>
         ) : s.following.length === 0 ? (
           <>
@@ -243,7 +242,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.bg,
   },
-  bellBadgeText: { color: colors.limeInk, fontSize: 10, fontWeight: '900' },
+  bellBadgeText: { color: colors.limeInk, fontSize: 10, fontWeight: '800' },
   memoryCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -265,19 +264,20 @@ const styles = StyleSheet.create({
   heroWhoText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   heroMeta: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700', marginTop: 3, fontFamily: fonts.ui, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   redactBar: { width: 88, height: 13, borderRadius: 7, backgroundColor: 'rgba(255,253,247,0.5)' },
-  big: { fontSize: font.display, fontWeight: '900', lineHeight: 58, fontFamily: fonts.display },
+  big: { fontSize: font.display, fontWeight: '800', lineHeight: 56, fontFamily: fonts.display },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui },
   lockChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
-    backgroundColor: colors.lime,
+    backgroundColor: colors.limeSoft,
     borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 8,
     marginBottom: space.lg,
-    boxShadow: shadow.button,
+    borderWidth: 1,
+    borderColor: colors.limeLine,
   },
-  lockDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.limeInk },
-  lockChipText: { color: colors.limeInk, fontSize: font.small, fontWeight: '900', letterSpacing: 0.3 },
+  lockDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.limeDust },
+  lockChipText: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
 });

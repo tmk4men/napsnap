@@ -61,7 +61,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
           <Pressable onPress={changePhoto} style={styles.avatarWrap}>
             <Avatar user={me} size={64} />
             <View style={styles.editBadge}>
-              <PencilIcon size={12} color={colors.limeInk} />
+              <PencilIcon size={12} color={colors.limeInkSoft} />
             </View>
           </Pressable>
           <View style={{ marginLeft: space.md, flex: 1 }}>
@@ -207,18 +207,18 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.lime,
+    backgroundColor: colors.limeSoft,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2.5,
     borderColor: colors.bg,
   },
-  name: { color: colors.text, fontSize: font.title, fontWeight: '900', fontFamily: fonts.display },
+  name: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.display },
   handle: { color: colors.textDim, fontSize: font.body, marginTop: 2, fontWeight: '600' },
   stats: { flexDirection: 'row', gap: space.lg, marginTop: space.sm },
   connStat: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  connNum: { color: colors.text, fontSize: font.body, fontWeight: '900' },
-  connLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700' },
+  connNum: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  connLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
 
   hl: {
     width: 132,
@@ -260,8 +260,9 @@ const styles = StyleSheet.create({
   sectionLabel: {
     color: colors.textDim,
     fontSize: font.small,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+    fontFamily: fonts.ui,
     marginTop: space.lg,
     marginBottom: space.sm,
   },

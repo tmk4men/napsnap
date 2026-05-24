@@ -9,8 +9,9 @@ import {
   ViewStyle,
 } from 'react-native';
 import { colors, font, radius, shadow, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { User } from '../types';
-import { ClockIcon } from './icons';
+import { ClockIcon, UserIcon } from './icons';
 import { formatClock } from '../lib/time';
 
 export function PrimaryButton({
@@ -125,12 +126,13 @@ function AvatarInner({ user, size, border, blur }: { user?: User; size: number; 
     );
   }
   const initial = (user?.displayName ?? '').trim().charAt(0);
+  const hasInitial = !!initial;
   return (
-    <View style={[styles.avatar, wrap, border, { backgroundColor: colors.surfaceSunken }]}>
-      {blur ? null : initial ? (
-        <Text style={{ fontSize: size * 0.42, fontWeight: '800', color: colors.textDim }}>{initial}</Text>
+    <View style={[styles.avatar, wrap, border, { backgroundColor: hasInitial ? colors.surfaceSunken : colors.avatarFallback }]}>
+      {blur ? null : hasInitial ? (
+        <Text style={{ fontSize: size * 0.42, fontWeight: '700', color: colors.textDim, fontFamily: fonts.ui }}>{initial}</Text>
       ) : (
-        <Text style={{ fontSize: size * 0.5 }}>{user?.avatarEmoji ?? '🟡'}</Text>
+        <UserIcon size={size * 0.5} color={colors.avatarFallbackIcon} />
       )}
     </View>
   );
@@ -223,7 +225,7 @@ const styles = StyleSheet.create({
   primaryShadow: { boxShadow: shadow.button },
   primaryDisabled: { backgroundColor: colors.surfaceSunken, borderColor: colors.hairline },
   primaryPressed: { transform: [{ scale: 0.985 }, { translateY: 1 }], boxShadow: shadow.cardPressed },
-  primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '800', letterSpacing: 0.2 },
+  primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.ui },
   primaryLabelDisabled: { color: colors.textFaint },
 
   ghost: {
@@ -237,7 +239,7 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
   },
   ghostPressed: { backgroundColor: colors.surfaceSunken, transform: [{ scale: 0.985 }] },
-  ghostLabel: { color: colors.textDim, fontSize: font.body, fontWeight: '700' },
+  ghostLabel: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
 
   card: {
     backgroundColor: colors.surfaceRaised,
@@ -263,7 +265,7 @@ const styles = StyleSheet.create({
   pillLime: { backgroundColor: colors.limeSoft, borderColor: 'rgba(24,26,13,0.10)' },
   pillMedia: { backgroundColor: colors.mediaChip, borderColor: colors.mediaChipBorder },
   pillDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.lime },
-  pillText: { color: colors.text, fontSize: font.small, fontWeight: '800' },
+  pillText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
 
   avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarShadow: { borderRadius: radius.pill, boxShadow: shadow.avatar },

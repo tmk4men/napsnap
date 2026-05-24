@@ -67,7 +67,7 @@ export function AccountSetupScreen() {
             <Pressable onPress={choosePhoto} style={styles.avatarPreviewWrap}>
               <Avatar user={previewUser} size={104} />
               <View style={styles.editBadge}>
-                <PencilIcon size={13} color={colors.limeInk} />
+                <PencilIcon size={13} color={colors.limeInkSoft} />
               </View>
             </Pressable>
             <Pressable onPress={choosePhoto} style={({ pressed }) => [styles.choose, pressed && styles.chosePressed]}>
@@ -81,7 +81,7 @@ export function AccountSetupScreen() {
             value={name}
             onChangeText={setName}
             placeholder={copy.setupNamePlaceholder}
-            placeholderTextColor={colors.textFaint}
+            placeholderTextColor="rgba(110,104,89,0.42)"
             style={styles.input}
             maxLength={12}
           />
@@ -93,7 +93,7 @@ export function AccountSetupScreen() {
               value={handle}
               onChangeText={(t) => setHandle(sanitizeHandle(t))}
               placeholder="username"
-              placeholderTextColor={colors.textFaint}
+              placeholderTextColor="rgba(110,104,89,0.42)"
               autoCapitalize="none"
               style={styles.handleInput}
               maxLength={16}
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: colors.lime,
+    backgroundColor: colors.limeSoft,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
@@ -198,15 +198,16 @@ const styles = StyleSheet.create({
   chosePressed: { backgroundColor: colors.surfaceSunken, transform: [{ scale: 0.98 }] },
   chooseText: { color: colors.text, fontSize: font.body, fontWeight: '800' },
 
-  fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '800', marginTop: space.lg, marginBottom: space.xs },
+  fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: space.lg, marginBottom: space.xs },
   input: {
     backgroundColor: colors.surfaceRaised,
     color: colors.text,
-    fontSize: font.title,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '600',
+    fontFamily: fonts.ui,
     borderRadius: radius.md,
     paddingHorizontal: space.md,
-    paddingVertical: 14,
+    paddingVertical: 15,
     borderWidth: 1,
     borderColor: colors.hairline,
   },
@@ -219,8 +220,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairline,
   },
-  at: { color: colors.textDim, fontSize: font.lead, fontWeight: '800' },
-  handleInput: { flex: 1, color: colors.text, fontSize: font.lead, fontWeight: '700', paddingVertical: 14, marginLeft: 4 },
+  at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700' },
+  handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '600', fontFamily: fonts.ui, paddingVertical: 15, marginLeft: 4 },
   hint: { color: colors.textFaint, fontSize: font.small, marginTop: space.xs },
 
   person: {
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
-  followBtnOn: { backgroundColor: colors.lime, borderColor: colors.lime },
-  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
-  followTextOn: { color: colors.limeInk },
+  followBtnOn: { backgroundColor: colors.limeSoft, borderColor: colors.limeLine },
+  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  followTextOn: { color: colors.limeInkSoft },
 });

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar } from './ui';
-import { CloseIcon, TraceMark } from './icons';
+import { CloseIcon, SearchIcon, TraceMark } from './icons';
 import { User } from '../types';
 
 type Tab = 'following' | 'followers';
 
-// 自分タブの「フォロー中／フォロワー」をタップしたときに出る一覧。
+// 自分タブの「フォロー中／フォロワー」をタップしたときに出る一覧。@IDや名前で検索できる。
 export function ConnectionsOverlay({
   initial,
   following,
@@ -27,7 +27,13 @@ export function ConnectionsOverlay({
 }) {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>(initial);
-  const list = tab === 'following' ? following : followers;
+  const [q, setQ] = useState('');
+
+  const base = tab === 'following' ? following : followers;
+  const query = q.trim().replace(/^@/, '').toLowerCase();
+  const list = query
+    ? base.filter((u) => u.handle.toLowerCase().includes(query) || u.displayName.toLowerCase().includes(query))
+    : base;
 
   return (
     <View style={styles.container}>
@@ -45,13 +51,33 @@ export function ConnectionsOverlay({
         </Pressable>
       </View>
 
+      {/* @IDや名前で検索 */}
+      <View style={styles.searchWrap}>
+        <SearchIcon size={17} color={colors.textFaint} />
+        <TextInput
+          value={q}
+          onChangeText={setQ}
+          placeholder="@IDや名前でさがす"
+          placeholderTextColor="rgba(110,104,89,0.42)"
+          autoCapitalize="none"
+          style={styles.searchInput}
+        />
+        {q.length > 0 && (
+          <Pressable onPress={() => setQ('')} hitSlop={10}>
+            <CloseIcon size={15} color={colors.textFaint} />
+          </Pressable>
+        )}
+      </View>
+
       {list.length === 0 ? (
         <View style={styles.empty}>
           <TraceMark size={44} />
-          <Text style={styles.emptyText}>{tab === 'following' ? 'まだ誰もフォローしてない' : 'まだフォロワーがいない'}</Text>
+          <Text style={styles.emptyText}>
+            {query ? '見つからない' : tab === 'following' ? 'まだ誰もフォローしてない' : 'まだフォロワーがいない'}
+          </Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: insets.bottom + space.xl }} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.xl }} showsVerticalScrollIndicator={false}>
           {list.map((p) => {
             const on = isFollowing(p.id);
             return (
@@ -84,16 +110,26 @@ const styles = StyleSheet.create({
     gap: space.sm,
     paddingHorizontal: space.md,
     paddingBottom: space.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.line,
   },
   tabs: { flexDirection: 'row', gap: 4, flex: 1, backgroundColor: colors.surfaceSunken, borderRadius: radius.pill, padding: 4 },
   tab: { flex: 1, paddingVertical: 8, borderRadius: radius.pill, alignItems: 'center' },
   tabActive: { backgroundColor: colors.surfaceRaised, boxShadow: shadow.chip },
-  tabText: { color: colors.textDim, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
+  tabText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
   tabTextActive: { color: colors.text },
   close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
-  closeText: { color: colors.text, fontSize: 18, fontWeight: '700' },
+  searchWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: space.md,
+    marginBottom: space.sm,
+    paddingHorizontal: space.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  searchInput: { flex: 1, color: colors.text, fontSize: font.body, fontWeight: '600', fontFamily: fonts.ui, paddingVertical: 11 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, padding: space.xl },
   emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
   row: {
@@ -113,7 +149,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.line,
   },
-  followBtnOn: { backgroundColor: colors.lime, borderColor: colors.lime },
-  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
-  followTextOn: { color: colors.limeInk },
+  followBtnOn: { backgroundColor: colors.limeSoft, borderColor: colors.limeLine },
+  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  followTextOn: { color: colors.limeInkSoft },
 });

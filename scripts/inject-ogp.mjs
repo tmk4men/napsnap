@@ -28,7 +28,7 @@ if (html.includes('<!-- ogp:start -->')) {
 }
 
 const FONTS_HREF =
-  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&display=swap';
+  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;800;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&display=swap';
 
 const tags = `  <!-- ogp:start -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

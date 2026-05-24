@@ -25,7 +25,7 @@ export function captionFont(key: string) {
 }
 
 export const GOOGLE_FONTS_HREF =
-  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&display=swap';
+  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;800;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&display=swap';
 
 // 実行時にWebのheadへフォントlinkを差し込む（dev/prod 両対応。idで二重読み込みを防ぐ）。
 export function loadWebFonts() {
