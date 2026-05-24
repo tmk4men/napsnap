@@ -96,7 +96,31 @@ export function CameraIcon({ size = 22, color = colors.text }: IconProps) {
   );
 }
 
-// --- タブ：ホーム（窓＝今をのぞく） ---
+// --- タブ：ホーム（家） ---
+export function HouseIcon({ size = 24, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M3.5 11.2 12 4.3l8.5 6.9"
+        stroke={color}
+        strokeWidth={1.9}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M5.6 10.2V19a1 1 0 0 0 1 1h10.8a1 1 0 0 0 1-1v-8.8"
+        stroke={color}
+        strokeWidth={1.9}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <Path d="M9.8 20v-4.6a1 1 0 0 1 1-1h2.4a1 1 0 0 1 1 1V20" stroke={color} strokeWidth={1.9} fill="none" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+// --- タブ：ホーム（窓＝今をのぞく。旧） ---
 export function WindowIcon({ size = 24, color = colors.text }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">

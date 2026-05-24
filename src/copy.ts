@@ -52,7 +52,6 @@ export const copy = {
   retake: '撮り直す',
 
   // フィード
-  swipeAway: '反応せず流す',
   feedDoneTitle: 'ぜんぶ見た',
   feedDoneSub: 'また誰かが出したら、ここに増える。',
   close: 'とじる',

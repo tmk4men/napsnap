@@ -177,9 +177,11 @@ export function FeedScreen({ nav }: { nav: Nav }) {
       {/* 下部：リアクション＋流す */}
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md }]}>
         <ReactionBar onReact={doReact} />
-        <Pressable onPress={doSkip} style={styles.skip} hitSlop={8}>
-          <ChevronDownIcon size={16} color={colors.onMediaDim} />
-          <Text style={styles.skipText}>{copy.swipeAway}</Text>
+        <Pressable onPress={doSkip} style={styles.skip} hitSlop={10}>
+          <ChevronDownIcon size={24} color={colors.onMediaDim} />
+          <View style={{ marginTop: -14 }}>
+            <ChevronDownIcon size={24} color={colors.onMediaDim} />
+          </View>
         </Pressable>
       </View>
     </View>
@@ -224,8 +226,7 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 4 },
   metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.md, gap: space.sm },
-  skip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: space.sm },
-  skipText: { color: colors.onMediaDim, fontSize: font.body, fontWeight: '700' },
+  skip: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs },
 
   // done
   done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },

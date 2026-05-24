@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
@@ -10,12 +10,13 @@ import { PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { ConnectionsOverlay } from '../components/ConnectionsOverlay';
+import { CropModal } from '../components/CropModal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { currentUser, memoryHighlights, myArchive, myPosts } from '../selectors';
 import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
-import { pickAvatarImage } from '../lib/avatar';
+import { pickRawImage } from '../lib/avatar';
 import { Post } from '../types';
 
 export function MeScreen({ nav }: { nav: Nav }) {
@@ -36,10 +37,13 @@ export function MeScreen({ nav }: { nav: Nav }) {
 
   const [viewing, setViewing] = useState<Post[] | null>(null);
   const [conn, setConn] = useState<'following' | 'followers' | null>(null);
+  const [cropUri, setCropUri] = useState<string | null>(null);
 
   async function changePhoto() {
-    const uri = await pickAvatarImage();
-    if (uri) updateProfileImage(uri);
+    const uri = await pickRawImage();
+    if (!uri) return;
+    if (Platform.OS === 'web') setCropUri(uri);
+    else updateProfileImage(uri);
   }
 
   return (
@@ -168,6 +172,16 @@ export function MeScreen({ nav }: { nav: Nav }) {
       </ScrollView>
 
       {viewing && <MemoryViewer posts={viewing} onClose={() => setViewing(null)} />}
+      {cropUri && (
+        <CropModal
+          uri={cropUri}
+          onCancel={() => setCropUri(null)}
+          onDone={(d) => {
+            updateProfileImage(d);
+            setCropUri(null);
+          }}
+        />
+      )}
       {conn && (
         <ConnectionsOverlay
           initial={conn}

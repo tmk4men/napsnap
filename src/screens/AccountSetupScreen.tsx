@@ -17,7 +17,8 @@ import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
 import { ImageIcon, PencilIcon } from '../components/icons';
 import { useStore } from '../store';
 import { makeMockPeople } from '../seed';
-import { pickAvatarImage } from '../lib/avatar';
+import { pickRawImage } from '../lib/avatar';
+import { CropModal } from '../components/CropModal';
 
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -28,14 +29,17 @@ export function AccountSetupScreen() {
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [avatarUri, setAvatarUri] = useState<string>('');
+  const [cropUri, setCropUri] = useState<string | null>(null);
   const [followingIds, setFollowingIds] = useState<string[]>(() => people.map((p) => p.id));
 
   const sanitizeHandle = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16);
   const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: colors.avatarTint, avatarImageUri: avatarUri || undefined, createdAt: 0 };
 
   async function choosePhoto() {
-    const uri = await pickAvatarImage();
-    if (uri) setAvatarUri(uri);
+    const uri = await pickRawImage();
+    if (!uri) return;
+    if (Platform.OS === 'web') setCropUri(uri);
+    else setAvatarUri(uri);
   }
 
   function finish() {
@@ -100,6 +104,17 @@ export function AccountSetupScreen() {
         <View style={{ paddingBottom: insets.bottom + space.md, paddingTop: space.sm }}>
           <PrimaryButton label={copy.setupNext} disabled={!name.trim()} onPress={() => setStep(1)} />
         </View>
+
+        {cropUri && (
+          <CropModal
+            uri={cropUri}
+            onCancel={() => setCropUri(null)}
+            onDone={(d) => {
+              setAvatarUri(d);
+              setCropUri(null);
+            }}
+          />
+        )}
       </KeyboardAvoidingView>
     );
   }

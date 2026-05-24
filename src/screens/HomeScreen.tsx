@@ -9,6 +9,8 @@ import { CameraIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { currentUser, feedQueue, isPassOpen, userById } from '../selectors';
+import { isActive } from '../lib/time';
+import { Post } from '../types';
 
 export function HomeScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
@@ -16,19 +18,35 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
   const s = useStore();
   const open = isPassOpen(s);
+  const me = currentUser(s);
+
   const queue = useMemo(
     () => feedQueue(s),
     [s.posts, s.feedStates, s.following, s.currentUserId]
   );
-  const count = queue.length;
-  const latest = queue[0];
-  const me = currentUser(s);
-  const heroAuthor = userById(s.users, latest?.userId);
+  // 自分の期限内の投稿（ホームにも出す）
+  const myActive = useMemo(
+    () =>
+      s.posts
+        .filter((p) => p.userId === s.currentUserId && isActive(p.expiresAt))
+        .sort((a, b) => b.createdAt - a.createdAt),
+    [s.posts, s.currentUserId]
+  );
 
-  // ロック中：相手画像をモザイク。オープン中で投稿あり：そのまま最新を出して「最初から誰かの投稿」を見せる。
-  const mediaMode = !open && !!latest; // ぼかし
-  const openHero = open && count > 0 && !!latest; // くっきり
+  const count = queue.length; // フォロー中の見れる数
+  const followedLatest = queue[0];
+  // ヒーロー＝自分＋フォロー中で最新の1枚
+  const heroPost = [myActive[0], followedLatest]
+    .filter((p): p is Post => !!p)
+    .sort((a, b) => b.createdAt - a.createdAt)[0];
+  const heroIsMine = !!heroPost && heroPost.userId === s.currentUserId;
+  const heroAuthor = heroIsMine ? me : userById(s.users, heroPost?.userId);
+
+  const mediaMode = !open && !!followedLatest; // ロック中はフォロー投稿をぼかし
+  const openHero = open && !!heroPost;
   const showImage = mediaMode || openHero;
+  const heroImage = mediaMode ? followedLatest?.imageUrl : heroPost?.imageUrl;
+
   const onPhoto = showImage;
   const textColor = onPhoto ? colors.onMedia : colors.text;
   const dimColor = onPhoto ? colors.onMediaDim : colors.textDim;
@@ -38,12 +56,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     <View style={[styles.container, showImage && { backgroundColor: colors.surfaceMedia }]}>
       {showImage && (
         <>
-          <Image
-            source={{ uri: latest.imageUrl }}
-            style={StyleSheet.absoluteFill}
-            blurRadius={mediaMode ? 28 : 0}
-            resizeMode="cover"
-          />
+          <Image source={{ uri: heroImage }} style={StyleSheet.absoluteFill} blurRadius={mediaMode ? 28 : 0} resizeMode="cover" />
           <View style={styles.scrim} />
         </>
       )}
@@ -66,12 +79,12 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       {/* 中央 */}
       <View style={styles.center}>
         {open ? (
-          count > 0 ? (
+          heroPost ? (
             <>
               {heroAuthor && (
                 <View style={styles.heroWho}>
                   <Avatar user={heroAuthor} size={32} />
-                  <Text style={styles.heroWhoText}>{heroAuthor.displayName} たちの今</Text>
+                  <Text style={styles.heroWhoText}>{heroIsMine ? 'あなたの今' : `${heroAuthor.displayName} たちの今`}</Text>
                 </View>
               )}
               <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
@@ -83,7 +96,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
               <Remaining expiresAt={s.accessPass!.expiresAt} color={metaColor} size={15} />
             </>
           )
-        ) : latest ? (
+        ) : followedLatest ? (
           <>
             <View style={styles.lockChip}>
               <View style={styles.lockDot} />
@@ -93,9 +106,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <Text style={[styles.sub, { color: dimColor }]}>{copy.lockedSub}</Text>
           </>
         ) : (
-          <>
-            <Text style={[styles.big, { color: textColor }]}>{copy.lockedEmpty}</Text>
-          </>
+          <Text style={[styles.big, { color: textColor }]}>{copy.lockedEmpty}</Text>
         )}
       </View>
 

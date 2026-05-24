@@ -1,11 +1,10 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
-import { tabs } from '../copy';
+import { colors, radius, space } from '../theme';
 import { TabKey } from './nav';
 import { Avatar } from '../components/ui';
-import { BookmarkIcon, WindowIcon } from '../components/icons';
+import { BookmarkIcon, HouseIcon } from '../components/icons';
 import { User } from '../types';
 
 export function TabBar({
@@ -21,14 +20,14 @@ export function TabBar({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.bar, { paddingBottom: insets.bottom + space.xs }]}>
-      <Tab label={tabs.home} active={active === 'home'} onPress={() => onChange('home')}>
-        <WindowIcon size={23} color={active === 'home' ? colors.text : colors.textFaint} />
+    <View style={[styles.bar, { paddingBottom: insets.bottom + space.sm }]}>
+      <Tab onPress={() => onChange('home')}>
+        <HouseIcon size={25} color={active === 'home' ? colors.text : colors.textFaint} />
       </Tab>
 
-      <Tab label={tabs.kept} active={active === 'kept'} onPress={() => onChange('kept')}>
+      <Tab onPress={() => onChange('kept')}>
         <View>
-          <BookmarkIcon size={23} color={active === 'kept' ? colors.text : colors.textFaint} filled={active === 'kept'} />
+          <BookmarkIcon size={24} color={active === 'kept' ? colors.text : colors.textFaint} filled={active === 'kept'} />
           {keptCount > 0 && (
             <View style={styles.dot}>
               <Text style={styles.dotText}>{keptCount}</Text>
@@ -37,28 +36,17 @@ export function TabBar({
         </View>
       </Tab>
 
-      <Tab label={tabs.me} active={active === 'me'} onPress={() => onChange('me')}>
-        <Avatar user={me} size={24} ring={active === 'me'} />
+      <Tab onPress={() => onChange('me')}>
+        <Avatar user={me} size={26} ring={active === 'me'} />
       </Tab>
     </View>
   );
 }
 
-function Tab({
-  children,
-  label,
-  active,
-  onPress,
-}: {
-  children: React.ReactNode;
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
+function Tab({ children, onPress }: { children: React.ReactNode; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.item, pressed && { opacity: 0.6 }]}>
       <View style={styles.iconBox}>{children}</View>
-      <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
     </Pressable>
   );
 }
@@ -71,10 +59,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.line,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  iconBox: { height: 24, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: font.tiny, color: colors.textFaint, fontWeight: '700', letterSpacing: 0.3 },
-  activeLabel: { color: colors.text },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
+  iconBox: { height: 28, alignItems: 'center', justifyContent: 'center' },
   dot: {
     position: 'absolute',
     top: -5,
