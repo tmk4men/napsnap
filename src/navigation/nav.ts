@@ -7,6 +7,6 @@ export interface Nav {
   openCamera: () => void;
   openFeed: () => void;
   closeOverlay: () => void;
-  onCaptured: (uri: string) => void; // カメラ → プレビュー
+  onCaptured: (uri: string, audioUri?: string) => void; // カメラ（写真＋2.5秒音声）→ プレビュー
   onPosted: () => void; // プレビューで投稿 → フィードへ
 }

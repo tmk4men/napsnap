@@ -4,10 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, GhostButton, useTick } from '../components/ui';
+import { SoundBadge, useClipPlayer } from '../components/audio';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { currentUser, myPosts } from '../selectors';
 import { formatRemaining, timeAgo } from '../lib/time';
+import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 
 export function MeScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
@@ -15,6 +17,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const s = useStore();
   const resetDemo = useStore((st) => st.resetDemo);
   const leaveGroup = useStore((st) => st.leaveGroup);
+  const { play, playingId } = useClipPlayer();
   const me = currentUser(s);
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
   const memberCount = s.group?.memberIds.length ?? 0;
@@ -60,6 +63,16 @@ export function MeScreen({ nav }: { nav: Nav }) {
                   <Text style={styles.metaTime}>
                     {timeAgo(post.createdAt)}・{formatRemaining(post.expiresAt)}で消える
                   </Text>
+                  <View style={{ marginTop: space.xs }}>
+                    <SoundBadge
+                      hasSound={postHasSound(post)}
+                      playing={playingId === post.id}
+                      onPress={() => {
+                        const src = resolvePostAudioSource(post);
+                        if (src) play(post.id, src);
+                      }}
+                    />
+                  </View>
                 </View>
               </View>
 

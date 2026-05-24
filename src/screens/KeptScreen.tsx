@@ -4,14 +4,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, useTick } from '../components/ui';
+import { SoundBadge, useClipPlayer } from '../components/audio';
 import { useStore } from '../store';
 import { keptPosts, userById } from '../selectors';
 import { formatRemaining, timeAgo } from '../lib/time';
+import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 
 export function KeptScreen() {
   const insets = useSafeAreaInsets();
   useTick(30000);
   const s = useStore();
+  const { play, playingId } = useClipPlayer();
   const kept = useMemo(() => keptPosts(s), [s.reactions, s.posts, s.currentUserId]);
 
   return (
@@ -53,6 +56,14 @@ export function KeptScreen() {
                       {timeAgo(post.createdAt)}・{formatRemaining(post.expiresAt)}で消える
                     </Text>
                   </View>
+                  <SoundBadge
+                    hasSound={postHasSound(post)}
+                    playing={playingId === post.id}
+                    onPress={() => {
+                      const src = resolvePostAudioSource(post);
+                      if (src) play(post.id, src);
+                    }}
+                  />
                   <Text style={styles.reactLabel}>{meta.label}</Text>
                 </View>
               </View>
@@ -96,7 +107,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  cardFoot: { flexDirection: 'row', alignItems: 'center', padding: space.md },
+  cardFoot: { flexDirection: 'row', alignItems: 'center', padding: space.md, gap: space.sm },
   name: { color: colors.white, fontSize: font.body, fontWeight: '800' },
   meta: { color: colors.gray, fontSize: font.tiny, marginTop: 2 },
   reactLabel: { color: colors.lime, fontSize: font.small, fontWeight: '800' },

@@ -48,6 +48,7 @@ export function makeFriendPosts(friends: User[], groupId: string): Post[] {
       userId: friend.id,
       groupId,
       imageUrl: lifeImage(`${friend.id}-${p.seed}`),
+      audioSeed: `${friend.id}-${p.seed}`,
       createdAt,
       expiresAt: createdAt + POST_TTL_HOURS * HOUR,
     });

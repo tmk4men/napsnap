@@ -24,6 +24,10 @@ export interface Post {
   userId: string;
   groupId: string;
   imageUrl: string;
+  // シャッター押下直後に録音した2.5秒の音声。自分の投稿は録音URI。
+  audioUrl?: string;
+  // モック友達投稿用：デモ環境音をシードから生成するための種（Webでのみ鳴る）。
+  audioSeed?: string;
   createdAt: number;
   expiresAt: number; // createdAt + 24h
 }

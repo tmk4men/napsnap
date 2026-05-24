@@ -18,6 +18,7 @@ export function AppShell() {
   const [tab, setTab] = useState<TabKey>('home');
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [draftUri, setDraftUri] = useState<string | null>(null);
+  const [draftAudio, setDraftAudio] = useState<string | undefined>(undefined);
 
   const s = useStore();
   const keptCount = useMemo(() => keptPosts(s).length, [s.reactions, s.posts, s.currentUserId]);
@@ -32,13 +33,16 @@ export function AppShell() {
     closeOverlay: () => {
       setOverlay(null);
       setDraftUri(null);
+      setDraftAudio(undefined);
     },
-    onCaptured: (uri) => {
+    onCaptured: (uri, audioUri) => {
       setDraftUri(uri);
+      setDraftAudio(audioUri);
       setOverlay('preview');
     },
     onPosted: () => {
       setDraftUri(null);
+      setDraftAudio(undefined);
       setOverlay('feed'); // 投稿でパスがひらく → そのままフィードへ
     },
   };
@@ -55,7 +59,9 @@ export function AppShell() {
       {overlay !== null && (
         <View style={StyleSheet.absoluteFill}>
           {overlay === 'camera' && <CameraScreen nav={nav} />}
-          {overlay === 'preview' && draftUri && <PreviewScreen uri={draftUri} nav={nav} />}
+          {overlay === 'preview' && draftUri && (
+            <PreviewScreen uri={draftUri} audioUri={draftAudio} nav={nav} />
+          )}
           {overlay === 'feed' && <FeedScreen nav={nav} />}
         </View>
       )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Image,
@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
@@ -18,6 +19,7 @@ import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { feedQueue, isPassOpen, userById } from '../selectors';
 import { formatRemaining, timeAgo } from '../lib/time';
+import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { ReactionType } from '../types';
 
 const NATIVE = Platform.OS !== 'web';
@@ -42,6 +44,36 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   useEffect(() => {
     if (post) markViewed(post.id);
   }, [post?.id]);
+
+  // この投稿の2.5秒の音をループ再生（ミュート切替可）
+  const audioSrc = useMemo(() => resolvePostAudioSource(post), [post?.id]);
+  const hasSound = postHasSound(post);
+  const player = useAudioPlayer(audioSrc ?? null);
+  const [muted, setMuted] = useState(false);
+
+  useEffect(() => {
+    if (!audioSrc) return;
+    try {
+      player.loop = true;
+      player.muted = muted;
+      player.seekTo(0);
+      player.play();
+    } catch {}
+    return () => {
+      try {
+        player.pause();
+      } catch {}
+    };
+  }, [audioSrc]);
+
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    try {
+      player.muted = next;
+      if (!next) player.play(); // 自動再生がブロックされていた場合の保険（タップ起点で再生）
+    } catch {}
+  };
 
   const ty = useRef(new Animated.Value(0)).current;
   const postRef = useRef(post);
@@ -111,7 +143,18 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           <Pressable onPress={nav.closeOverlay} style={styles.close} hitSlop={12}>
             <Text style={styles.closeText}>✕</Text>
           </Pressable>
-          <Pill tone="dark">残り {queue.length}</Pill>
+          <View style={styles.topRight}>
+            <Pressable
+              onPress={hasSound ? toggleSound : undefined}
+              style={[styles.soundToggle, !hasSound && styles.soundToggleOff]}
+              hitSlop={8}
+            >
+              <Text style={styles.soundToggleText}>
+                {!hasSound ? '🔇' : muted ? '🔇' : '🔊'}
+              </Text>
+            </Pressable>
+            <Pill tone="dark">残り {queue.length}</Pill>
+          </View>
         </View>
 
         {/* 投稿者 */}
@@ -159,6 +202,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeText: { color: colors.white, fontSize: 18, fontWeight: '700' },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  soundToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  soundToggleOff: { opacity: 0.5 },
+  soundToggleText: { fontSize: 16 },
   author: { position: 'absolute', left: space.lg, flexDirection: 'row', alignItems: 'center' },
   authorName: { color: colors.white, fontSize: font.lead, fontWeight: '800' },
   time: { color: 'rgba(255,255,255,0.75)', fontSize: font.small, marginTop: 2 },

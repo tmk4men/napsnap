@@ -16,7 +16,8 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "生活の痕跡を1枚撮るためにカメラを使います。"
+        "NSCameraUsageDescription": "生活の痕跡を1枚撮るためにカメラを使います。",
+        "NSMicrophoneUsageDescription": "その瞬間の音を2.5秒だけ録音します。"
       }
     },
     "android": {
@@ -26,7 +27,10 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "permissions": ["CAMERA"],
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -40,6 +44,12 @@
         "expo-camera",
         {
           "cameraPermission": "生活の痕跡を1枚撮るためにカメラを使います。"
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "その瞬間の音を2.5秒だけ録音します。"
         }
       ]
     ],

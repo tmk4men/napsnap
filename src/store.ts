@@ -33,7 +33,7 @@ interface Actions {
   createGroup: (name: string) => void;
   joinGroup: (code: string) => void;
   leaveGroup: () => void;
-  addPost: (imageUrl: string) => string;
+  addPost: (imageUrl: string, audioUrl?: string) => string;
   markViewed: (postId: string) => void;
   reactToPost: (postId: string, type: ReactionType) => void;
   skipPost: (postId: string) => void;
@@ -146,7 +146,7 @@ export const useStore = create<Store>()(
           });
         },
 
-        addPost: (imageUrl) => {
+        addPost: (imageUrl, audioUrl) => {
           const { currentUserId, group } = get();
           if (!currentUserId || !group) return '';
           const createdAt = now();
@@ -155,6 +155,7 @@ export const useStore = create<Store>()(
             userId: currentUserId,
             groupId: group.id,
             imageUrl,
+            audioUrl,
             createdAt,
             expiresAt: createdAt + POST_TTL_HOURS * HOUR,
           };
