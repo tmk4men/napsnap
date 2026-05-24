@@ -8,6 +8,7 @@ export interface User {
   displayName: string;
   avatarEmoji: string;
   avatarColor: string;
+  avatarImageUri?: string; // プロフィール画像（選んだ写真／プリセット）。あれば表示の主役。
   createdAt: number;
   isMock?: boolean; // デモ用のモックの人
 }

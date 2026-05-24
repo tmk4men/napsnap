@@ -13,7 +13,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <ResponsiveFrame>
         <RootNavigator />
       </ResponsiveFrame>

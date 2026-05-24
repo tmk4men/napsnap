@@ -10,7 +10,7 @@ import { FeedScreen } from '../screens/FeedScreen';
 import { TabBar } from './TabBar';
 import { Nav, TabKey } from './nav';
 import { useStore } from '../store';
-import { keptPosts } from '../selectors';
+import { currentUser, keptPosts } from '../selectors';
 
 type Overlay = null | 'camera' | 'preview' | 'feed';
 
@@ -22,6 +22,7 @@ export function AppShell() {
   const [retakeUsed, setRetakeUsed] = useState(false); // 撮り直しは1回だけ
 
   const s = useStore();
+  const me = currentUser(s);
   const keptCount = useMemo(() => keptPosts(s).length, [s.reactions, s.posts, s.currentUserId]);
 
   const nav: Nav = {
@@ -66,7 +67,7 @@ export function AppShell() {
         {tab === 'kept' && <KeptScreen />}
         {tab === 'me' && <MeScreen nav={nav} />}
       </View>
-      <TabBar active={tab} onChange={nav.setTab} keptCount={keptCount} />
+      <TabBar active={tab} onChange={nav.setTab} keptCount={keptCount} me={me} />
 
       {overlay !== null && (
         <View style={StyleSheet.absoluteFill}>

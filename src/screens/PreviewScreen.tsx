@@ -68,8 +68,15 @@ export function PreviewScreen({
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
-  heading: { color: colors.text, fontSize: font.title, fontWeight: '900', marginBottom: space.md },
-  imageWrap: { flex: 1, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.card },
+  heading: { color: colors.text, fontSize: font.title, fontWeight: '900', marginBottom: space.md, letterSpacing: -0.3 },
+  imageWrap: {
+    flex: 1,
+    borderRadius: radius.lg,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceSunken,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
   image: { width: '100%', height: '100%' },
   soundChip: {
     position: 'absolute',

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, shadow, space } from '../theme';
 import { copy } from '../copy';
 import { Avatar, PrimaryButton, Remaining, useTick } from '../components/ui';
 import { CameraIcon } from '../components/icons';
@@ -41,8 +41,12 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
         <Text style={[styles.brand, { color: textColor }]}>napsnap</Text>
         <View style={styles.headerRight}>
-          <Pressable onPress={nav.openCamera} style={styles.camBtn} hitSlop={10}>
-            <CameraIcon size={22} color={textColor} />
+          <Pressable
+            onPress={nav.openCamera}
+            style={[styles.camBtn, mediaMode ? styles.camBtnMedia : styles.camBtnLight]}
+            hitSlop={10}
+          >
+            <CameraIcon size={20} color={textColor} />
           </Pressable>
           <Avatar user={me} size={36} />
         </View>
@@ -68,6 +72,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         ) : latest ? (
           <>
             <View style={styles.lockChip}>
+              <View style={styles.lockDot} />
               <Text style={styles.lockChipText}>{copy.revealChip}</Text>
             </View>
             <Text style={[styles.big, { color: textColor }]}>{copy.lockedHeadline}</Text>
@@ -104,18 +109,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: space.lg,
   },
-  brand: { fontSize: font.body, fontWeight: '900', letterSpacing: 1 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  camBtn: { padding: 4 },
+  brand: { fontSize: font.body, fontWeight: '900', letterSpacing: 2 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  camBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  camBtnLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
+  camBtnMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
   center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
-  big: { fontSize: 52, fontWeight: '900', lineHeight: 56 },
+  big: { fontSize: font.display, fontWeight: '900', lineHeight: 56, letterSpacing: -1.2 },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5 },
   lockChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
     backgroundColor: colors.lime,
     borderRadius: radius.pill,
     paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingVertical: 8,
     marginBottom: space.lg,
+    boxShadow: shadow.button,
   },
-  lockChipText: { color: colors.limeInk, fontSize: font.small, fontWeight: '900' },
+  lockDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.limeInk },
+  lockChipText: { color: colors.limeInk, fontSize: font.small, fontWeight: '900', letterSpacing: 0.3 },
 });

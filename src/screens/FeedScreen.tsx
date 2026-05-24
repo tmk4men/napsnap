@@ -6,7 +6,7 @@ import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
 import { Avatar, GhostButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
-import { ChevronDownIcon, SpeakerOffIcon, SpeakerOnIcon } from '../components/icons';
+import { ChevronDownIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { feedQueue, isPassOpen, userById } from '../selectors';
@@ -102,7 +102,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     return (
       <View style={[styles.done, { paddingTop: insets.top, paddingBottom: insets.bottom + space.lg }]}>
         <View style={styles.doneCenter}>
-          <View style={styles.doneMark} />
+          <TraceMark size={52} />
           <Text style={styles.doneTitle}>{copy.feedDoneTitle}</Text>
           <Text style={styles.doneSub}>{copy.feedDoneSub}</Text>
         </View>
@@ -153,7 +153,6 @@ export function FeedScreen({ nav }: { nav: Nav }) {
               <Text style={styles.metaText}>{timeAgo(post.createdAt)}</Text>
               <Remaining expiresAt={post.expiresAt} color={colors.onMedia} size={12} />
             </View>
-            <Text style={styles.hint}>{copy.cantUndo}</Text>
           </View>
         </View>
       </Animated.View>
@@ -207,15 +206,13 @@ const styles = StyleSheet.create({
   authorName: { color: colors.onMedia, fontSize: font.lead, fontWeight: '800' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 4 },
   metaText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
-  hint: { color: colors.onMediaDim, fontSize: font.tiny, marginTop: 3 },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: space.md, gap: space.sm },
   skip: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: space.sm },
   skipText: { color: colors.onMediaDim, fontSize: font.body, fontWeight: '700' },
 
   // done
   done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
-  doneCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  doneMark: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.lime, marginBottom: space.lg },
-  doneTitle: { color: colors.text, fontSize: font.title, fontWeight: '900' },
-  doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', marginTop: space.sm },
+  doneCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs },
+  doneTitle: { color: colors.text, fontSize: font.title, fontWeight: '900', marginTop: space.sm, letterSpacing: -0.3 },
+  doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
 });

@@ -3,16 +3,16 @@
 
 import { Post, User } from './types';
 import { uid } from './lib/id';
-import { lifeImage, TRACE_SEEDS } from './lib/images';
+import { avatarImage, lifeImage, TRACE_SEEDS } from './lib/images';
 import { HOUR } from './lib/time';
 import { POST_TTL_HOURS } from './copy';
 
 export function makeMockPeople(): User[] {
   const base = [
-    { handle: 'miho', displayName: 'みほ', avatarEmoji: '🌿', avatarColor: '#DFFF2F' },
-    { handle: 'taku', displayName: 'たくや', avatarEmoji: '🛋️', avatarColor: '#7FB3FF' },
-    { handle: 'ken', displayName: 'けん', avatarEmoji: '☕️', avatarColor: '#FFB37F' },
-    { handle: 'saki', displayName: 'さき', avatarEmoji: '🌙', avatarColor: '#C79BFF' },
+    { handle: 'miho', displayName: 'みほ', avatarEmoji: '🌿', avatarColor: '#C7E6A6', avatarSeed: 'miho-plant' },
+    { handle: 'taku', displayName: 'たくや', avatarEmoji: '🛋️', avatarColor: '#AFD0E2', avatarSeed: 'taku-sofa' },
+    { handle: 'ken', displayName: 'けん', avatarEmoji: '☕️', avatarColor: '#E6C7A6', avatarSeed: 'ken-coffee' },
+    { handle: 'saki', displayName: 'さき', avatarEmoji: '🌙', avatarColor: '#CFBCE6', avatarSeed: 'saki-night' },
   ];
   const t = Date.now();
   return base.map((b, i) => ({
@@ -21,6 +21,7 @@ export function makeMockPeople(): User[] {
     displayName: b.displayName,
     avatarEmoji: b.avatarEmoji,
     avatarColor: b.avatarColor,
+    avatarImageUri: avatarImage(b.avatarSeed),
     createdAt: t - (i + 1) * HOUR,
     isMock: true,
   }));

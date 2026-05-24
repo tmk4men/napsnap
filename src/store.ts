@@ -17,6 +17,7 @@ export interface AccountSetupInput {
   handle: string;
   avatarEmoji: string;
   avatarColor: string;
+  avatarImageUri?: string; // 選んだ写真／プリセット
   people: User[]; // フォロー候補（モックの人）
   followingIds: string[]; // フォローする人のid
 }
@@ -35,6 +36,7 @@ interface PersistedState {
 
 interface Actions {
   completeAccountSetup: (input: AccountSetupInput) => void;
+  updateProfileImage: (uri: string) => void;
   toggleFollow: (userId: string) => void;
   addPost: (imageUrl: string, audioUrl?: string) => string;
   markViewed: (postId: string) => void;
@@ -91,7 +93,7 @@ export const useStore = create<Store>()(
       return {
         ...initial,
 
-        completeAccountSetup: ({ displayName, handle, avatarEmoji, avatarColor, people, followingIds }) => {
+        completeAccountSetup: ({ displayName, handle, avatarEmoji, avatarColor, avatarImageUri, people, followingIds }) => {
           const id = uid('u_');
           const me: User = {
             id,
@@ -99,9 +101,12 @@ export const useStore = create<Store>()(
             displayName: displayName.trim() || 'なまえ',
             avatarEmoji,
             avatarColor,
+            avatarImageUri,
             createdAt: now(),
           };
           const followed = people.filter((p) => followingIds.includes(p.id));
+          // 最初からフォロー中の投稿が見えるよう、アクセスパスを開けた状態で始める。
+          const openedAt = now();
           set({
             onboarded: true,
             currentUserId: id,
@@ -111,8 +116,16 @@ export const useStore = create<Store>()(
             views: [],
             reactions: [],
             feedStates: [],
-            accessPass: null,
+            accessPass: { openedAt, expiresAt: openedAt + PASS_HOURS * HOUR },
           });
+        },
+
+        updateProfileImage: (uri) => {
+          const { currentUserId } = get();
+          if (!currentUserId) return;
+          set((st) => ({
+            users: st.users.map((u) => (u.id === currentUserId ? { ...u, avatarImageUri: uri } : u)),
+          }));
         },
 
         toggleFollow: (userId) => {
@@ -192,9 +205,12 @@ export const useStore = create<Store>()(
           if (followedPeople.length === 0) return;
           const fresh = makeFollowPosts(followedPeople);
           const freshIds = new Set(fresh.map((p) => p.id));
+          const openedAt = now();
           set((st) => ({
             posts: [...st.posts.filter((p) => p.userId === currentUserId), ...fresh],
             feedStates: st.feedStates.filter((f) => !freshIds.has(f.postId)),
+            // デモを作り直したら、その投稿がすぐ見えるようにパスも開け直す。
+            accessPass: { openedAt, expiresAt: openedAt + PASS_HOURS * HOUR },
           }));
         },
 
@@ -202,7 +218,7 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v2',
+      name: 'napsnap-store-v3',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,

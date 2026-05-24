@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "napsnap",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#050505",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFF8E8",
     "splash": {
       "backgroundColor": "#050505",
       "resizeMode": "contain",
@@ -37,7 +37,7 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro",
       "output": "single",
-      "backgroundColor": "#050505"
+      "backgroundColor": "#FFF8E8"
     },
     "plugins": [
       [
@@ -50,6 +50,12 @@
         "expo-audio",
         {
           "microphonePermission": "その瞬間の音を2.5秒だけ録音します。"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "プロフィール画像を選ぶために写真ライブラリにアクセスします。"
         }
       ]
     ],

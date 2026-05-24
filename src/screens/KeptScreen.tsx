@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
-import { ReactionIcon } from '../components/icons';
+import { ReactionIcon, TraceMark } from '../components/icons';
 import { useStore } from '../store';
 import { keptPosts, userById } from '../selectors';
 import { timeAgo } from '../lib/time';
@@ -79,7 +79,7 @@ export function KeptScreen() {
   if (kept.length === 0) {
     return (
       <View style={styles.empty}>
-        <View style={styles.emptyMark} />
+        <TraceMark size={48} />
         <Text style={styles.emptyTitle}>{copy.emptyKept}</Text>
         <Text style={styles.emptySub}>{copy.emptyKeptSub}</Text>
       </View>
@@ -163,8 +163,7 @@ const styles = StyleSheet.create({
     fontSize: font.tiny,
     fontWeight: '700',
   },
-  empty: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.lg },
-  emptyMark: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.card, marginBottom: space.md },
-  emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800' },
+  empty: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.lg, gap: space.xs },
+  emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', marginTop: space.sm, lineHeight: font.body * 1.6 },
 });

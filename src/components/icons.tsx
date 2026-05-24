@@ -84,6 +84,82 @@ export function CameraIcon({ size = 22, color = colors.text }: IconProps) {
   );
 }
 
+// --- タブ：ホーム（窓＝今をのぞく） ---
+export function WindowIcon({ size = 24, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5z"
+        stroke={color}
+        strokeWidth={1.9}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <Line x1={12} y1={4.5} x2={12} y2={19.5} stroke={color} strokeWidth={1.9} />
+      <Line x1={3.5} y1={12} x2={20.5} y2={12} stroke={color} strokeWidth={1.9} />
+    </Svg>
+  );
+}
+
+// --- タブ：残した（しおり） ---
+export function BookmarkIcon({ size = 24, color = colors.text, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.2a.6.6 0 0 1-.95.49L12 16.7l-5.55 4a.6.6 0 0 1-.95-.49V5A1.5 1.5 0 0 1 7 3.5z"
+        stroke={color}
+        strokeWidth={1.9}
+        fill={filled ? color : 'none'}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+// --- 編集（鉛筆） ---
+export function PencilIcon({ size = 14, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M4 16.5L15.5 5l3.5 3.5L7.5 20H4v-3.5z"
+        stroke={color}
+        strokeWidth={2}
+        fill="none"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+// --- 写真を選ぶ（画像） ---
+export function ImageIcon({ size = 18, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"
+        stroke={color}
+        strokeWidth={1.9}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <Circle cx={8.5} cy={9.5} r={1.6} fill={color} />
+      <Path d="M3.5 17l4.5-4.5 3.5 3.5 3-3L20.5 17" stroke={color} strokeWidth={1.9} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// --- 空状態の抽象マーク（生活の“痕跡”＝短い斜線＋1点） ---
+export function TraceMark({ size = 44, color = colors.line, dot = colors.limeDust }: IconProps & { dot?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 44 44">
+      <Line x1={8} y1={28} x2={20} y2={16} stroke={color} strokeWidth={2.4} strokeLinecap="round" />
+      <Line x1={16} y1={32} x2={32} y2={16} stroke={color} strokeWidth={2.4} strokeLinecap="round" />
+      <Line x1={26} y1={34} x2={36} y2={24} stroke={color} strokeWidth={2.4} strokeLinecap="round" />
+      <Circle cx={34} cy={12} r={3} fill={dot} />
+    </Svg>
+  );
+}
+
 // --- 反応せず流す（下向き） ---
 export function ChevronDownIcon({ size = 18, color = colors.text }: IconProps) {
   return (

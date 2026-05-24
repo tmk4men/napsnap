@@ -4,42 +4,62 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { tabs } from '../copy';
 import { TabKey } from './nav';
-
-const ITEMS: { key: TabKey; label: string; icon: string }[] = [
-  { key: 'home', label: tabs.home, icon: '◐' },
-  { key: 'kept', label: tabs.kept, icon: '✦' },
-  { key: 'me', label: tabs.me, icon: '●' },
-];
+import { Avatar } from '../components/ui';
+import { BookmarkIcon, WindowIcon } from '../components/icons';
+import { User } from '../types';
 
 export function TabBar({
   active,
   onChange,
   keptCount,
+  me,
 }: {
   active: TabKey;
   onChange: (t: TabKey) => void;
   keptCount: number;
+  me?: User;
 }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + space.xs }]}>
-      {ITEMS.map((it) => {
-        const isActive = active === it.key;
-        return (
-          <Pressable key={it.key} onPress={() => onChange(it.key)} style={styles.item}>
-            <View>
-              <Text style={[styles.icon, isActive && styles.activeIcon]}>{it.icon}</Text>
-              {it.key === 'kept' && keptCount > 0 && (
-                <View style={styles.dot}>
-                  <Text style={styles.dotText}>{keptCount}</Text>
-                </View>
-              )}
+      <Tab label={tabs.home} active={active === 'home'} onPress={() => onChange('home')}>
+        <WindowIcon size={23} color={active === 'home' ? colors.text : colors.textFaint} />
+      </Tab>
+
+      <Tab label={tabs.kept} active={active === 'kept'} onPress={() => onChange('kept')}>
+        <View>
+          <BookmarkIcon size={23} color={active === 'kept' ? colors.text : colors.textFaint} filled={active === 'kept'} />
+          {keptCount > 0 && (
+            <View style={styles.dot}>
+              <Text style={styles.dotText}>{keptCount}</Text>
             </View>
-            <Text style={[styles.label, isActive && styles.activeLabel]}>{it.label}</Text>
-          </Pressable>
-        );
-      })}
+          )}
+        </View>
+      </Tab>
+
+      <Tab label={tabs.me} active={active === 'me'} onPress={() => onChange('me')}>
+        <Avatar user={me} size={24} ring={active === 'me'} />
+      </Tab>
     </View>
+  );
+}
+
+function Tab({
+  children,
+  label,
+  active,
+  onPress,
+}: {
+  children: React.ReactNode;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.item, pressed && { opacity: 0.6 }]}>
+      <View style={styles.iconBox}>{children}</View>
+      <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -51,15 +71,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.line,
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
-  icon: { fontSize: 20, color: colors.textFaint },
-  activeIcon: { color: colors.text },
-  label: { fontSize: font.tiny, color: colors.textFaint, fontWeight: '700' },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  iconBox: { height: 24, alignItems: 'center', justifyContent: 'center' },
+  label: { fontSize: font.tiny, color: colors.textFaint, fontWeight: '700', letterSpacing: 0.3 },
   activeLabel: { color: colors.text },
   dot: {
     position: 'absolute',
-    top: -4,
-    right: -10,
+    top: -5,
+    right: -11,
     backgroundColor: colors.lime,
     borderRadius: radius.pill,
     minWidth: 16,
@@ -67,6 +86,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: colors.bg,
   },
   dotText: { fontSize: 10, fontWeight: '900', color: colors.limeInk },
 });

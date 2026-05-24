@@ -30,6 +30,8 @@ jobs:
       - run: npm ci
       - name: Export web build
         run: npx expo export --platform web
+      - name: Inject OGP meta tags
+        run: node scripts/inject-ogp.mjs
       - name: Disable Jekyll (keep _expo dir)
         run: touch dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3

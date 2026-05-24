@@ -1,16 +1,17 @@
 import React, { useMemo } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, shadow, space } from '../theme';
 import { copy, reactionMeta } from '../copy';
-import { Avatar, GhostButton, Remaining, useTick } from '../components/ui';
+import { Avatar, Card, GhostButton, Remaining, useTick } from '../components/ui';
 import { SoundBadge, useClipPlayer } from '../components/audio';
-import { ReactionIcon } from '../components/icons';
+import { PencilIcon, ReactionIcon, TraceMark } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { currentUser, myPosts } from '../selectors';
 import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
+import { pickAvatarImage } from '../lib/avatar';
 
 export function MeScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
@@ -18,10 +19,16 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const s = useStore();
   const resetDemo = useStore((st) => st.resetDemo);
   const toggleFollow = useStore((st) => st.toggleFollow);
+  const updateProfileImage = useStore((st) => st.updateProfileImage);
   const { play, playingId } = useClipPlayer();
   const me = currentUser(s);
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
   const people = s.users.filter((u) => u.isMock);
+
+  async function changePhoto() {
+    const uri = await pickAvatarImage();
+    if (uri) updateProfileImage(uri);
+  }
 
   return (
     <View style={styles.container}>
@@ -35,8 +42,13 @@ export function MeScreen({ nav }: { nav: Nav }) {
       >
         {/* プロフィール */}
         <View style={styles.profile}>
-          <Avatar user={me} size={60} />
-          <View style={{ marginLeft: space.md }}>
+          <Pressable onPress={changePhoto} style={styles.avatarWrap}>
+            <Avatar user={me} size={64} />
+            <View style={styles.editBadge}>
+              <PencilIcon size={12} color={colors.limeInk} />
+            </View>
+          </Pressable>
+          <View style={{ marginLeft: space.md, flex: 1 }}>
             <Text style={styles.name}>{me?.displayName}</Text>
             <Text style={styles.handle}>@{me?.handle}</Text>
           </View>
@@ -45,7 +57,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
         {/* 自分の投稿 */}
         {mine.length === 0 ? (
           <View style={styles.empty}>
-            <View style={styles.emptyMark} />
+            <TraceMark size={48} />
             <Text style={styles.emptyTitle}>{copy.emptyMine}</Text>
             <Text style={styles.emptySub}>{copy.emptyMineSub}</Text>
             <View style={{ height: space.lg }} />
@@ -53,7 +65,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
           </View>
         ) : (
           mine.map(({ post, viewers, viewCount, reactionCount }) => (
-            <View key={post.id} style={styles.card}>
+            <Card key={post.id} style={styles.card}>
               <View style={styles.cardTop}>
                 <Image source={{ uri: post.imageUrl }} style={styles.thumb} resizeMode="cover" />
                 <View style={{ flex: 1, marginLeft: space.md }}>
@@ -95,7 +107,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
                   ))}
                 </View>
               )}
-            </View>
+            </Card>
           ))
         )}
 
@@ -107,14 +119,14 @@ export function MeScreen({ nav }: { nav: Nav }) {
           const on = s.following.includes(p.id);
           return (
             <View key={p.id} style={styles.person}>
-              <Avatar user={p} size={36} />
+              <Avatar user={p} size={40} />
               <View style={{ flex: 1, marginLeft: space.sm }}>
                 <Text style={styles.personName}>{p.displayName}</Text>
                 <Text style={styles.personHandle}>@{p.handle}</Text>
               </View>
               <Pressable
                 onPress={() => toggleFollow(p.id)}
-                style={[styles.followBtn, on && styles.followBtnOn]}
+                style={({ pressed }) => [styles.followBtn, on && styles.followBtnOn, pressed && { opacity: 0.8 }]}
               >
                 <Text style={[styles.followText, on && styles.followTextOn]}>
                   {on ? 'フォロー中' : 'フォロー'}
@@ -134,27 +146,35 @@ export function MeScreen({ nav }: { nav: Nav }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   profile: { flexDirection: 'row', alignItems: 'center', marginBottom: space.lg },
-  name: { color: colors.text, fontSize: font.title, fontWeight: '900' },
-  handle: { color: colors.textDim, fontSize: font.body, marginTop: 2, fontWeight: '600' },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xl },
-  emptyMark: { width: 16, height: 16, borderRadius: 8, backgroundColor: colors.card, marginBottom: space.md },
-  emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800' },
-  emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', marginTop: space.sm },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.lg,
-    padding: space.md,
-    marginBottom: space.md,
+  avatarWrap: { position: 'relative' },
+  editBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2.5,
+    borderColor: colors.bg,
   },
+  name: { color: colors.text, fontSize: font.title, fontWeight: '900', letterSpacing: -0.3 },
+  handle: { color: colors.textDim, fontSize: font.body, marginTop: 2, fontWeight: '600' },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xl, gap: space.xs },
+  emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm },
+  emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
+  card: { padding: space.md, marginBottom: space.md },
   cardTop: { flexDirection: 'row', alignItems: 'center' },
-  thumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.line },
+  thumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },
   stat: { color: colors.text, fontSize: font.body, marginBottom: 2 },
   statNum: { color: colors.text, fontWeight: '900', fontSize: font.lead },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 6 },
   viewers: {
     marginTop: space.md,
     borderTopWidth: 1,
-    borderTopColor: colors.line,
+    borderTopColor: colors.hairline,
     paddingTop: space.sm,
     gap: space.xs,
   },
@@ -167,16 +187,19 @@ const styles = StyleSheet.create({
     color: colors.textDim,
     fontSize: font.small,
     fontWeight: '900',
+    letterSpacing: 0.5,
     marginTop: space.lg,
     marginBottom: space.sm,
   },
   person: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.surfaceRaised,
     borderRadius: radius.md,
     padding: space.sm,
     marginBottom: space.sm,
+    borderWidth: 1,
+    borderColor: colors.hairline,
   },
   personName: { color: colors.text, fontSize: font.body, fontWeight: '800' },
   personHandle: { color: colors.textDim, fontSize: font.small, marginTop: 1 },

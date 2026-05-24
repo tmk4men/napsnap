@@ -1,11 +1,12 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { colors, font, radius } from '../theme';
+import { colors, font, radius, shadow, space } from '../theme';
 
 // napsnap はスマホ前提のSNS。GitHub Pages のデモはPCブラウザでも開かれるため、
-// 広い画面ではスマホ幅の「端末枠」に収めて中央寄せ、狭い画面では全幅で表示する。
+// 広い画面では「本物の端末」風モックに収めてプロダクトショットに見せる。狭い画面では全幅。
 const WIDE_BREAKPOINT = 640;
-const FRAME_WIDTH = 412;
+const SCREEN_WIDTH = 412;
+const BEZEL = 12;
 
 export function ResponsiveFrame({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
@@ -16,12 +17,23 @@ export function ResponsiveFrame({ children }: { children: React.ReactNode }) {
     return <View style={styles.fill}>{children}</View>;
   }
 
-  const frameHeight = Math.min(Math.max(height - 64, 560), 896);
+  const screenHeight = Math.min(Math.max(height - 96, 560), 900);
 
   return (
-    <View style={styles.page}>
-      <View style={[styles.frame, { width: FRAME_WIDTH, height: frameHeight }]}>{children}</View>
-      <Text style={styles.caption}>napsnap・ブラウザ用デモ版（モックデータ／顔検知はPhase2）</Text>
+    <View style={[styles.page, styles.pageGradient as object]}>
+      <View style={styles.glow} pointerEvents="none" />
+
+      <View style={styles.device}>
+        <View style={[styles.screen, { width: SCREEN_WIDTH, height: screenHeight }]}>
+          {children}
+          <View style={styles.island} pointerEvents="none" />
+        </View>
+      </View>
+
+      <View style={styles.brandRow}>
+        <Text style={styles.brand}>napsnap</Text>
+        <Text style={styles.tagline}>顔のない、今日の痕跡。</Text>
+      </View>
     </View>
   );
 }
@@ -34,13 +46,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  frame: {
+  // web のみ効く線形グラデ（未対応環境では backgroundColor にフォールバック）
+  pageGradient: {
+    experimental_backgroundImage:
+      'linear-gradient(150deg, #24221B 0%, #34301F 52%, #1A1813 100%)',
+  } as any,
+  // 端末背後の淡いライムの光
+  glow: {
+    position: 'absolute',
+    width: 520,
+    height: 520,
+    borderRadius: 260,
+    backgroundColor: 'rgba(217,247,74,0.06)',
+    boxShadow: '0 0 220px 120px rgba(217,247,74,0.05)',
+  },
+  device: {
+    backgroundColor: colors.deviceShell,
+    borderRadius: radius.xl + 16,
+    padding: BEZEL,
+    boxShadow: shadow.frame,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  screen: {
     backgroundColor: colors.bg,
-    borderRadius: radius.lg + 12,
+    borderRadius: radius.xl + 4,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.15)',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.45)',
+    borderColor: 'rgba(255,255,255,0.05)',
+    position: 'relative',
   },
-  caption: { color: 'rgba(255,255,255,0.45)', fontSize: font.small, marginTop: 16 },
+  island: {
+    position: 'absolute',
+    top: 9,
+    alignSelf: 'center',
+    width: 100,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#08080a',
+  },
+  brandRow: { marginTop: space.lg, alignItems: 'center', gap: 4 },
+  brand: { color: 'rgba(255,253,247,0.92)', fontSize: font.body, fontWeight: '900', letterSpacing: 2 },
+  tagline: { color: 'rgba(255,253,247,0.40)', fontSize: font.small, letterSpacing: 0.5 },
 });
