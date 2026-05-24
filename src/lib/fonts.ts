@@ -9,6 +9,8 @@ export const fonts = {
   brand: WEB ? 'Caveat' : undefined, // napsnap のロゴ＝手書き風
   display: WEB ? 'Zen Kaku Gothic New' : undefined, // 大見出し
   ui: WEB ? 'Zen Kaku Gothic New' : undefined, // UI本文・ラベル（全体の統一感）
+  name: WEB ? 'Zen Maru Gothic' : undefined, // 表示名＝丸ゴで親しみのある人格
+  handle: WEB ? 'DM Mono' : undefined, // @ID＝等幅で“ユーザー名”らしい質感
 } as const;
 
 // 画像に入れる文字のフォント（3種）。
@@ -25,7 +27,7 @@ export function captionFont(key: string) {
 }
 
 export const GOOGLE_FONTS_HREF =
-  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;800;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&display=swap';
+  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;800;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&family=DM+Mono:wght@400;500&display=swap';
 
 // 実行時にWebのheadへフォントlinkを差し込む（dev/prod 両対応。idで二重読み込みを防ぐ）。
 export function loadWebFonts() {

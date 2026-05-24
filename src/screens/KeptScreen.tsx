@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy, reactionMeta } from '../copy';
-import { Avatar, GhostButton, Remaining, useTick } from '../components/ui';
+import { Avatar, Remaining, useTick } from '../components/ui';
 import { Nav } from '../navigation/nav';
 import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
@@ -106,8 +106,6 @@ export function KeptScreen({ nav }: { nav: Nav }) {
       <View style={styles.empty}>
         <TraceMark size={48} />
         <Text style={styles.emptySub}>{copy.emptyKeptSub}</Text>
-        <View style={{ height: space.md }} />
-        <GhostButton label={copy.shoot} onPress={() => nav.openCamera()} />
       </View>
     );
   }

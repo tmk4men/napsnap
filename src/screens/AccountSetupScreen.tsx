@@ -220,8 +220,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.hairline,
   },
-  at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700' },
-  handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '600', fontFamily: fonts.ui, paddingVertical: 15, marginLeft: 4 },
+  at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.handle },
+  handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.3, paddingVertical: 15, marginLeft: 4 },
   hint: { color: colors.textFaint, fontSize: font.small, marginTop: space.xs },
 
   person: {

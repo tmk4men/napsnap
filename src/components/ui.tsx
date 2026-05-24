@@ -12,7 +12,7 @@ import {
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { User } from '../types';
-import { ClockIcon, UserIcon } from './icons';
+import { CameraIcon, ClockIcon, UserIcon } from './icons';
 import { formatClock } from '../lib/time';
 
 export function PrimaryButton({
@@ -39,6 +39,30 @@ export function PrimaryButton({
       ]}
     >
       <Text style={[styles.primaryLabel, disabled && styles.primaryLabelDisabled]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+// 「撮る」をカメラのSVGで表す。block=全幅のライムピル / 既定=丸ボタン。
+export function ShootButton({
+  onPress,
+  block = false,
+  style,
+}: {
+  onPress: () => void;
+  block?: boolean;
+  style?: StyleProp<ViewStyle>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        block ? styles.shootBlock : styles.shootRound,
+        pressed && { transform: [{ scale: 0.97 }], boxShadow: shadow.cardPressed },
+        style,
+      ]}
+    >
+      <CameraIcon size={block ? 24 : 23} color={colors.limeInk} />
     </Pressable>
   );
 }
@@ -254,6 +278,28 @@ const styles = StyleSheet.create({
   primaryPressed: { transform: [{ scale: 0.985 }, { translateY: 1 }], boxShadow: shadow.cardPressed },
   primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.ui },
   primaryLabelDisabled: { color: colors.textFaint },
+
+  shootBlock: {
+    backgroundColor: colors.lime,
+    borderRadius: radius.pill,
+    paddingVertical: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(24,26,13,0.10)',
+    boxShadow: shadow.button,
+  },
+  shootRound: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(24,26,13,0.10)',
+    boxShadow: shadow.button,
+  },
 
   ghost: {
     paddingVertical: 14,

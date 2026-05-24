@@ -95,8 +95,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.hairline,
   },
-  name: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
-  handle: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
+  name: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
+  handle: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.handle, letterSpacing: 0.2 },
   followBtn: {
     borderRadius: radius.pill,
     paddingHorizontal: 14,

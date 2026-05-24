@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, GhostButton, Remaining, useTick } from '../components/ui';
+import { Avatar, GhostButton, Remaining, ShootButton, useTick } from '../components/ui';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
 import { FootprintIcon, PencilIcon, TraceMark } from '../components/icons';
@@ -137,7 +137,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
             <TraceMark size={48} />
             <Text style={styles.emptyTitle}>{copy.emptyMine}</Text>
             <View style={{ height: space.md }} />
-            <GhostButton label={copy.shoot} onPress={() => nav.openCamera()} />
+            <ShootButton onPress={() => nav.openCamera()} />
           </View>
         ) : (
           <ScrollView
@@ -237,9 +237,9 @@ const styles = StyleSheet.create({
   },
   editBadgeLocked: { backgroundColor: colors.surfaceSunken },
   avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
-  name: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.display },
-  handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 2 },
-  handle: { color: colors.textDim, fontSize: font.body, fontWeight: '600' },
+  name: { color: colors.text, fontSize: font.title, fontWeight: '700', fontFamily: fonts.name },
+  handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 3 },
+  handle: { color: colors.textDim, fontSize: font.body, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.2 },
   editLink: {
     color: colors.textDim,
     fontSize: font.small,

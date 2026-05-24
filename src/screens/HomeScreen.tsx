@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
+import { Avatar, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
 import { ChekiCard } from '../components/ChekiCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -163,7 +163,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <GhostButton label={copy.shoot} onPress={() => nav.openCamera()} />
           )
         ) : (
-          <PrimaryButton label={copy.shoot} onPress={() => nav.openCamera()} />
+          <ShootButton block onPress={() => nav.openCamera()} />
         )}
       </View>
 
