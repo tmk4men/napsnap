@@ -27,11 +27,11 @@ export const copy = {
   setupBack: 'もどる',
 
   // ホーム：ロック中（相手の画像はモザイク・音は鳴らない）
-  lockedHeadline: 'まだ、見えない',
-  lockedSub: '1枚出すと、6時間みんなが見える。',
+  lockedHeadline: 'ロック中',
+  lockedSub: '出した人だけ、見える',
   lockedEmpty: 'まだ誰も出してない',
   shoot: '撮る',
-  revealChip: '撮ると、見える',
+  revealChip: '撮ってひらく',
 
   // ホーム：オープン
   see: '見る',
@@ -63,7 +63,7 @@ export const copy = {
 
   // 自分
   emptyMine: 'まだ出してない',
-  emptyMineSub: '1枚出すと、6時間みんなが見える。',
+  emptyMineSub: '出すと、ここに残る。',
   following: 'フォロー中',
   noFollowing: '誰もフォローしてない',
   saw: '見た',
