@@ -18,8 +18,6 @@ import { useStore } from '../store';
 import { makeMockPeople } from '../seed';
 import { pickAvatarImage } from '../lib/avatar';
 
-const DEFAULT_AVATAR_COLOR = '#C7E6A6'; // 写真未選択時の頭文字アバターのほのかな下地色
-
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
   const completeAccountSetup = useStore((s) => s.completeAccountSetup);
@@ -32,7 +30,7 @@ export function AccountSetupScreen() {
   const [followingIds, setFollowingIds] = useState<string[]>(() => people.map((p) => p.id));
 
   const sanitizeHandle = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16);
-  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: DEFAULT_AVATAR_COLOR, avatarImageUri: avatarUri || undefined, createdAt: 0 };
+  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: colors.avatarTint, avatarImageUri: avatarUri || undefined, createdAt: 0 };
 
   async function choosePhoto() {
     const uri = await pickAvatarImage();
@@ -44,7 +42,7 @@ export function AccountSetupScreen() {
       displayName: name,
       handle,
       avatarEmoji: '🟡',
-      avatarColor: DEFAULT_AVATAR_COLOR,
+      avatarColor: colors.avatarTint,
       avatarImageUri: avatarUri || undefined,
       people,
       followingIds,

@@ -212,8 +212,8 @@ export function CameraScreen({ nav }: { nav: Nav }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000' },
-  noCam: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#101010' },
+  container: { flex: 1, backgroundColor: colors.surfaceMedia },
+  noCam: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceMedia },
   noCamEmoji: { fontSize: 56, marginBottom: space.md },
   noCamText: { color: colors.onMediaDim, fontSize: font.body, textAlign: 'center', lineHeight: 22 },
   top: {

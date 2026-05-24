@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   Pressable,
   StyleProp,
@@ -189,14 +188,6 @@ export function Remaining({
   );
 }
 
-export function Spinner() {
-  return (
-    <View style={styles.center}>
-      <ActivityIndicator color={colors.textDim} />
-    </View>
-  );
-}
-
 export function useTick(intervalMs = 1000) {
   const [, setN] = useState(0);
   useEffect(() => {
@@ -273,7 +264,6 @@ const styles = StyleSheet.create({
 
   avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarShadow: { borderRadius: radius.pill, boxShadow: shadow.avatar },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   remaining: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   remainingText: { fontWeight: '800' },
 });

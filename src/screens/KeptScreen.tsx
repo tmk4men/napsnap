@@ -151,8 +151,8 @@ export function KeptScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', overflow: 'hidden' },
-  card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#111' },
+  container: { flex: 1, backgroundColor: colors.surfaceMedia, overflow: 'hidden' },
+  card: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surfaceMedia },
   shadeTop: { position: 'absolute', top: 0, left: 0, right: 0, height: 110, backgroundColor: 'rgba(0,0,0,0.3)' },
   shadeBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, backgroundColor: 'rgba(0,0,0,0.4)' },
   top: {

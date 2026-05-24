@@ -3,7 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { copy } from '../copy';
-import { Avatar, PrimaryButton, Remaining, useTick } from '../components/ui';
+import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
 import { CameraIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -29,7 +29,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const dimColor = mediaMode ? colors.onMediaDim : colors.textDim;
 
   return (
-    <View style={[styles.container, mediaMode && { backgroundColor: '#000' }]}>
+    <View style={[styles.container, mediaMode && { backgroundColor: colors.surfaceMedia }]}>
       {mediaMode && (
         <>
           <Image source={{ uri: latest.imageUrl }} style={StyleSheet.absoluteFill} blurRadius={28} resizeMode="cover" />
@@ -91,7 +91,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         {open ? (
           count > 0 ? (
             <PrimaryButton label={`${copy.see}（${count}）`} onPress={nav.openFeed} />
-          ) : null
+          ) : (
+            <GhostButton label={copy.shoot} onPress={nav.openCamera} />
+          )
         ) : (
           <PrimaryButton label={copy.shoot} onPress={nav.openCamera} />
         )}

@@ -218,7 +218,7 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v3',
+      name: 'napsnap-store-v4',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,

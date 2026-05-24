@@ -28,6 +28,9 @@ export const colors = {
   // 警告
   warn: '#D9473F', // 人検知時のみ
 
+  // 写真未選択時の頭文字アバターのほのかな下地色（互換用に User.avatarColor へ入れる）
+  avatarTint: '#C7E6A6',
+
   // 写真の上で使う固定色（テーマに依らず白＋暗いスクリム）
   onMedia: '#FFFDF7',
   onMediaDim: 'rgba(255,253,247,0.72)',
