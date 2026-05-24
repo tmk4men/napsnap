@@ -5,21 +5,46 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "scheme": "napsnap",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#050505",
+    "splash": {
+      "backgroundColor": "#050505",
+      "resizeMode": "contain",
+      "image": "./assets/splash-icon.png"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "生活の痕跡を1枚撮るためにカメラを使います。"
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#050505",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": ["CAMERA"],
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single",
+      "backgroundColor": "#050505"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "生活の痕跡を1枚撮るためにカメラを使います。"
+        }
+      ]
+    ],
+    "experiments": {
+      "baseUrl": "/napsnap"
     }
   }
 }
