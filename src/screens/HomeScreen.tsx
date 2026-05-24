@@ -5,6 +5,7 @@ import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton, Remaining, useTick } from '../components/ui';
+import { CaptionView } from '../components/Caption';
 import { CameraIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -58,6 +59,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <>
           <Image source={{ uri: heroImage }} style={StyleSheet.absoluteFill} blurRadius={mediaMode ? 28 : 0} resizeMode="cover" />
           <View style={styles.scrim} />
+          {openHero && heroPost?.caption && <CaptionView caption={heroPost.caption} />}
         </>
       )}
 

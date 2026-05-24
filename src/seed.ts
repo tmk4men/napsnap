@@ -31,14 +31,14 @@ export function makeMockPeople(): User[] {
 export function makeFollowPosts(people: User[]): Post[] {
   const t = Date.now();
   const posts: Post[] = [];
-  const plan: { personIndex: number; minutesAgo: number; seed: string }[] = [
-    { personIndex: 0, minutesAgo: 18, seed: TRACE_SEEDS[0] },
+  const plan: { personIndex: number; minutesAgo: number; seed: string; cap?: Post['caption'] }[] = [
+    { personIndex: 0, minutesAgo: 18, seed: TRACE_SEEDS[0], cap: { text: '休憩なう', fontKey: 'maru', color: '#FFFDF7', x: 0.5, y: 0.82 } },
     { personIndex: 1, minutesAgo: 52, seed: TRACE_SEEDS[2] },
-    { personIndex: 2, minutesAgo: 95, seed: TRACE_SEEDS[4] },
+    { personIndex: 2, minutesAgo: 95, seed: TRACE_SEEDS[4], cap: { text: 'コーヒー', fontKey: 'hand', color: '#E4FF54', x: 0.32, y: 0.22 } },
     { personIndex: 3, minutesAgo: 140, seed: TRACE_SEEDS[3] },
     { personIndex: 0, minutesAgo: 210, seed: TRACE_SEEDS[5] },
     { personIndex: 2, minutesAgo: 280, seed: TRACE_SEEDS[7] },
-    { personIndex: 1, minutesAgo: 360, seed: TRACE_SEEDS[9] },
+    { personIndex: 1, minutesAgo: 360, seed: TRACE_SEEDS[9], cap: { text: 'おやすみ', fontKey: 'mincho', color: '#FFFDF7', x: 0.5, y: 0.5 } },
   ];
   for (const p of plan) {
     const person = people[p.personIndex];
@@ -48,6 +48,7 @@ export function makeFollowPosts(people: User[]): Post[] {
       id: uid('p_'),
       userId: person.id,
       imageUrl: lifeImage(`${person.id}-${p.seed}`),
+      caption: p.cap,
       audioSeed: `${person.id}-${p.seed}`,
       createdAt,
       expiresAt: createdAt + POST_TTL_HOURS * HOUR,
@@ -61,15 +62,15 @@ export function makeFollowPosts(people: User[]): Post[] {
 export function makeMyMemories(meId: string): Post[] {
   const DAY = 24 * HOUR;
   const t = Date.now();
-  const plan: { daysAgo: number; seed: string; cap?: { text: string; fontKey: string; color: string; pos: 'top' | 'center' | 'bottom' } }[] = [
-    { daysAgo: 365, seed: 'me-y1', cap: { text: '一年前の\nわたしの机', fontKey: 'hand', color: '#FFFDF7', pos: 'bottom' } },
-    { daysAgo: 30, seed: 'me-m1', cap: { text: 'しずかな朝', fontKey: 'mincho', color: '#FFFDF7', pos: 'top' } },
-    { daysAgo: 7, seed: 'me-w1', cap: { text: 'おつかれ', fontKey: 'maru', color: '#E4FF54', pos: 'center' } },
+  const plan: { daysAgo: number; seed: string; cap?: Post['caption'] }[] = [
+    { daysAgo: 365, seed: 'me-y1', cap: { text: '一年前の\nわたしの机', fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.82 } },
+    { daysAgo: 30, seed: 'me-m1', cap: { text: 'しずかな朝', fontKey: 'mincho', color: '#FFFDF7', x: 0.5, y: 0.2 } },
+    { daysAgo: 7, seed: 'me-w1', cap: { text: 'おつかれ', fontKey: 'maru', color: '#E4FF54', x: 0.5, y: 0.5 } },
     { daysAgo: 2, seed: 'me-d2' },
-    { daysAgo: 3, seed: 'me-d3', cap: { text: '夜ふかし', fontKey: 'hand', color: '#FFFDF7', pos: 'bottom' } },
+    { daysAgo: 3, seed: 'me-d3', cap: { text: '夜ふかし', fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.82 } },
     { daysAgo: 12, seed: 'me-d12' },
     { daysAgo: 40, seed: 'me-d40' },
-    { daysAgo: 95, seed: 'me-d95', cap: { text: 'あの日の窓', fontKey: 'mincho', color: '#1A1A14', pos: 'top' } },
+    { daysAgo: 95, seed: 'me-d95', cap: { text: 'あの日の窓', fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.2 } },
     { daysAgo: 200, seed: 'me-d200' },
   ];
   return plan.map((p) => {

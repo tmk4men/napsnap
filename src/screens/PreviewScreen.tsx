@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,8 +10,9 @@ import { SpeakerOnIcon, TextIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { PostCaption } from '../types';
+import { countFaces } from '../lib/faceCheck';
 
-const DEFAULT_CAPTION: PostCaption = { text: '', fontKey: 'hand', color: '#FFFDF7', pos: 'center' };
+const DEFAULT_CAPTION: PostCaption = { text: '', fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.5 };
 
 export function PreviewScreen({
   uri,
@@ -33,7 +34,24 @@ export function PreviewScreen({
   const [editing, setEditing] = useState(false);
   const hasCaption = caption.text.trim().length > 0;
 
+  // 投稿前の顔チェック（Web=MediaPipe / ネイティブは本番で端末側に差し替え）
+  const [faces, setFaces] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setFaces(null);
+    countFaces(uri).then((n) => {
+      if (alive) setFaces(n);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [uri]);
+  const checking = faces === null;
+  const hasFace = (faces ?? 0) > 0;
+  const canPost = !checking && !hasFace;
+
   function postIt() {
+    if (!canPost) return;
     try {
       player.pause();
     } catch {}
@@ -56,15 +74,10 @@ export function PreviewScreen({
 
       {hasCaption && !editing && <CaptionView caption={caption} />}
 
-      {/* 上部：見出し＋音 */}
       {!editing && (
         <View style={[styles.top, { paddingTop: insets.top + space.md }]}>
           <Text style={styles.heading}>{copy.previewTitle}</Text>
-          <Pressable
-            onPress={playClip}
-            disabled={!audioUri}
-            style={[styles.soundChip, status.playing && styles.soundChipOn]}
-          >
+          <Pressable onPress={playClip} disabled={!audioUri} style={[styles.soundChip, status.playing && styles.soundChipOn]}>
             <SpeakerOnIcon size={15} color={status.playing ? colors.limeInk : colors.onMedia} />
             <Text style={[styles.soundText, status.playing && { color: colors.limeInk }]}>
               {!audioUri ? copy.noMic : status.playing ? copy.previewPlaying : copy.previewPlay}
@@ -73,20 +86,30 @@ export function PreviewScreen({
         </View>
       )}
 
-      {/* 文字入れ編集モード */}
-      {editing && (
-        <CaptionEditor value={caption} onChange={setCaption} onDone={() => setEditing(false)} />
-      )}
+      {editing && <CaptionEditor value={caption} onChange={setCaption} onDone={() => setEditing(false)} />}
 
-      {/* 下部シート */}
       {!editing && (
         <View style={[styles.sheet, { paddingBottom: insets.bottom + space.md }]}>
           <Pressable onPress={() => setEditing(true)} style={({ pressed }) => [styles.textBtn, pressed && styles.textBtnPressed]}>
             <TextIcon size={16} color={colors.text} />
             <Text style={styles.textBtnLabel}>{hasCaption ? '文字を編集' : '文字を入れる'}</Text>
           </Pressable>
-          <PrimaryButton label={copy.post} onPress={postIt} />
-          {canRetake && <GhostButton label={copy.retake} onPress={nav.retake} style={{ marginTop: space.xs }} />}
+
+          {hasFace ? (
+            <View style={styles.warn}>
+              <View style={styles.warnDot} />
+              <Text style={styles.warnText}>顔が写ってるかも。napsnapは顔なしで。</Text>
+            </View>
+          ) : checking ? (
+            <Text style={styles.checking}>顔がないか確認中…</Text>
+          ) : null}
+
+          {hasFace ? (
+            <PrimaryButton label="撮り直す" onPress={nav.retake} />
+          ) : (
+            <PrimaryButton label={checking ? '確認中…' : copy.post} onPress={postIt} disabled={!canPost} />
+          )}
+          {canRetake && !hasFace && <GhostButton label={copy.retake} onPress={nav.retake} style={{ marginTop: space.xs }} />}
         </View>
       )}
     </View>
@@ -149,4 +172,19 @@ const styles = StyleSheet.create({
   },
   textBtnPressed: { backgroundColor: colors.surfaceSunken },
   textBtnLabel: { color: colors.text, fontSize: font.body, fontWeight: '800' },
+  warn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(217,71,63,0.12)',
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(217,71,63,0.4)',
+    marginBottom: space.xs,
+  },
+  warnDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.warn },
+  warnText: { color: colors.warn, fontSize: font.small, fontWeight: '800' },
+  checking: { color: colors.textDim, fontSize: font.small, fontWeight: '700', textAlign: 'center', marginBottom: space.xs },
 });

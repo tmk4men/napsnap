@@ -26,7 +26,8 @@ export interface PostCaption {
   text: string;
   fontKey: string; // CAPTION_FONTS のキー
   color: string; // 文字色
-  pos: 'top' | 'center' | 'bottom';
+  x: number; // 文字中心の水平位置（0..1）
+  y: number; // 文字中心の垂直位置（0..1）
 }
 
 export interface Post {
