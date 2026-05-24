@@ -13,7 +13,7 @@ export const colors = {
   // 文字
   text: '#171713', // メイン Soft Black
   textDim: '#6E6859', // 補助（生活感のある灰）
-  textFaint: '#A79E8B', // さらに薄い灰
+  textFaint: '#7C735F', // さらに薄い灰（cream上でも読めるコントラストに）
 
   // 線
   line: '#DED4C1', // 区切り線

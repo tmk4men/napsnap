@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
   camBtnLight: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.hairline },
   camBtnMedia: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
   center: { flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingHorizontal: space.lg },
-  big: { fontSize: font.display, fontWeight: '900', lineHeight: 56, letterSpacing: -1.2 },
+  big: { fontSize: font.display, fontWeight: '900', lineHeight: 58 },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5 },
   lockChip: {
     flexDirection: 'row',

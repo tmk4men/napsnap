@@ -112,6 +112,30 @@ export function Pill({
 }
 
 // プロフィール画像があれば写真、なければ頭文字。絵文字は最後のフォールバック。
+// ring=true のときは外側にライムの輪＋内側にクリームの隙間を作る（写真/文字で見え方が揺れない）。
+function AvatarInner({ user, size, border }: { user?: User; size: number; border: object }) {
+  const wrap = { width: size, height: size, borderRadius: size / 2 };
+  if (user?.avatarImageUri) {
+    return (
+      <Image
+        source={{ uri: user.avatarImageUri }}
+        style={[wrap, border, { backgroundColor: colors.surfaceSunken }]}
+        resizeMode="cover"
+      />
+    );
+  }
+  const initial = (user?.displayName ?? '').trim().charAt(0);
+  return (
+    <View style={[styles.avatar, wrap, border, { backgroundColor: colors.surfaceSunken }]}>
+      {initial ? (
+        <Text style={{ fontSize: size * 0.42, fontWeight: '800', color: colors.textDim }}>{initial}</Text>
+      ) : (
+        <Text style={{ fontSize: size * 0.5 }}>{user?.avatarEmoji ?? '🟡'}</Text>
+      )}
+    </View>
+  );
+}
+
 export function Avatar({
   user,
   size = 38,
@@ -121,31 +145,28 @@ export function Avatar({
   size?: number;
   ring?: boolean;
 }) {
-  const wrap = {
-    width: size,
-    height: size,
-    borderRadius: size / 2,
-  };
-  const ringStyle = ring ? { borderWidth: 2, borderColor: colors.lime } : { borderWidth: 1, borderColor: colors.hairline };
-
-  if (user?.avatarImageUri) {
+  if (ring) {
     return (
-      <Image
-        source={{ uri: user.avatarImageUri }}
-        style={[wrap, ringStyle, { backgroundColor: colors.surfaceSunken }]}
-        resizeMode="cover"
-      />
+      <View
+        style={[
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: colors.lime,
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+          size >= 40 && styles.avatarShadow,
+        ]}
+      >
+        <AvatarInner user={user} size={size - 4} border={{ borderWidth: 2, borderColor: colors.bg }} />
+      </View>
     );
   }
-
-  const initial = (user?.displayName ?? '').trim().charAt(0);
   return (
-    <View style={[styles.avatar, wrap, ringStyle, { backgroundColor: colors.surfaceSunken }]}>
-      {initial ? (
-        <Text style={{ fontSize: size * 0.42, fontWeight: '800', color: colors.textDim }}>{initial}</Text>
-      ) : (
-        <Text style={{ fontSize: size * 0.5 }}>{user?.avatarEmoji ?? '🟡'}</Text>
-      )}
+    <View style={size >= 40 ? styles.avatarShadow : undefined}>
+      <AvatarInner user={user} size={size} border={{ borderWidth: 1, borderColor: colors.hairline }} />
     </View>
   );
 }
@@ -251,6 +272,7 @@ const styles = StyleSheet.create({
   pillText: { color: colors.text, fontSize: font.small, fontWeight: '800' },
 
   avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarShadow: { borderRadius: radius.pill, boxShadow: shadow.avatar },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   remaining: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   remainingText: { fontWeight: '800' },

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, font } from '../theme';
-import { Spinner } from '../components/ui';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { colors, font, space } from '../theme';
 import { AccountSetupScreen } from '../screens/AccountSetupScreen';
 import { AppShell } from './AppShell';
 import { useStore } from '../store';
@@ -27,7 +26,8 @@ export function RootNavigator() {
     return (
       <View style={styles.splash}>
         <Text style={styles.brand}>napsnap</Text>
-        <Spinner />
+        <View style={styles.bar} />
+        <ActivityIndicator color={colors.textFaint} style={{ marginTop: space.xl }} />
       </View>
     );
   }
@@ -38,5 +38,6 @@ export function RootNavigator() {
 
 const styles = StyleSheet.create({
   splash: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  brand: { color: colors.text, fontSize: font.title, fontWeight: '900', letterSpacing: 2, marginBottom: 20 },
+  brand: { color: colors.text, fontSize: font.title, fontWeight: '900', letterSpacing: 3 },
+  bar: { width: 28, height: 5, borderRadius: 3, backgroundColor: colors.lime, marginTop: space.sm },
 });

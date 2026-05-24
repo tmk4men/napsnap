@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -17,10 +16,9 @@ import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
 import { ImageIcon, PencilIcon } from '../components/icons';
 import { useStore } from '../store';
 import { makeMockPeople } from '../seed';
-import { PRESET_AVATARS } from '../lib/images';
 import { pickAvatarImage } from '../lib/avatar';
 
-const TINTS = ['#C7E6A6', '#AFD0E2', '#E6C7A6', '#CFBCE6', '#D7E2A6', '#E6AFBC', '#E6D28F', '#AFE2D4'];
+const DEFAULT_AVATAR_COLOR = '#C7E6A6'; // 写真未選択時の頭文字アバターのほのかな下地色
 
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -30,11 +28,11 @@ export function AccountSetupScreen() {
   const [step, setStep] = useState<0 | 1>(0);
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
-  const [avatarUri, setAvatarUri] = useState<string>(PRESET_AVATARS[0]);
+  const [avatarUri, setAvatarUri] = useState<string>('');
   const [followingIds, setFollowingIds] = useState<string[]>(() => people.map((p) => p.id));
 
   const sanitizeHandle = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16);
-  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: TINTS[0], avatarImageUri: avatarUri, createdAt: 0 };
+  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: DEFAULT_AVATAR_COLOR, avatarImageUri: avatarUri || undefined, createdAt: 0 };
 
   async function choosePhoto() {
     const uri = await pickAvatarImage();
@@ -46,8 +44,8 @@ export function AccountSetupScreen() {
       displayName: name,
       handle,
       avatarEmoji: '🟡',
-      avatarColor: TINTS[0],
-      avatarImageUri: avatarUri,
+      avatarColor: DEFAULT_AVATAR_COLOR,
+      avatarImageUri: avatarUri || undefined,
       people,
       followingIds,
     });
@@ -74,25 +72,9 @@ export function AccountSetupScreen() {
             </Pressable>
             <Pressable onPress={choosePhoto} style={({ pressed }) => [styles.choose, pressed && styles.chosePressed]}>
               <ImageIcon size={16} color={colors.text} />
-              <Text style={styles.chooseText}>写真を選ぶ</Text>
+              <Text style={styles.chooseText}>{avatarUri ? '写真を変える' : '写真を選ぶ'}</Text>
             </Pressable>
-          </View>
-
-          {/* プリセット写真アバター */}
-          <Text style={styles.presetLabel}>または、痕跡から選ぶ</Text>
-          <View style={styles.presetRow}>
-            {PRESET_AVATARS.map((uri) => {
-              const active = uri === avatarUri;
-              return (
-                <Pressable
-                  key={uri}
-                  onPress={() => setAvatarUri(uri)}
-                  style={[styles.presetWrap, active && styles.presetActive]}
-                >
-                  <Image source={{ uri }} style={styles.preset} resizeMode="cover" />
-                </Pressable>
-              );
-            })}
+            <Text style={styles.avatarHint}>顔の写らない、好きな1枚を。あとから変えられる。</Text>
           </View>
 
           <Text style={styles.fieldLabel}>なまえ</Text>
@@ -173,7 +155,7 @@ export function AccountSetupScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   brand: { color: colors.text, fontSize: font.body, fontWeight: '900', letterSpacing: 2, marginBottom: space.lg },
-  title: { color: colors.text, fontSize: font.hero, fontWeight: '900', lineHeight: font.hero * 1.08, letterSpacing: -0.5 },
+  title: { color: colors.text, fontSize: font.hero, fontWeight: '900', lineHeight: 48 },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 
   avatarStage: { alignItems: 'center', marginTop: space.xl, gap: space.md },
@@ -205,19 +187,7 @@ const styles = StyleSheet.create({
   },
   chosePressed: { backgroundColor: colors.surfaceSunken, transform: [{ scale: 0.98 }] },
   chooseText: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-
-  presetLabel: { color: colors.textFaint, fontSize: font.small, fontWeight: '800', marginTop: space.xl, marginBottom: space.sm },
-  presetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  presetWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    padding: 2,
-  },
-  presetActive: { borderColor: colors.lime },
-  preset: { width: '100%', height: '100%', borderRadius: 24, backgroundColor: colors.surfaceSunken },
+  avatarHint: { color: colors.textFaint, fontSize: font.small, textAlign: 'center' },
 
   fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '800', marginTop: space.lg, marginBottom: space.xs },
   input: {
@@ -248,11 +218,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     padding: space.sm,
     marginBottom: space.sm,
     borderWidth: 1,
     borderColor: colors.hairline,
+    boxShadow: shadow.chip,
   },
   personPressed: { backgroundColor: colors.surfaceSunken },
   personName: { color: colors.text, fontSize: font.body, fontWeight: '800' },
@@ -261,11 +232,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: colors.bg,
-    borderWidth: 1.5,
-    borderColor: colors.text,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.line,
   },
   followBtnOn: { backgroundColor: colors.lime, borderColor: colors.lime },
-  followText: { color: colors.text, fontSize: font.small, fontWeight: '800' },
+  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
   followTextOn: { color: colors.limeInk },
 });

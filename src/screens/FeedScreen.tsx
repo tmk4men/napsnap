@@ -213,6 +213,6 @@ const styles = StyleSheet.create({
   // done
   done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   doneCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs },
-  doneTitle: { color: colors.text, fontSize: font.title, fontWeight: '900', marginTop: space.sm, letterSpacing: -0.3 },
+  doneTitle: { color: colors.text, fontSize: font.title, fontWeight: '900', marginTop: space.sm },
   doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
 });

@@ -11,7 +11,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
-import { GhostButton } from '../components/ui';
 import { Waveform } from '../components/Waveform';
 import { Nav } from '../navigation/nav';
 import { demoCapture } from '../lib/images';
@@ -172,6 +171,7 @@ export function CameraScreen({ nav }: { nav: Nav }) {
           <Text style={styles.closeText}>✕</Text>
         </Pressable>
         <View style={styles.guidePill}>
+          <View style={styles.guideDot} />
           <Text style={styles.guideText}>{copy.cameraGuide}</Text>
         </View>
         {granted ? (
@@ -193,11 +193,18 @@ export function CameraScreen({ nav }: { nav: Nav }) {
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.lg }]}>
-        <Pressable onPress={shoot} style={styles.shutterOuter}>
-          <View style={styles.shutterInner} />
+        <Pressable onPress={shoot} style={({ pressed }) => [styles.shutterOuter, pressed && { transform: [{ scale: 0.94 }] }]}>
+          <View style={styles.shutterInner}>
+            <View style={styles.shutterCore} />
+          </View>
         </Pressable>
         {granted && (
-          <GhostButton label="カメラが使えない時はデモ写真で" onPress={() => startCapture(demoCapture())} />
+          <Pressable
+            onPress={() => startCapture(demoCapture())}
+            style={({ pressed }) => [styles.demoBtn, pressed && { opacity: 0.8 }]}
+          >
+            <Text style={styles.demoBtnText}>カメラが使えない時はデモ写真で</Text>
+          </Pressable>
         )}
       </View>
     </View>
@@ -241,8 +248,19 @@ const styles = StyleSheet.create({
   },
   flipIcon: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
   flipLabel: { color: colors.lime, fontSize: font.small, fontWeight: '800' },
-  guidePill: { backgroundColor: colors.mediaChip, borderRadius: radius.pill, paddingHorizontal: 14, paddingVertical: 8 },
-  guideText: { color: colors.lime, fontSize: font.small, fontWeight: '800' },
+  guidePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: colors.mediaChip,
+    borderRadius: radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: colors.mediaChipBorder,
+  },
+  guideDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.lime },
+  guideText: { color: colors.onMedia, fontSize: font.small, fontWeight: '800' },
   frame: {
     position: 'absolute',
     top: '24%',
@@ -257,7 +275,7 @@ const styles = StyleSheet.create({
     paddingBottom: space.md,
   },
   frameHint: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
-  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', gap: space.xs },
+  bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', gap: space.sm },
   shutterOuter: {
     width: 78,
     height: 78,
@@ -267,7 +285,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shutterInner: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.lime },
+  shutterInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.onMedia,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shutterCore: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.lime },
+  demoBtn: {
+    backgroundColor: colors.mediaChip,
+    borderRadius: radius.pill,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: colors.mediaChipBorder,
+  },
+  demoBtnText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700' },
 
   // 録音フェーズ
   recShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },

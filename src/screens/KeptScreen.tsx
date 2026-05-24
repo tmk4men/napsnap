@@ -1,15 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Image, PanResponder, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Image, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
-import { ReactionIcon, TraceMark } from '../components/icons';
+import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { useStore } from '../store';
 import { keptPosts, userById } from '../selectors';
 import { timeAgo } from '../lib/time';
-import { resolvePostAudioSource } from '../lib/audio';
+import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -23,13 +23,16 @@ export function KeptScreen() {
   const safeIndex = Math.min(index, Math.max(0, kept.length - 1));
   const current = kept[safeIndex];
 
-  // 現在の投稿の音を自動再生（ループ）
+  // 現在の投稿の音を自動再生（ループ）。ミュートは手動で切り替えられる。
   const audioSrc = useMemo(() => resolvePostAudioSource(current?.post), [current?.post.id]);
+  const hasSound = postHasSound(current?.post);
   const player = useAudioPlayer(audioSrc ?? null);
+  const [muted, setMuted] = useState(false);
   useEffect(() => {
     if (!audioSrc) return;
     try {
       player.loop = true;
+      player.muted = muted;
       player.seekTo(0);
       player.play();
     } catch {}
@@ -39,6 +42,15 @@ export function KeptScreen() {
       } catch {}
     };
   }, [audioSrc]);
+
+  const toggleSound = () => {
+    const next = !muted;
+    setMuted(next);
+    try {
+      player.muted = next;
+      if (!next) player.play();
+    } catch {}
+  };
 
   const ty = useRef(new Animated.Value(0)).current;
   const hRef = useRef(0);
@@ -98,9 +110,22 @@ export function KeptScreen() {
 
         {/* 上部：何件中いくつ＋あなたの反応 */}
         <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
-          <Text style={styles.count}>
-            {safeIndex + 1} / {kept.length}
-          </Text>
+          <View style={styles.topLeft}>
+            <Text style={styles.count}>
+              {safeIndex + 1} / {kept.length}
+            </Text>
+            <Pressable
+              onPress={hasSound ? toggleSound : undefined}
+              style={[styles.soundBtn, !hasSound && { opacity: 0.4 }]}
+              hitSlop={8}
+            >
+              {hasSound && !muted ? (
+                <SpeakerOnIcon size={16} color={colors.onMedia} />
+              ) : (
+                <SpeakerOffIcon size={16} color={colors.onMedia} />
+              )}
+            </Pressable>
+          </View>
           <View style={styles.reactBadge}>
             <ReactionIcon type={current.reaction.type} size={16} color={colors.limeInk} />
             <Text style={styles.reactLabel}>{meta.label}</Text>
@@ -139,6 +164,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: space.md,
+  },
+  topLeft: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  soundBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.mediaChip,
+    borderWidth: 1,
+    borderColor: colors.mediaChipBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   count: { color: colors.onMedia, fontSize: font.small, fontWeight: '800' },
   reactBadge: {
