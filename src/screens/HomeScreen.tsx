@@ -110,8 +110,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
               )}
             </Pressable>
             <View style={styles.glyphSep} />
-            <Avatar user={me} size={28} />
-            <View style={styles.glyphSep} />
             <Pressable onPress={() => setShowMenu(true)} style={styles.glyphBtn} hitSlop={8}>
               <MenuIcon size={21} color={colors.text} />
             </Pressable>
@@ -166,9 +164,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                     </Text>
                   )}
                   {displayAuthor?.isOfficial && <VerifiedBadge size={15} />}
-                  <View style={{ marginLeft: 6 }}>
-                    <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
-                  </View>
+                  {!displayAuthor?.isOfficial && (
+                    <View style={{ marginLeft: 6 }}>
+                      <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
+                    </View>
+                  )}
                 </>
               ) : (
                 <>
@@ -176,9 +176,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                     {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'まだ反応なし'}
                   </Text>
                   {/* ロック中でも、この投稿があと何時間で消えるかを赤で出す（早く撮ろう） */}
-                  <View style={{ marginLeft: 6 }}>
-                    <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
-                  </View>
+                  {!displayAuthor?.isOfficial && (
+                    <View style={{ marginLeft: 6 }}>
+                      <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
+                    </View>
+                  )}
                 </>
               )}
             </View>
@@ -236,9 +238,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <HamburgerMenu
           onClose={() => setShowMenu(false)}
           items={[
-            { label: '通知', onPress: openActivity },
-            { label: 'さがす', onPress: () => nav.setTab('search') },
-            { label: '自分', onPress: () => nav.setTab('me') },
             ...(Platform.OS === 'web'
               ? [{ label: themeMode === 'dark' ? 'ライトモードにする' : 'ダークモードにする', onPress: toggleThemeMode }]
               : []),

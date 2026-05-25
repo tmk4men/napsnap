@@ -87,8 +87,17 @@ const initial: PersistedState = {
   searchHistory: [],
 };
 
-// ライブのスナップショットをローカル state に反映（feedState/accessPass 等の端末ローカル項目は触らない）。
+// ライブのスナップショットをローカル state に反映。
+// パス（6h解錠）は「自分の有効な通常投稿」から導出する＝過去のローカル accessPass の残留で
+// 「今日はここまで＋謎の残り時間」が出るのを防ぐ。投稿が無ければパス無し＝ロック表示。
 function applySnapshot(set: (p: Partial<Store>) => void, snap: LiveSnapshot) {
+  const myActive = snap.posts
+    .filter((p) => p.userId === snap.currentUserId && !p.topicKey && isActive(p.expiresAt))
+    .sort((a, b) => b.createdAt - a.createdAt);
+  const latest = myActive[0];
+  const accessPass: AccessPass | null = latest
+    ? { openedAt: latest.createdAt, expiresAt: latest.createdAt + PASS_HOURS * HOUR }
+    : null;
   set({
     onboarded: snap.onboarded,
     currentUserId: snap.currentUserId,
@@ -97,6 +106,7 @@ function applySnapshot(set: (p: Partial<Store>) => void, snap: LiveSnapshot) {
     posts: snap.posts,
     reactions: snap.reactions,
     views: snap.views,
+    accessPass,
   });
 }
 

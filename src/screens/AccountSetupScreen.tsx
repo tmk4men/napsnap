@@ -30,7 +30,8 @@ export function AccountSetupScreen() {
   const storeUsers = useStore((s) => s.users);
   const myId = useStore((s) => s.currentUserId);
   const mockPeople = useMemo(() => makeMockPeople(), []);
-  const livePeople = useMemo(() => storeUsers.filter((u) => u.id !== myId), [storeUsers, myId]);
+  // 公式は自動フォローなので候補からは除く。
+  const livePeople = useMemo(() => storeUsers.filter((u) => u.id !== myId && !u.isOfficial), [storeUsers, myId]);
   const people = hasSupabase ? livePeople : mockPeople;
 
   const [step, setStep] = useState<0 | 1>(0);

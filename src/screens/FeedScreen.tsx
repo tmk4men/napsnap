@@ -191,9 +191,11 @@ export function FeedScreen({ nav }: { nav: Nav }) {
                   {author?.isOfficial && <VerifiedBadge size={14} />}
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.metaAgo}>{timeAgo(post.createdAt)}</Text>
-                  <View style={{ marginLeft: 6 }}>
-                    <Remaining expiresAt={post.expiresAt} color={colors.warn} size={12} />
-                  </View>
+                  {!author?.isOfficial && (
+                    <View style={{ marginLeft: 6 }}>
+                      <Remaining expiresAt={post.expiresAt} color={colors.warn} size={12} />
+                    </View>
+                  )}
                 </>
               ) : (
                 <View style={styles.redactBar} />

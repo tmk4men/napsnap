@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, rule, space } from '../theme';
+import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
@@ -10,7 +10,7 @@ import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
 import { TopicNote } from '../components/TopicNote';
 import { ReactionBar } from '../components/ReactionBar';
-import { PencilIcon, TraceMark } from '../components/icons';
+import { PlusIcon, TraceMark } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { myReaction, topicPosts, userById } from '../selectors';
@@ -113,17 +113,9 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.sm }]}>
       <Backdrop />
-      {/* 今日のお題（上質なカード）。出すボタンは紙の中に。 */}
+      {/* 今日のお題（出すボタンは右下の＋に集約） */}
       <View style={styles.noteWrap}>
-        <TopicNote prompt={topic.prompt}>
-          <Pressable
-            onPress={() => nav.openCamera(topic.key)}
-            style={({ pressed }) => [styles.joinBtn, pressed && { transform: [{ scale: 0.97 }] }]}
-          >
-            <PencilIcon size={15} color={colors.limeInk} />
-            <Text style={styles.joinText}>{copy.topicJoin}</Text>
-          </Pressable>
-        </TopicNote>
+        <TopicNote prompt={topic.prompt} />
       </View>
 
       {/* スワイプ領域 */}
@@ -170,6 +162,15 @@ export function TopicScreen({ nav }: { nav: Nav }) {
           <ReactionBar key={current.id} selected={mine} onReact={(t) => reactToTopic(current.id, t)} />
         </View>
       )}
+
+      {/* このお題に出す＝右下のプラス */}
+      <Pressable
+        onPress={() => nav.openCamera(topic.key)}
+        style={({ pressed }) => [styles.fab, { bottom: insets.bottom + space.lg }, pressed && { transform: [{ scale: 0.94 }] }]}
+        hitSlop={8}
+      >
+        <PlusIcon size={28} color={colors.limeInk} />
+      </Pressable>
     </View>
   );
 }
@@ -177,18 +178,19 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   noteWrap: { paddingHorizontal: space.lg, paddingTop: space.xs, paddingBottom: space.sm },
-  joinBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  fab: {
+    position: 'absolute',
+    right: space.lg,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: colors.lime,
-    borderRadius: radius.xs,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: rule.hair,
     borderColor: colors.limeDust,
+    boxShadow: '0 8px 20px rgba(0,0,0,0.20)',
   },
-  joinText: { color: colors.limeInk, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 1 },
   stage: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingBottom: 96 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

@@ -1,7 +1,7 @@
 // ライブ（Supabase）モードのオーケストレーション。
 // store はここから「スナップショット」を受け取り、ローカル state にそのまま入れる
 // （= 既存の selectors / 画面はそのまま動く）。鍵が無いときは何もしない。
-import { hasSupabase } from '../config';
+import { hasSupabase, OFFICIAL_USER_ID } from '../config';
 import * as be from './backend';
 import { Post, Reaction, User, ViewRecord } from '../types';
 
@@ -22,9 +22,18 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
   if (!LIVE) return null;
   const id = await be.ensureSession();
   if (!id) return null;
-  const [users, following, active, mine, reactions, views] = await Promise.all([
+  // 公式アカウントを必ずフォロー（最初から feed に出すため）。投稿取得より前に行う＝RLSで公式投稿が読める。
+  let following = await be.listFollowing();
+  if (OFFICIAL_USER_ID && id !== OFFICIAL_USER_ID && !following.includes(OFFICIAL_USER_ID)) {
+    try {
+      await be.follow(OFFICIAL_USER_ID);
+      following = [...following, OFFICIAL_USER_ID];
+    } catch (e) {
+      console.warn('follow official failed', e);
+    }
+  }
+  const [users, active, mine, reactions, views] = await Promise.all([
     be.listProfiles(),
-    be.listFollowing(),
     be.listActivePosts(),
     be.listMyPosts(),
     be.listReactions(),
