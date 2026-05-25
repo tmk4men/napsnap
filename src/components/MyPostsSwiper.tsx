@@ -78,12 +78,6 @@ export function MyPostsSwiper({ posts, me }: { posts: Post[]; me?: User }) {
           )}
         </View>
       </Animated.View>
-
-      {posts.length > 1 && (
-        <Text style={styles.hint}>
-          ↑↓ めくる・{safeIndex + 1}/{posts.length}
-        </Text>
-      )}
     </View>
   );
 }
@@ -93,5 +87,4 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   metaName: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.3 },
-  hint: { position: 'absolute', bottom: space.xs, alignSelf: 'center', color: colors.textFaint, fontSize: font.tiny, fontWeight: '700', fontFamily: fonts.ui },
 });
