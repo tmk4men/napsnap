@@ -8,6 +8,9 @@ import { HOUR, isActive, nextMidnight, now } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
 import { makeFollowPosts, makeMyMemories, makeOfficialPosts, makeOfficialUser, makeSeedReactions, makeTopicPosts, OFFICIAL_ID } from './seed';
 import { dayIndex, todaysTopic } from './topics';
+import { hasSupabase } from './config';
+import * as be from './lib/backend';
+import { liveBootstrap, liveCompleteSetup, LiveSnapshot } from './lib/live';
 
 const SEARCH_HISTORY_MAX = 4;
 
@@ -43,11 +46,12 @@ interface PersistedState {
 }
 
 interface Actions {
-  completeAccountSetup: (input: AccountSetupInput) => void;
+  completeAccountSetup: (input: AccountSetupInput) => void | Promise<void>;
   updateProfileImage: (uri: string) => void;
   updateProfile: (displayName: string, handle: string) => void;
   toggleFollow: (userId: string) => void;
-  addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption, topicKey?: string) => string;
+  addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption, topicKey?: string) => Promise<string>;
+  liveHydrate: () => Promise<void>;
   markViewed: (postId: string) => void;
   reactToPost: (postId: string, type: ReactionType) => void;
   reactToTopic: (postId: string, type: ReactionType) => void;
@@ -83,11 +87,26 @@ const initial: PersistedState = {
   searchHistory: [],
 };
 
+// ライブのスナップショットをローカル state に反映（feedState/accessPass 等の端末ローカル項目は触らない）。
+function applySnapshot(set: (p: Partial<Store>) => void, snap: LiveSnapshot) {
+  set({
+    onboarded: snap.onboarded,
+    currentUserId: snap.currentUserId,
+    users: snap.users,
+    following: snap.following,
+    posts: snap.posts,
+    reactions: snap.reactions,
+    views: snap.views,
+  });
+}
+
 export const useStore = create<Store>()(
   persist(
     (set, get) => {
       // 自分の投稿に、フォロワー（デモのモックの人）が少し遅れて足跡＆反応を残す演出。
+      // ライブ（実データ）では本物の反応が来るので動かさない。
       function scheduleEngagement(postId: string) {
+        if (hasSupabase) return;
         const followers = get().users.filter((u) => u.isMock && get().following.includes(u.id));
         const shuffled = [...followers].sort(() => Math.random() - 0.5);
         shuffled.forEach((f, i) => {
@@ -116,7 +135,18 @@ export const useStore = create<Store>()(
       return {
         ...initial,
 
-        completeAccountSetup: ({ displayName, handle, avatarEmoji, avatarColor, avatarImageUri, people, followingIds }) => {
+        completeAccountSetup: async ({ displayName, handle, avatarEmoji, avatarColor, avatarImageUri, people, followingIds }) => {
+          // ライブ：プロフィール作成＋フォローを Supabase に書き、スナップショットで反映。
+          if (hasSupabase) {
+            const snap = await liveCompleteSetup({
+              displayName: displayName.trim() || 'なまえ',
+              handle: handle.trim().replace(/^@/, '') || 'me',
+              avatarImageUri,
+              followingIds,
+            });
+            if (snap) applySnapshot(set, snap);
+            return;
+          }
           const id = uid('u_');
           const me: User = {
             id,
@@ -164,6 +194,17 @@ export const useStore = create<Store>()(
             users: st.users.map((u) => (u.id === currentUserId ? { ...u, avatarImageUri: uri } : u)),
             avatarChangedAt: now(),
           }));
+          if (hasSupabase) {
+            (async () => {
+              try {
+                const url = await be.uploadMedia(uri, 'photo');
+                await be.updateMyProfile({ avatarUrl: url });
+                set((st) => ({ users: st.users.map((u) => (u.id === currentUserId ? { ...u, avatarImageUri: url } : u)) }));
+              } catch (e) {
+                console.warn('avatar update failed', e);
+              }
+            })();
+          }
         },
 
         updateProfile: (displayName, handle) => {
@@ -177,11 +218,22 @@ export const useStore = create<Store>()(
             ),
             profileEditAt: [...st.profileEditAt, now()].slice(-10),
           }));
+          if (hasSupabase) {
+            be.updateMyProfile({ displayName: name || undefined, handle: h || undefined }).catch((e) => console.warn('profile update failed', e));
+          }
         },
 
         toggleFollow: (userId) => {
           const { following, users, posts } = get();
-          if (following.includes(userId)) {
+          const isFollowing = following.includes(userId);
+          // ライブ：楽観的にローカル更新 → Supabase へ書き → 再取得（相手の投稿の可視範囲が変わるため）。
+          if (hasSupabase) {
+            set({ following: isFollowing ? following.filter((f) => f !== userId) : [...following, userId] });
+            const op = isFollowing ? be.unfollow(userId) : be.follow(userId);
+            op.then(() => get().liveHydrate()).catch((e) => console.warn('follow toggle failed', e));
+            return;
+          }
+          if (isFollowing) {
             set({ following: following.filter((f) => f !== userId) });
             return;
           }
@@ -194,10 +246,27 @@ export const useStore = create<Store>()(
           set({ following: next, posts: nextPosts });
         },
 
-        addPost: (imageUrl, audioUrl, caption, topicKey) => {
+        addPost: async (imageUrl, audioUrl, caption, topicKey) => {
           const { currentUserId } = get();
           if (!currentUserId) return '';
           const createdAt = now();
+          // お題は日付がかわる0時で総入れ替え＝期限は今日の終わり。通常投稿は24時間。
+          const expiresAt = topicKey ? nextMidnight(createdAt) : createdAt + POST_TTL_HOURS * HOUR;
+          // ライブ：画像/音声を Supabase Storage に上げ、posts に挿入。
+          if (hasSupabase) {
+            try {
+              const post = await be.addPost({ imageUri: imageUrl, audioUri: audioUrl, caption, topicKey, expiresAt });
+              if (topicKey) {
+                set((st) => ({ posts: [...st.posts, post] }));
+              } else {
+                set((st) => ({ posts: [...st.posts, post], accessPass: { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR } }));
+              }
+              return post.id;
+            } catch (e) {
+              console.warn('addPost failed', e);
+              return '';
+            }
+          }
           const post: Post = {
             id: uid('p_'),
             userId: currentUserId,
@@ -206,8 +275,7 @@ export const useStore = create<Store>()(
             caption,
             audioUrl,
             createdAt,
-            // お題は日付がかわる0時で総入れ替え＝期限は今日の終わり。通常投稿は24時間。
-            expiresAt: topicKey ? nextMidnight(createdAt) : createdAt + POST_TTL_HOURS * HOUR,
+            expiresAt,
           };
           if (topicKey) {
             // お題は独立：ホームの相互アンロック（6h）は開かない。
@@ -220,6 +288,16 @@ export const useStore = create<Store>()(
           return post.id;
         },
 
+        liveHydrate: async () => {
+          if (!hasSupabase) return;
+          try {
+            const snap = await liveBootstrap();
+            if (snap) applySnapshot(set, snap);
+          } catch (e) {
+            console.warn('liveHydrate failed', e);
+          }
+        },
+
         markViewed: (postId) => {
           const { currentUserId, views } = get();
           if (!currentUserId) return;
@@ -227,6 +305,7 @@ export const useStore = create<Store>()(
           set((st) => ({
             views: [...st.views, { id: uid('v_'), postId, viewerId: currentUserId, viewedAt: now() }],
           }));
+          if (hasSupabase) be.markViewed(postId).catch((e) => console.warn('markViewed failed', e));
         },
 
         reactToPost: (postId, type) => {
@@ -242,6 +321,7 @@ export const useStore = create<Store>()(
               { postId, status: 'reacted', updatedAt: now() },
             ],
           }));
+          if (hasSupabase) be.react(postId, type).catch((e) => console.warn('react failed', e));
         },
 
         // お題でのリアクション：反応は記録するが「残す」には入れない（feedStateも触らない）。
@@ -254,6 +334,7 @@ export const useStore = create<Store>()(
               { id: uid('r_'), postId, userId: currentUserId, type, createdAt: now() },
             ],
           }));
+          if (hasSupabase) be.react(postId, type).catch((e) => console.warn('react failed', e));
         },
 
         skipPost: (postId) => {
@@ -285,6 +366,7 @@ export const useStore = create<Store>()(
         // デモが古くなってフォロー中（モック仲間）の投稿が全部期限切れなら、新しい時刻で作り直す。
         // 公式・お題・自分の投稿は触らない（それぞれ別ロジックで管理）。
         refreshFollowPostsIfStale: () => {
+          if (hasSupabase) return; // ライブは実データ。モックの自動生成はしない。
           const { following, posts, users } = get();
           const followedMockIds = new Set(
             users.filter((u) => u.isMock && following.includes(u.id)).map((u) => u.id)
@@ -306,6 +388,7 @@ export const useStore = create<Store>()(
 
         // 復帰時、今日のお題に仲間の投稿が無ければ（日付がかわった等）作り直す。
         refreshTopicPostsIfStale: () => {
+          if (hasSupabase) return;
           const { posts, following, users, currentUserId } = get();
           const topic = todaysTopic();
           const active = posts.filter(
@@ -324,6 +407,7 @@ export const useStore = create<Store>()(
         // 既存ユーザー（公式導入より前にアカウント作成した人）にも、公式アカウントを
         // 後付けでフォローさせる。冪等＝何度呼んでも重複しない。
         ensureOfficialFollowed: () => {
+          if (hasSupabase) return; // ライブには公式モックを足さない。
           const s = get();
           if (!s.onboarded) return;
           const existing = s.users.find((u) => u.isOfficial || u.id === OFFICIAL_ID);
@@ -340,6 +424,7 @@ export const useStore = create<Store>()(
         // 復帰時、公式アカウントの投稿が無ければ（期限切れ・初期フィード補充）作り直す。
         // 本番でも「はじめてのフィードが空」を避けるため。
         refreshOfficialPostsIfStale: () => {
+          if (hasSupabase) return;
           const { posts, following, users } = get();
           const official = users.find((u) => u.isOfficial) ?? users.find((u) => u.id === OFFICIAL_ID);
           if (!official || !following.includes(official.id)) return;
@@ -379,7 +464,10 @@ export const useStore = create<Store>()(
           });
         },
 
-        resetDemo: () => set({ ...initial }),
+        resetDemo: () => {
+          if (hasSupabase) be.signOut().catch(() => {}); // ライブ：サインアウト＝次回は新しい匿名ユーザー
+          set({ ...initial });
+        },
       };
     },
     {

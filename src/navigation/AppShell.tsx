@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -14,6 +14,7 @@ import { Nav, TabKey } from './nav';
 import { useStore } from '../store';
 import { currentUser, keptPosts } from '../selectors';
 import { FadeIn } from '../components/ui';
+import { hasSupabase } from '../config';
 
 type Overlay = null | 'camera' | 'preview' | 'feed';
 
@@ -28,6 +29,13 @@ export function AppShell() {
   const s = useStore();
   const me = currentUser(s);
   const keptCount = useMemo(() => keptPosts(s).length, [s.reactions, s.posts, s.currentUserId]);
+
+  // ライブ：他の人の投稿/反応を定期的に取り込む（3人トライアル規模なら軽い）。
+  useEffect(() => {
+    if (!hasSupabase) return;
+    const id = setInterval(() => useStore.getState().liveHydrate(), 15000);
+    return () => clearInterval(id);
+  }, []);
 
   const nav: Nav = {
     setTab: (t) => {
@@ -45,7 +53,10 @@ export function AppShell() {
       setRetakeUsed(true);
       setOverlay('camera');
     },
-    openFeed: () => setOverlay('feed'),
+    openFeed: () => {
+      if (hasSupabase) useStore.getState().liveHydrate();
+      setOverlay('feed');
+    },
     closeOverlay: () => {
       setOverlay(null);
       setDraftUri(null);
@@ -64,6 +75,7 @@ export function AppShell() {
       setDraftAudio(undefined);
       setDraftTopic(undefined);
       setRetakeUsed(false);
+      if (hasSupabase) useStore.getState().liveHydrate(); // 投稿後に最新を取り込む
       if (wasTopic) {
         // お題は独立：パスは開かない。お題タブへ戻る。
         setOverlay(null);

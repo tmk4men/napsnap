@@ -91,15 +91,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <View style={styles.titleRow}>
           <Text style={styles.brand}>napsnap</Text>
           <View style={styles.dateline}>
-            <View style={styles.gogaiTag}>
-              <Text style={styles.gogaiText}>号外</Text>
-            </View>
             <Text style={styles.dateText}>{dateline}</Text>
           </View>
         </View>
         <View style={styles.ruleHeavy} />
         <View style={styles.utilityRow}>
-          <Text style={styles.kicker}>本日の紙面</Text>
           <View style={styles.glyphs}>
             <Pressable onPress={() => nav.openCamera()} style={styles.glyphBtn} hitSlop={8}>
               <CameraIcon size={21} color={colors.text} />
@@ -133,10 +129,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           >
             <Image source={{ uri: memory.post.imageUrl }} style={styles.bnThumb} resizeMode="cover" />
             <View style={{ flex: 1, marginLeft: space.sm }}>
-              <Text style={styles.bnKicker}>縮刷版　{memory.label}</Text>
-              <Text style={styles.bnSub} numberOfLines={1}>
-                {memory.post.caption?.text ? memory.post.caption.text.replace(/\n/g, ' ') : 'あの日の痕跡'}
-              </Text>
+              <Text style={styles.bnKicker}>{memory.label}</Text>
             </View>
             <ChevronRightIcon size={18} color={colors.textFaint} />
           </Pressable>
@@ -167,9 +160,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
               <Avatar user={displayAuthor} size={26} blur={mediaMode} />
               {openHero ? (
                 <>
-                  <Text style={styles.metaName}>
-                    {heroIsMine ? 'あなたの今' : displayAuthor?.isOfficial ? 'napsnap' : `${displayAuthor?.displayName} たちの今`}
-                  </Text>
+                  {!heroIsMine && (
+                    <Text style={styles.metaName}>
+                      {displayAuthor?.isOfficial ? 'napsnap' : `${displayAuthor?.displayName} たちの今`}
+                    </Text>
+                  )}
                   {displayAuthor?.isOfficial && <VerifiedBadge size={15} />}
                   <View style={{ marginLeft: 6 }}>
                     <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
@@ -266,13 +261,10 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 6 },
   brand: { fontSize: 38, fontFamily: fonts.brand, color: colors.text, letterSpacing: -1, includeFontPadding: false },
   dateline: { alignItems: 'flex-end', paddingBottom: 4 },
-  gogaiTag: { backgroundColor: colors.lime, paddingHorizontal: 7, paddingVertical: 1, marginBottom: 3 },
-  gogaiText: { color: colors.limeInk, fontSize: 11, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 3 },
   dateText: { color: colors.textDim, fontSize: 11, fontFamily: fonts.handle, letterSpacing: 0.5 },
   ruleHeavy: { height: rule.thick, backgroundColor: colors.text },
   ruleThin: { height: rule.hair, backgroundColor: colors.hairline },
-  utilityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7 },
-  kicker: { color: colors.textDim, fontSize: font.tiny, fontFamily: fonts.ui, fontWeight: '700', letterSpacing: 4 },
+  utilityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingVertical: 7 },
   glyphs: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   glyphBtn: { alignItems: 'center', justifyContent: 'center' },
   glyphSep: { width: rule.hair, height: 16, backgroundColor: colors.hairline },
@@ -303,8 +295,7 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
   },
   bnThumb: { width: 46, height: 46, backgroundColor: colors.surfaceSunken, borderWidth: rule.hair, borderColor: colors.hairline },
-  bnKicker: { color: colors.limeInkSoft, fontSize: font.tiny, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 1.5 },
-  bnSub: { color: colors.text, fontSize: font.body, marginTop: 2, fontFamily: fonts.serif },
+  bnKicker: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
 
   // 中央ステージ
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },

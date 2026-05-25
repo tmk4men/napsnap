@@ -80,8 +80,12 @@ export function SearchScreen() {
 
       {list.length === 0 ? (
         <View style={styles.empty}>
-          <TraceMark size={44} />
-          <Text style={styles.emptyText}>{query ? '見つからない' : 'みんなフォロー済み'}</Text>
+          {query !== '' && (
+            <>
+              <TraceMark size={44} />
+              <Text style={styles.emptyText}>見つからない</Text>
+            </>
+          )}
         </View>
       ) : (
         <ScrollView

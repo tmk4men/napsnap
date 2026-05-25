@@ -29,6 +29,10 @@ export async function myId(): Promise<string | null> {
   return data.user?.id ?? null;
 }
 
+export async function signOut() {
+  if (supabase) await supabase.auth.signOut();
+}
+
 // ---------- 行 → アプリ型 ----------
 const toMs = (t: string) => new Date(t).getTime();
 
@@ -80,6 +84,17 @@ export async function upsertMyProfile(p: { handle: string; displayName: string; 
   const { error } = await db()
     .from('profiles')
     .upsert({ id, handle: p.handle, display_name: p.displayName, avatar_url: p.avatarUrl ?? null });
+  if (error) throw error;
+}
+
+export async function updateMyProfile(fields: { handle?: string; displayName?: string; avatarUrl?: string }) {
+  const id = await myId();
+  if (!id) throw new Error('未サインイン');
+  const patch: Record<string, unknown> = {};
+  if (fields.handle !== undefined) patch.handle = fields.handle;
+  if (fields.displayName !== undefined) patch.display_name = fields.displayName;
+  if (fields.avatarUrl !== undefined) patch.avatar_url = fields.avatarUrl;
+  const { error } = await db().from('profiles').update(patch).eq('id', id);
   if (error) throw error;
 }
 

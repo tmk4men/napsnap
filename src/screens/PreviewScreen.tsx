@@ -70,7 +70,7 @@ export function PreviewScreen({
     } catch {}
     // 保存・配信を軽くするため、出す直前に画像を縮小＋再エンコード（失敗時は元のまま）
     const finalUri = await compressForStore(uri);
-    addPost(finalUri, audioUri, hasCaption ? caption : undefined, topicKey);
+    await addPost(finalUri, audioUri, hasCaption ? caption : undefined, topicKey);
     nav.onPosted();
   }
 

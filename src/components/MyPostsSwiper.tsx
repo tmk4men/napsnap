@@ -70,10 +70,7 @@ export function MyPostsSwiper({ posts, me }: { posts: Post[]; me?: User }) {
           {current && (
             <View style={styles.metaRow}>
               <Avatar user={me} size={26} />
-              <Text style={styles.metaName}>あなたの今</Text>
-              <View style={{ marginLeft: 6 }}>
-                <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
-              </View>
+              <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
             </View>
           )}
         </View>

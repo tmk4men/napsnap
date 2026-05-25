@@ -5,9 +5,12 @@ import { fonts } from '../lib/fonts';
 import { AccountSetupScreen } from '../screens/AccountSetupScreen';
 import { AppShell } from './AppShell';
 import { useStore } from '../store';
+import { hasSupabase } from '../config';
 
 export function RootNavigator() {
   const [hydrated, setHydrated] = useState(useStore.persist.hasHydrated());
+  // ライブ：Supabase から初期データを取り終えるまで待つ（モック時は即 ready）。
+  const [liveReady, setLiveReady] = useState(!hasSupabase);
 
   useEffect(() => {
     const unsub = useStore.persist.onFinishHydration(() => setHydrated(true));
@@ -15,10 +18,14 @@ export function RootNavigator() {
     return unsub;
   }, []);
 
-  // 復帰時、期限切れを掃除してから、フォロー中／今日のお題の投稿が無ければ作り直す
   useEffect(() => {
-    if (hydrated) {
-      useStore.getState().ensureOfficialFollowed(); // 既存ユーザーにも公式を後付けフォロー
+    if (!hydrated) return;
+    if (hasSupabase) {
+      // ライブ：匿名セッション確保＋サーバから全取得（オンボ済みかもここで確定）。
+      useStore.getState().liveHydrate().finally(() => setLiveReady(true));
+    } else {
+      // モック：復帰時、期限切れを掃除してから、無ければ作り直す。
+      useStore.getState().ensureOfficialFollowed();
       useStore.getState().pruneExpired();
       useStore.getState().refreshFollowPostsIfStale();
       useStore.getState().refreshTopicPostsIfStale();
@@ -29,7 +36,7 @@ export function RootNavigator() {
   const onboarded = useStore((s) => s.onboarded);
   const currentUserId = useStore((s) => s.currentUserId);
 
-  if (!hydrated) {
+  if (!hydrated || !liveReady) {
     return (
       <View style={styles.splash}>
         <Text style={styles.brand}>napsnap</Text>

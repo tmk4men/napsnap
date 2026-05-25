@@ -17,6 +17,7 @@ import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ImageIcon, PencilIcon } from '../components/icons';
 import { useStore } from '../store';
+import { hasSupabase } from '../config';
 import { makeMockPeople } from '../seed';
 import { pickRawImage } from '../lib/avatar';
 import { hasBanned } from '../lib/words';
@@ -25,9 +26,15 @@ import { CropModal } from '../components/CropModal';
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
   const completeAccountSetup = useStore((s) => s.completeAccountSetup);
-  const people = useMemo(() => makeMockPeople(), []);
+  // ライブ：フォロー候補は実在ユーザー（自分以外）。モック：従来のシード（IDが変わらないよう安定生成）。
+  const storeUsers = useStore((s) => s.users);
+  const myId = useStore((s) => s.currentUserId);
+  const mockPeople = useMemo(() => makeMockPeople(), []);
+  const livePeople = useMemo(() => storeUsers.filter((u) => u.id !== myId), [storeUsers, myId]);
+  const people = hasSupabase ? livePeople : mockPeople;
 
   const [step, setStep] = useState<0 | 1>(0);
+  const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [avatarUri, setAvatarUri] = useState<string>('');
@@ -44,16 +51,24 @@ export function AccountSetupScreen() {
     else setAvatarUri(uri);
   }
 
-  function finish() {
-    completeAccountSetup({
-      displayName: name,
-      handle,
-      avatarEmoji: '🟡',
-      avatarColor: colors.avatarTint,
-      avatarImageUri: avatarUri || undefined,
-      people,
-      followingIds,
-    });
+  async function finish() {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await completeAccountSetup({
+        displayName: name,
+        handle,
+        avatarEmoji: '🟡',
+        avatarColor: colors.avatarTint,
+        avatarImageUri: avatarUri || undefined,
+        people,
+        followingIds,
+      });
+      // 成功するとオンボ完了で画面が切り替わる（このコンポーネントは外れる）。
+    } catch (e) {
+      console.warn('setup failed', e);
+      setSubmitting(false);
+    }
   }
 
   if (step === 0) {
@@ -165,7 +180,7 @@ export function AccountSetupScreen() {
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom + space.md }}>
-        <PrimaryButton label={copy.setupStart} onPress={finish} />
+        <PrimaryButton label={submitting ? '作成中…' : copy.setupStart} disabled={submitting} onPress={finish} />
         <GhostButton label={copy.setupBack} onPress={() => setStep(0)} style={{ marginTop: space.xs }} />
       </View>
     </View>
