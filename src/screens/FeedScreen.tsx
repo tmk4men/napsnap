@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
@@ -239,9 +239,9 @@ const styles = StyleSheet.create({
   iconBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.xs,
     backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
@@ -250,18 +250,18 @@ const styles = StyleSheet.create({
   stage: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.2 },
+  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
   metaDot: { color: colors.textFaint, fontSize: font.small },
-  metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
-  redactBar: { width: 96, height: 13, borderRadius: 7, backgroundColor: colors.surfaceSunken },
+  metaAgo: { color: colors.textDim, fontSize: font.small, fontFamily: fonts.handle },
+  redactBar: { width: 96, height: 12, borderRadius: 0, backgroundColor: colors.text, opacity: 0.82 },
   bottom: { paddingHorizontal: space.md, gap: space.sm, alignItems: 'center' },
   skip: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs },
   relock: { gap: space.sm, alignSelf: 'stretch' },
-  relockText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', textAlign: 'center' },
+  relockText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center' },
 
   // done
   done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   doneCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs },
-  doneTitle: { color: colors.text, fontSize: 36, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: 0.5 },
+  doneTitle: { color: colors.text, fontSize: 36, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: -0.5 },
   doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', fontFamily: fonts.ui },
 });

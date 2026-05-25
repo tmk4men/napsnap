@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar, FadeIn, PrimaryButton } from './ui';
 import { CloseIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
@@ -104,21 +104,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
-  title: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display },
-  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
+  title: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display, letterSpacing: -0.5 },
+  close: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   turn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.sm,
     backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     padding: space.md,
     marginBottom: space.md,
-    boxShadow: '0 10px 28px rgba(44,36,22,0.10)',
   },
-  turnTitle: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display },
+  turnTitle: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display, letterSpacing: -0.5 },
   turnSub: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.ui },
   empty: { alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingVertical: space.xxl },
   emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
@@ -127,8 +126,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.sm,
     backgroundColor: colors.limeSoft,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
     borderColor: colors.limeLine,
     padding: space.md,
     marginBottom: space.md,
@@ -136,16 +135,16 @@ const styles = StyleSheet.create({
   topicIcon: {
     width: 38,
     height: 38,
-    borderRadius: radius.md,
+    borderRadius: radius.xs,
     backgroundColor: colors.lime,
     alignItems: 'center',
     justifyContent: 'center',
   },
   topicLine: { color: colors.limeInkSoft, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
   topicSub: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: 1 },
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.hairline },
+  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: rule.hair, borderBottomColor: colors.hairline },
   lineRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   line: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
-  time: { color: colors.textFaint, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
-  thumb: { width: 40, height: 40, borderRadius: radius.sm, backgroundColor: colors.surfaceSunken, marginLeft: space.sm },
+  time: { color: colors.textFaint, fontSize: font.small, marginTop: 1, fontFamily: fonts.handle },
+  thumb: { width: 40, height: 40, borderRadius: radius.xs, backgroundColor: colors.surfaceSunken, marginLeft: space.sm },
 });

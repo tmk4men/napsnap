@@ -278,13 +278,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
     backgroundColor: colors.mediaChip,
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: colors.mediaChipBorder,
   },
-  guideDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.lime },
+  guideDot: { width: 6, height: 6, borderRadius: 0, backgroundColor: colors.lime },
   guideText: { color: colors.onMedia, fontSize: font.small, fontWeight: '800' },
   frame: {
     position: 'absolute',
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   shutterCore: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.lime },
   demoBtn: {
     backgroundColor: colors.mediaChip,
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 1,
@@ -332,9 +332,9 @@ const styles = StyleSheet.create({
   // 録音フェーズ
   recShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },
   recCenter: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  muteChip: { backgroundColor: colors.mediaChip, borderRadius: radius.pill, paddingHorizontal: 16, paddingVertical: 10 },
+  muteChip: { backgroundColor: colors.mediaChip, borderRadius: radius.xs, paddingHorizontal: 16, paddingVertical: 10 },
   muteText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800' },
   recBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', paddingHorizontal: space.xl },
-  barTrack: { width: '100%', height: 6, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
-  barFill: { height: '100%', backgroundColor: colors.lime, borderRadius: radius.pill },
+  barTrack: { width: '100%', height: 6, borderRadius: 0, backgroundColor: 'rgba(255,255,255,0.25)', overflow: 'hidden' },
+  barFill: { height: '100%', backgroundColor: colors.lime, borderRadius: 0 },
 });

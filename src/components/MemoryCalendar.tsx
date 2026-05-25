@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, radius, rule, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons';
 import { Post } from '../types';
@@ -46,9 +46,8 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
 
   return (
     <View style={styles.wrap}>
-      {/* 紙の質感（うっすら罫線の繊維＋やわらかな光沢） */}
+      {/* 紙の質感（うっすら印刷罫線の繊維だけ。光沢は載せない） */}
       <View pointerEvents="none" style={styles.paperLines} />
-      <View pointerEvents="none" style={styles.paperSheen} />
 
       <View style={styles.header}>
         <Pressable onPress={() => shift(-1)} hitSlop={10} style={styles.nav}>
@@ -97,9 +96,9 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
 
 const styles = StyleSheet.create({
   wrap: {
-    backgroundColor: '#FFFDF4', // 温かい紙の地色
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    backgroundColor: colors.surfaceRaised, // 貼り込んだ紙（生成りより少し明るい）
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     padding: space.md,
     boxShadow: shadow.card,
@@ -114,26 +113,17 @@ const styles = StyleSheet.create({
     experimental_backgroundImage:
       'repeating-linear-gradient(0deg, rgba(70,58,34,0.035) 0px, rgba(70,58,34,0.035) 1px, transparent 1px, transparent 26px)',
   } as any,
-  paperSheen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    experimental_backgroundImage:
-      'linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 42%, rgba(120,90,40,0.05) 100%)',
-  } as any,
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.sm },
-  nav: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
-  title: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display },
+  nav: { width: 32, height: 32, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
+  title: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display, letterSpacing: -0.5 },
   weekRow: { flexDirection: 'row', marginBottom: 4 },
   weekday: { flex: 1, textAlign: 'center', color: colors.textFaint, fontSize: font.tiny, fontWeight: '800' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 2 },
-  dayInner: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  dayInner: { width: 32, height: 32, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center' },
   dayHas: { backgroundColor: colors.limeSoft },
-  dayToday: { borderWidth: 1.5, borderColor: colors.text },
-  dayNum: { color: colors.textDim, fontSize: font.small, fontWeight: '700' },
-  dayNumHas: { color: colors.text, fontWeight: '900' },
+  dayToday: { borderWidth: rule.thin, borderColor: colors.text },
+  dayNum: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
+  dayNumHas: { color: colors.text, fontWeight: '500' },
   dayNumToday: { color: colors.text },
 });

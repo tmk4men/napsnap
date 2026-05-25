@@ -9,12 +9,13 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, radius, rule, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { User } from '../types';
 import { CameraIcon, ClockIcon, UserIcon } from './icons';
 import { formatClock } from '../lib/time';
 
+// 主ボタン＝号外の「校了」印。朱のベタ角箱・光沢なし・直角。文字は紙色のゴシック。
 export function PrimaryButton({
   label,
   onPress,
@@ -32,20 +33,17 @@ export function PrimaryButton({
       disabled={disabled}
       style={({ pressed }) => [
         styles.primary,
-        !disabled && styles.primaryShadow,
         disabled && styles.primaryDisabled,
         pressed && !disabled && styles.primaryPressed,
         style,
       ]}
     >
-      {!disabled && <View style={styles.shootSheen} pointerEvents="none" />}
       <Text style={[styles.primaryLabel, disabled && styles.primaryLabelDisabled]}>{label}</Text>
     </Pressable>
   );
 }
 
-// 「撮る」をカメラのSVGで表す。block=全幅のライムピル / 既定=丸ボタン。
-// label を渡すとカメラSVGの横に文字を並べる（例：撮ってひらく）。
+// 「撮る」＝紙面を起こす赤い版。block=全幅の朱バー / 既定=朱の角箱。光沢なし・直角。
 export function ShootButton({
   onPress,
   block = false,
@@ -62,12 +60,10 @@ export function ShootButton({
       onPress={onPress}
       style={({ pressed }) => [
         block ? styles.shootBlock : styles.shootRound,
-        pressed && { transform: [{ scale: 0.97 }], boxShadow: shadow.cardPressed },
+        pressed && styles.shootPressed,
         style,
       ]}
     >
-      {/* 上からの艶（質感）＝のっぺりしたベタ塗りを避ける */}
-      <View style={styles.shootSheen} pointerEvents="none" />
       <View style={styles.shootRow}>
         <CameraIcon size={block ? 22 : 23} color={colors.limeInk} />
         {label ? <Text style={styles.shootLabel}>{label}</Text> : null}
@@ -76,6 +72,7 @@ export function ShootButton({
   );
 }
 
+// 副ボタン＝インクの細罫で囲った角箱（地は塗らない）。
 export function GhostButton({
   label,
   onPress,
@@ -116,6 +113,7 @@ export function Card({
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
+// タグ＝丸ピルではなく、直角の「組み見出し」。朱トーンは朱の細罫＋小さな朱の四角。
 export function Pill({
   children,
   tone = 'default',
@@ -135,7 +133,7 @@ export function Pill({
       <Text
         style={[
           styles.pillText,
-          tone === 'lime' && { color: colors.limeInk },
+          tone === 'lime' && { color: colors.limeInkSoft },
           tone === 'media' && { color: colors.onMedia },
         ]}
       >
@@ -146,7 +144,7 @@ export function Pill({
 }
 
 // プロフィール画像があれば写真、なければ頭文字。絵文字は最後のフォールバック。
-// ring=true のときは外側にライムの輪＋内側にクリームの隙間を作る（写真/文字で見え方が揺れない）。
+// ring=true のときは外側に朱の輪＋内側に紙の隙間（顔なしSNSの“登録写真”的な縁取り）。
 function AvatarInner({ user, size, border, blur }: { user?: User; size: number; border: object; blur?: boolean }) {
   const wrap = { width: size, height: size, borderRadius: size / 2 };
   if (user?.avatarImageUri) {
@@ -209,7 +207,7 @@ export function Avatar({
   );
 }
 
-// 時計マーク＋残り時間だけ（例: ⏱ 23:41）
+// 締切までの残り。数字は等幅（活字で組んだ“締切時刻”）。例: ⏱ 23:41
 export function Remaining({
   expiresAt,
   color = colors.text,
@@ -228,7 +226,7 @@ export function Remaining({
 }
 
 // マウント時にふわっと（フェード＋少し上へ）。key を変えると再生される。
-// delay を変えると“ずらして現れる”演出（ページロードのステージング）に使える。
+// delay を変えると“ずらして現れる”演出（紙面が刷り上がるステージング）に使える。
 export function FadeIn({
   children,
   style,
@@ -277,72 +275,59 @@ export function useOnce(fn: () => void) {
 const styles = StyleSheet.create({
   primary: {
     backgroundColor: colors.lime,
-    borderRadius: radius.pill,
-    paddingVertical: 18,
+    borderRadius: radius.xs,
+    paddingVertical: 17,
     paddingHorizontal: space.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.12)',
-    overflow: 'hidden',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
   },
-  primaryShadow: { boxShadow: shadow.button },
   primaryDisabled: { backgroundColor: colors.surfaceSunken, borderColor: colors.hairline },
-  primaryPressed: { transform: [{ scale: 0.985 }, { translateY: 1 }], boxShadow: shadow.cardPressed },
-  primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.ui, letterSpacing: 0.4 },
+  primaryPressed: { transform: [{ translateY: 1 }], opacity: 0.92 },
+  primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 2 },
   primaryLabelDisabled: { color: colors.textFaint },
 
   shootBlock: {
     backgroundColor: colors.lime,
-    borderRadius: radius.pill,
-    paddingVertical: 19,
+    borderRadius: radius.xs,
+    paddingVertical: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.12)',
-    boxShadow: shadow.button,
-    overflow: 'hidden',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
   },
   shootRound: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: radius.xs,
     backgroundColor: colors.lime,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.12)',
-    boxShadow: shadow.button,
-    overflow: 'hidden',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
   },
-  shootSheen: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '52%',
-    backgroundColor: 'rgba(255,255,255,0.22)',
-  },
+  shootPressed: { transform: [{ translateY: 1 }], opacity: 0.92 },
   shootRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
-  shootLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.ui, letterSpacing: 0.4 },
+  shootLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 2 },
 
   ghost: {
     paddingVertical: 14,
     paddingHorizontal: space.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.hairline,
+    borderRadius: radius.xs,
+    backgroundColor: 'transparent',
+    borderWidth: rule.thin,
+    borderColor: colors.text,
   },
-  ghostPressed: { backgroundColor: colors.surfaceSunken, transform: [{ scale: 0.985 }] },
-  ghostLabel: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
+  ghostPressed: { backgroundColor: colors.surfaceSunken },
+  ghostLabel: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 1 },
 
   card: {
     backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     boxShadow: shadow.card,
   },
@@ -352,21 +337,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    backgroundColor: 'transparent',
+    borderRadius: radius.xs,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     alignSelf: 'flex-start',
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
   },
-  pillLime: { backgroundColor: colors.limeSoft, borderColor: 'rgba(24,26,13,0.10)' },
+  pillLime: { backgroundColor: colors.limeSoft, borderColor: colors.limeLine },
   pillMedia: { backgroundColor: colors.mediaChip, borderColor: colors.mediaChipBorder },
-  pillDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.lime },
-  pillText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  pillDot: { width: 6, height: 6, borderRadius: 0, backgroundColor: colors.lime },
+  pillText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 0.5 },
 
   avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarShadow: { borderRadius: radius.pill, boxShadow: shadow.avatar },
   remaining: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  remainingText: { fontWeight: '800' },
+  remainingText: { fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.5 },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, space } from '../theme';
+import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { FadeIn } from './ui';
 import { Backdrop } from './Backdrop';
@@ -49,11 +49,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
-  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.4 },
-  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
+  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
+  close: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   updated: { color: colors.textFaint, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginBottom: space.md },
   intro: { color: colors.textDim, fontSize: font.body, lineHeight: font.body * 1.8, fontFamily: fonts.ui, marginBottom: space.lg },
   section: { marginBottom: space.lg },
-  heading: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.2, marginBottom: space.xs },
+  heading: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5, marginBottom: space.xs },
   body: { color: colors.textDim, fontSize: font.body, lineHeight: font.body * 1.85, fontFamily: fonts.ui },
 });

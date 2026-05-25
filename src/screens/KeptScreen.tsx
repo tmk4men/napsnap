@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
@@ -179,32 +179,32 @@ const styles = StyleSheet.create({
   soundBtn: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.xs,
     backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  count: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
+  count: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   reactBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     backgroundColor: colors.limeSoft,
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.limeLine,
   },
-  reactLabel: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
+  reactLabel: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
   stage: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.2 },
+  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
   metaDot: { color: colors.textFaint, fontSize: font.small },
-  metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
+  metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   swipeHint: {
     alignSelf: 'center',
     color: colors.textFaint,

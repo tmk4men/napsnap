@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, space } from '../theme';
+import { colors, rule, space } from '../theme';
 import { TabKey } from './nav';
 import { Avatar } from '../components/ui';
 import { BookmarkIcon, HouseIcon, NoteIcon, SearchIcon } from '../components/icons';
@@ -54,7 +54,8 @@ export function TabBar({
 function Tab({ children, active, onPress }: { children: React.ReactNode; active: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.item, pressed && { opacity: 0.6 }]}>
-      <View style={[styles.iconBox, active && styles.iconBoxActive]}>{children}</View>
+      <View style={[styles.marker, active && styles.markerActive]} />
+      <View style={styles.iconBox}>{children}</View>
     </Pressable>
   );
 }
@@ -63,26 +64,26 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     backgroundColor: colors.bg,
-    paddingTop: space.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
+    borderTopWidth: rule.thick,
+    borderTopColor: colors.text, // 紙面の下端＝太罫
   },
-  item: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  iconBox: { width: 54, height: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center' },
-  iconBoxActive: { backgroundColor: colors.limeSoft },
+  item: { flex: 1, alignItems: 'center', justifyContent: 'flex-start' },
+  // アクティブは“節見出し”の朱の太罫で示す（角丸の塗りカードにしない）
+  marker: { width: 26, height: rule.thick, backgroundColor: 'transparent', marginBottom: 8 },
+  markerActive: { backgroundColor: colors.lime },
+  iconBox: { width: 54, height: 32, alignItems: 'center', justifyContent: 'center' },
   dot: {
     position: 'absolute',
-    top: -5,
+    top: -6,
     right: -11,
     backgroundColor: colors.lime,
-    borderRadius: radius.pill,
-    minWidth: 16,
-    height: 16,
+    minWidth: 15,
+    height: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 1.5,
+    paddingHorizontal: 3,
+    borderWidth: rule.hair,
     borderColor: colors.bg,
   },
-  dotText: { fontSize: 10, fontWeight: '900', color: colors.limeInk },
+  dotText: { fontSize: 9, fontWeight: '700', color: colors.limeInk },
 });

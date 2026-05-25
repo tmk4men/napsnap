@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, Remaining, ShootButton, useTick } from '../components/ui';
@@ -260,11 +260,11 @@ const styles = StyleSheet.create({
   shareBtn: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: radius.xs,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.limeSoft,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.limeLine,
     alignSelf: 'flex-start',
   },
@@ -279,27 +279,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: fonts.ui,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingHorizontal: 10,
     paddingVertical: 2,
   },
   stats: { flexDirection: 'row', gap: space.lg, marginTop: space.sm },
   connStat: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  connNum: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  connNum: { color: colors.text, fontSize: font.body, fontWeight: '500', fontFamily: fonts.handle },
   connLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
 
   hl: {
     width: 132,
     height: 168,
-    borderRadius: radius.lg,
+    borderRadius: radius.xs,
     overflow: 'hidden',
     backgroundColor: colors.surfaceSunken,
     justifyContent: 'flex-end',
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.mediaChipBorder,
-    boxShadow: shadow.chip,
   },
   hlImg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   hlScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.28)' },
@@ -307,15 +306,15 @@ const styles = StyleSheet.create({
   hlCap: { color: colors.onMediaDim, fontSize: font.tiny, fontWeight: '700', paddingHorizontal: 10, paddingBottom: 10, paddingTop: 2 },
 
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.lg, gap: space.xs },
-  emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: 0.3 },
+  emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: -0.5 },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
   meStatRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: space.sm, paddingHorizontal: 2 },
   meStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  meStatText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  meStatText: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   meSound: { marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 2 },
   card: { padding: space.md, marginBottom: space.md },
   cardTop: { flexDirection: 'row', alignItems: 'center' },
-  thumb: { width: 84, height: 84, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },
+  thumb: { width: 84, height: 84, borderRadius: radius.xs, backgroundColor: colors.surfaceSunken },
   stat: { color: colors.text, fontSize: font.body, marginBottom: 2 },
   statNum: { color: colors.text, fontWeight: '900', fontSize: font.lead },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 6 },

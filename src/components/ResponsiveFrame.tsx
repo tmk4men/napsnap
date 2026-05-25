@@ -1,6 +1,6 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 
 // napsnap はスマホ前提のSNS。GitHub Pages のデモはPCブラウザでも開かれるため、
@@ -47,11 +47,12 @@ const styles = StyleSheet.create({
   },
   // web のみ効く線形グラデ（未対応環境では backgroundColor にフォールバック）
   pageGradient: {
-    experimental_backgroundImage: 'linear-gradient(150deg, #24221B 0%, #1F1D18 100%)',
+    experimental_backgroundImage: 'linear-gradient(150deg, #2C281C 0%, #1C1A15 100%)',
   } as any,
+  // 端末枠の角丸は“スマホらしさ”のため radius トークン（紙面用に直角化）とは独立に固定する。
   device: {
     backgroundColor: colors.deviceShell,
-    borderRadius: radius.xl + 16,
+    borderRadius: 46,
     padding: BEZEL,
     boxShadow: shadow.frame,
     borderWidth: 1,
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   },
   screen: {
     backgroundColor: colors.bg,
-    borderRadius: radius.xl + 4,
+    borderRadius: 34,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { FadeIn, PrimaryButton } from './ui';
 import { CloseIcon } from './icons';
@@ -113,18 +113,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
-  barTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.display },
-  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
+  barTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.display, letterSpacing: -0.5 },
+  close: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   body: { flex: 1, padding: space.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  bigNote: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.display },
+  bigNote: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.display, letterSpacing: -0.5 },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, fontFamily: fonts.ui, textAlign: 'center' },
   adBox: {
     width: '100%',
     height: 200,
-    borderRadius: radius.lg,
+    borderRadius: radius.xs,
     backgroundColor: colors.surfaceSunken,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, radius, rule, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { FadeIn } from './ui';
 
@@ -42,14 +42,14 @@ const styles = StyleSheet.create({
     right: space.lg,
     minWidth: 196,
     backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     boxShadow: shadow.card,
     paddingVertical: space.xxs,
     overflow: 'hidden',
   },
   item: { paddingHorizontal: space.md, paddingVertical: 14 },
-  itemBorder: { borderTopWidth: 1, borderTopColor: colors.hairline },
+  itemBorder: { borderTopWidth: rule.hair, borderTopColor: colors.hairline },
   itemText: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
 });

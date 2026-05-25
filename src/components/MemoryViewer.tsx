@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { ChekiCard } from './ChekiCard';
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SpeakerOnIcon } from './icons';
@@ -96,25 +96,25 @@ const styles = StyleSheet.create({
   iconBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.xs,
     backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  counter: { color: colors.textDim, fontSize: font.small, fontWeight: '800' },
+  counter: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   stage: { flex: 1, paddingHorizontal: space.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   bottom: { paddingHorizontal: space.lg, alignItems: 'center', gap: space.sm },
-  date: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.ui },
+  date: { color: colors.text, fontSize: font.lead, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.5 },
   nav: { flexDirection: 'row', gap: space.md },
   navBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.xs,
     backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',

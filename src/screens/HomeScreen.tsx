@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, FadeIn, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
@@ -33,6 +33,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const me = currentUser(s);
   const topic = todaysTopic();
   const topicNew = topicUnseen(s); // 今日のお題をまだ見ていない＝通知あり
+
+  // 題字横の日付（号外のデートライン）。
+  const now = new Date();
+  const wd = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+  const dateline = `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}（${wd}）`;
 
   const queue = useMemo(() => feedQueue(s), [s.posts, s.feedStates, s.following, s.currentUserId]);
   const myActive = useMemo(
@@ -81,39 +86,55 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       {/* 紙の空気感（放射グラデ＋フィルムグレイン） */}
       <Backdrop />
 
-      {/* ヘッダー */}
-      <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
-        <Text style={styles.brand}>napsnap</Text>
-        <View style={styles.headerRight}>
-          <Pressable onPress={() => nav.openCamera()} style={styles.iconBtn} hitSlop={8}>
-            <CameraIcon size={20} color={colors.text} />
-          </Pressable>
-          <Pressable onPress={openActivity} style={styles.iconBtn} hitSlop={8}>
-            <BellIcon size={19} color={colors.text} />
-            {unread > 0 && (
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText}>{unread}</Text>
-              </View>
-            )}
-          </Pressable>
-          <Avatar user={me} size={36} />
-          <Pressable onPress={() => setShowMenu(true)} style={styles.iconBtn} hitSlop={8}>
-            <MenuIcon size={20} color={colors.text} />
-          </Pressable>
+      {/* マストヘッド（題字＋デートライン＋欄外の操作） */}
+      <View style={[styles.masthead, { paddingTop: insets.top + space.sm }]}>
+        <View style={styles.titleRow}>
+          <Text style={styles.brand}>napsnap</Text>
+          <View style={styles.dateline}>
+            <View style={styles.gogaiTag}>
+              <Text style={styles.gogaiText}>号外</Text>
+            </View>
+            <Text style={styles.dateText}>{dateline}</Text>
+          </View>
         </View>
+        <View style={styles.ruleHeavy} />
+        <View style={styles.utilityRow}>
+          <Text style={styles.kicker}>本日の紙面</Text>
+          <View style={styles.glyphs}>
+            <Pressable onPress={() => nav.openCamera()} style={styles.glyphBtn} hitSlop={8}>
+              <CameraIcon size={21} color={colors.text} />
+            </Pressable>
+            <View style={styles.glyphSep} />
+            <Pressable onPress={openActivity} style={styles.glyphBtn} hitSlop={8}>
+              <BellIcon size={20} color={colors.text} />
+              {unread > 0 && (
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText}>{unread}</Text>
+                </View>
+              )}
+            </Pressable>
+            <View style={styles.glyphSep} />
+            <Avatar user={me} size={28} />
+            <View style={styles.glyphSep} />
+            <Pressable onPress={() => setShowMenu(true)} style={styles.glyphBtn} hitSlop={8}>
+              <MenuIcon size={21} color={colors.text} />
+            </Pressable>
+          </View>
+        </View>
+        <View style={styles.ruleThin} />
       </View>
 
-      {/* 思い出の入口（1年前の今日 など） */}
+      {/* 縮刷版（1年前の号 など、バックナンバー欄） */}
       {memory && (
         <FadeIn delay={70} dy={8}>
           <Pressable
             onPress={() => setViewingMemory([memory.post])}
-            style={({ pressed }) => [styles.memoryCard, pressed && { backgroundColor: colors.surfaceSunken }]}
+            style={({ pressed }) => [styles.backnumber, pressed && { backgroundColor: colors.surfaceSunken }]}
           >
-            <Image source={{ uri: memory.post.imageUrl }} style={styles.memoryThumb} resizeMode="cover" />
+            <Image source={{ uri: memory.post.imageUrl }} style={styles.bnThumb} resizeMode="cover" />
             <View style={{ flex: 1, marginLeft: space.sm }}>
-              <Text style={styles.memoryLabel}>{memory.label}</Text>
-              <Text style={styles.memorySub} numberOfLines={1}>
+              <Text style={styles.bnKicker}>縮刷版　{memory.label}</Text>
+              <Text style={styles.bnSub} numberOfLines={1}>
                 {memory.post.caption?.text ? memory.post.caption.text.replace(/\n/g, ' ') : 'あの日の痕跡'}
               </Text>
             </View>
@@ -236,73 +257,58 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space.lg,
-  },
-  brand: { fontSize: 26, fontWeight: '700', fontFamily: fonts.brand, color: colors.text },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-  },
+
+  // マストヘッド
+  masthead: { paddingHorizontal: space.lg },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 6 },
+  brand: { fontSize: 38, fontFamily: fonts.brand, color: colors.text, letterSpacing: -1, includeFontPadding: false },
+  dateline: { alignItems: 'flex-end', paddingBottom: 4 },
+  gogaiTag: { backgroundColor: colors.lime, paddingHorizontal: 7, paddingVertical: 1, marginBottom: 3 },
+  gogaiText: { color: colors.limeInk, fontSize: 11, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 3 },
+  dateText: { color: colors.textDim, fontSize: 11, fontFamily: fonts.handle, letterSpacing: 0.5 },
+  ruleHeavy: { height: rule.thick, backgroundColor: colors.text },
+  ruleThin: { height: rule.hair, backgroundColor: colors.hairline },
+  utilityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7 },
+  kicker: { color: colors.textDim, fontSize: font.tiny, fontFamily: fonts.ui, fontWeight: '700', letterSpacing: 4 },
+  glyphs: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  glyphBtn: { alignItems: 'center', justifyContent: 'center' },
+  glyphSep: { width: rule.hair, height: 16, backgroundColor: colors.hairline },
   bellBadge: {
     position: 'absolute',
-    top: -3,
-    right: -3,
-    minWidth: 17,
-    height: 17,
-    borderRadius: radius.pill,
+    top: -6,
+    right: -7,
+    minWidth: 15,
+    height: 15,
     backgroundColor: colors.lime,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 1.5,
+    paddingHorizontal: 3,
+    borderWidth: rule.hair,
     borderColor: colors.bg,
   },
-  bellBadgeText: { color: colors.limeInk, fontSize: 10, fontWeight: '800' },
-  memoryCard: {
+  bellBadgeText: { color: colors.limeInk, fontSize: 9, fontWeight: '700', fontFamily: fonts.handle },
+
+  // 縮刷版（バックナンバー欄）
+  backnumber: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: space.lg,
     marginTop: space.sm,
-    padding: space.xs,
-    paddingRight: space.sm,
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    paddingVertical: space.xs,
+    borderTopWidth: rule.hair,
+    borderBottomWidth: rule.hair,
     borderColor: colors.hairline,
-    boxShadow: shadow.card,
   },
-  memoryThumb: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.surfaceSunken },
-  memoryLabel: { color: colors.text, fontSize: font.small, fontWeight: '900', fontFamily: fonts.ui },
-  memorySub: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
+  bnThumb: { width: 46, height: 46, backgroundColor: colors.surfaceSunken, borderWidth: rule.hair, borderColor: colors.hairline },
+  bnKicker: { color: colors.limeInkSoft, fontSize: font.tiny, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 1.5 },
+  bnSub: { color: colors.text, fontSize: font.body, marginTop: 2, fontFamily: fonts.serif },
+
+  // 中央ステージ
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },
   heroWrap: { alignItems: 'center', gap: space.md },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.3 },
+  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
   msg: { alignItems: 'flex-start', alignSelf: 'stretch' },
-  big: { fontSize: 44, fontWeight: '800', lineHeight: 54, fontFamily: fonts.serif, color: colors.text, letterSpacing: 0.5 },
+  big: { fontSize: 44, fontWeight: '800', lineHeight: 52, fontFamily: fonts.serif, color: colors.text, letterSpacing: -1 },
   sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.6, fontFamily: fonts.ui, color: colors.textDim },
-  lockChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: colors.limeSoft,
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.limeLine,
-  },
-  lockDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.limeDust },
-  lockChipText: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
 });

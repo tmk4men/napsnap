@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, radius, rule } from '../theme';
 import { REACTIONS } from '../copy';
 import { ReactionType } from '../types';
 import { ReactionIcon } from './icons';
@@ -93,23 +93,23 @@ const styles = StyleSheet.create({
   item: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: radius.xs,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(18,17,14,0.55)',
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.mediaChipBorder,
   },
   itemActive: {
-    backgroundColor: 'rgba(207,234,69,0.18)',
-    borderColor: 'rgba(207,234,69,0.6)',
+    backgroundColor: 'rgba(194,46,28,0.18)',
+    borderColor: 'rgba(194,46,28,0.6)',
   },
   ring: {
     position: 'absolute',
     width: 56,
     height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
+    borderRadius: radius.xs,
+    borderWidth: rule.thin,
     borderColor: colors.lime,
   },
 });

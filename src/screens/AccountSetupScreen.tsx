@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
@@ -174,8 +174,8 @@ export function AccountSetupScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
-  brand: { color: colors.text, fontSize: 28, fontWeight: '700', marginBottom: space.md, fontFamily: fonts.brand },
-  title: { color: colors.text, fontSize: font.hero, fontWeight: '800', lineHeight: 50, fontFamily: fonts.serif, letterSpacing: 0.5 },
+  brand: { color: colors.text, fontSize: 34, letterSpacing: -1, marginBottom: space.md, fontFamily: fonts.brand },
+  title: { color: colors.text, fontSize: font.hero, fontWeight: '800', lineHeight: 48, fontFamily: fonts.serif, letterSpacing: -1 },
   followHint: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, fontFamily: fonts.ui },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 
@@ -198,16 +198,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.pill,
+    backgroundColor: 'transparent',
+    borderRadius: radius.xs,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: colors.hairline,
-    boxShadow: shadow.chip,
+    borderColor: colors.text,
   },
-  chosePressed: { backgroundColor: colors.surfaceSunken, transform: [{ scale: 0.98 }] },
-  chooseText: { color: colors.text, fontSize: font.body, fontWeight: '800' },
+  chosePressed: { backgroundColor: colors.surfaceSunken },
+  chooseText: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
 
   fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: space.lg, marginBottom: space.xs },
   input: {
@@ -236,29 +235,26 @@ const styles = StyleSheet.create({
   hint: { color: colors.textFaint, fontSize: font.small, marginTop: space.xs },
   bannedNote: { color: colors.warn, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginBottom: space.xs },
 
+  // 罫線で区切った“名簿”。塗りカードにはしない。
   person: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.lg,
-    padding: space.sm,
-    marginBottom: space.sm,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    boxShadow: shadow.chip,
+    paddingVertical: space.sm,
+    borderBottomWidth: rule.hair,
+    borderBottomColor: colors.hairline,
   },
   personPressed: { backgroundColor: colors.surfaceSunken },
-  personName: { color: colors.text, fontSize: font.body, fontWeight: '800' },
-  personHandle: { color: colors.textDim, fontSize: font.small, marginTop: 1 },
+  personName: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
+  personHandle: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.handle },
   followBtn: {
-    borderRadius: radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.line,
+    borderRadius: radius.xs,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'transparent',
+    borderWidth: rule.hair,
+    borderColor: colors.text,
   },
-  followBtnOn: { backgroundColor: colors.limeSoft, borderColor: colors.limeLine },
-  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
-  followTextOn: { color: colors.limeInkSoft },
+  followBtnOn: { backgroundColor: colors.lime, borderColor: colors.limeDust },
+  followText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  followTextOn: { color: colors.limeInk },
 });

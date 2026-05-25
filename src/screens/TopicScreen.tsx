@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
@@ -182,22 +182,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: colors.lime,
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.10)',
-    boxShadow: '0 6px 14px rgba(96,109,31,0.18)',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
   },
-  joinText: { color: colors.limeInk, fontSize: font.small, fontWeight: '900', fontFamily: fonts.ui },
+  joinText: { color: colors.limeInk, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 1 },
   stage: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingBottom: 96 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.2 },
+  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
   metaDot: { color: colors.textFaint, fontSize: font.small },
-  metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
+  metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   reactFloat: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.lg },
-  emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: 0.3 },
+  emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: -0.5 },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', fontFamily: fonts.ui },
 });

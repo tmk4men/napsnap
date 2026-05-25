@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, shadow, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar, FadeIn } from './ui';
 import { CloseIcon, SearchIcon, TraceMark, VerifiedBadge } from './icons';
@@ -114,12 +114,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
     paddingBottom: space.sm,
   },
-  tabs: { flexDirection: 'row', gap: 4, flex: 1, backgroundColor: colors.surfaceSunken, borderRadius: radius.pill, padding: 4 },
-  tab: { flex: 1, paddingVertical: 8, borderRadius: radius.pill, alignItems: 'center' },
-  tabActive: { backgroundColor: colors.surfaceRaised, boxShadow: shadow.chip },
+  tabs: { flexDirection: 'row', gap: 4, flex: 1, backgroundColor: colors.surfaceSunken, borderRadius: radius.xs, padding: 4 },
+  tab: { flex: 1, paddingVertical: 8, borderRadius: radius.xs, alignItems: 'center', borderWidth: rule.hair, borderColor: 'transparent' },
+  tabActive: { backgroundColor: colors.surfaceRaised, borderColor: colors.hairline },
   tabText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
   tabTextActive: { color: colors.text },
-  close: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
+  close: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -128,8 +128,8 @@ const styles = StyleSheet.create({
     marginBottom: space.sm,
     paddingHorizontal: space.md,
     backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    borderWidth: 1,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
   },
   searchInput: { flex: 1, color: colors.text, fontSize: font.body, fontWeight: '600', fontFamily: fonts.ui, paddingVertical: 11 },
@@ -139,18 +139,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: rule.hair,
     borderBottomColor: colors.hairline,
   },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   name: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
   handle: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.handle, letterSpacing: 0.2 },
   followBtn: {
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingHorizontal: 14,
     paddingVertical: 8,
     backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.line,
   },
   followBtnOn: { backgroundColor: colors.limeSoft, borderColor: colors.limeLine },

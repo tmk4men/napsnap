@@ -4,14 +4,14 @@ import { Platform } from 'react-native';
 // ネイティブでは未バンドルのためフォールバック（システム書体）になる＝Web デモ優先。
 const WEB = Platform.OS === 'web';
 
-// ブランド（手書き風）と見出し（端正なゴシック）。
+// 号外（新聞紙面）の書体。題字はディドネ、見出しは詰めた明朝、本文/ラベルは公的書類のゴシック。
 export const fonts = {
-  brand: WEB ? 'Caveat' : undefined, // napsnap のロゴ＝手書き風
-  display: WEB ? 'Zen Kaku Gothic New' : undefined, // 大見出し
-  serif: WEB ? 'Shippori Mincho' : undefined, // 情緒/高級感のある明朝（“今”の見出しや余韻のコピー）
-  ui: WEB ? 'Zen Kaku Gothic New' : undefined, // UI本文・ラベル（全体の統一感）
-  name: WEB ? 'Zen Maru Gothic' : undefined, // 表示名＝丸ゴで親しみのある人格
-  handle: WEB ? 'DM Mono' : undefined, // @ID＝等幅で“ユーザー名”らしい質感
+  brand: WEB ? 'DM Serif Display' : undefined, // 題字＝高コントラストのディドネ（新聞のマストヘッド）
+  display: WEB ? 'Shippori Mincho' : undefined, // 大見出し（明朝・太）
+  serif: WEB ? 'Shippori Mincho' : undefined, // 見出し/余韻のコピー（明朝）
+  ui: WEB ? 'BIZ UDPGothic' : undefined, // UI本文・ラベル（公的書類の角ゴ＝“通知/告知”の質感）
+  name: WEB ? 'BIZ UDPGothic' : undefined, // 表示名（紙面では人名も同じ角ゴで組む）
+  handle: WEB ? 'DM Mono' : undefined, // @ID・数字＝等幅で“活字で組んだ”質感
 } as const;
 
 // 画像に入れる文字のフォント（3種）。
@@ -28,7 +28,7 @@ export function captionFont(key: string) {
 }
 
 export const GOOGLE_FONTS_HREF =
-  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;800;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&family=DM+Mono:wght@400;500&display=swap';
+  'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Shippori+Mincho:wght@600;700;800&family=BIZ+UDPGothic:wght@400;700&family=DM+Mono:wght@400;500&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&display=swap';
 
 // 実行時にWebのheadへフォントlinkを差し込む（dev/prod 両対応。idで二重読み込みを防ぐ）。
 export function loadWebFonts() {

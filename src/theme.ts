@@ -1,63 +1,64 @@
 // napsnap デザイントークン。
-// アイデンティティ＝「温かいクリーム × 静かなライム」。ライムは“塗る”のではなく“点灯”させる差し色。
+// 設計言語＝「号外（新聞紙面）」。生成りの紙にインクの黒、差し色は速報の朱赤“1色”だけ。
+// 角丸カード・光沢・やわ影・グラデ＋グレインは使わない。骨格は「罫線＋詰めた明朝」でつくる。
+// 色キーは旧来のまま（lime=朱赤に読み替え）。全画面が自動で紙面化する。
 export const colors = {
-  // 背景・面（紙のような階層を持たせる）
-  bg: '#FFF8E8', // ベース背景 Warm Off White
-  bgWarm: '#FFF3D8', // ほんのり濃いクリーム（ヘッダー裏やグラデの足し）
-  surface: '#F1EBDD', // 基本サーフェス
-  surfaceRaised: '#FFFCF2', // 浮いたカード（紙が手前に来た感じ）
-  surfaceSunken: '#E8DFCF', // 押し込み・非アクティブ
+  // 紙（生成り。クリームより彩度を落とした“新聞紙”の灰寄り）
+  bg: '#F1ECE0', // ベース＝新聞紙
+  bgWarm: '#E9E2D2', // 題字裏・欄の地に少し沈める
+  surface: '#E9E3D5', // 基本サーフェス
+  surfaceRaised: '#FAF7EE', // 貼り込んだ写真の白フチ（紙より明るい）
+  surfaceSunken: '#DCD5C2', // 押し込み・非アクティブ
   surfaceMedia: '#14130F', // 写真系の暗い面
-  card: '#F1EBDD', // 後方互換エイリアス（= surface）
+  card: '#E9E3D5', // 後方互換エイリアス（= surface）
 
-  // 文字
-  text: '#171713', // メイン Soft Black
-  textDim: '#6E6859', // 補助（生活感のある灰）
-  textFaint: '#7C735F', // さらに薄い灰（cream上でも読めるコントラストに）
+  // インク（紙に染みた黒。真っ黒よりわずかに暖）
+  text: '#17150F',
+  textDim: '#56503F',
+  textFaint: '#8A8268',
 
-  // 線
-  line: '#DED4C1', // 区切り線
-  hairline: 'rgba(23,23,19,0.08)', // ごく細い境界
+  // 罫線
+  line: '#C8C0AB', // 区切り罫
+  hairline: 'rgba(23,21,15,0.18)', // 細罫（“印刷された線”として読めるよう少し濃く）
 
-  // アクセント Trace Lime（面積を絞って“点灯”として使う）
-  lime: '#CFEA45', // primary（少し彩度を落として蛍光感を抑える）
-  limeSoft: '#F4F7D8', // 淡い選択背景・ハイライト
-  limeDust: '#96A83F', // 小さなドット・サブアクセント
-  limeInk: '#181A0D', // ライム上の文字
+  // 差し色 速報赤（号外の朱。面で塗らず、罫・印・見出しの一点に）
+  lime: '#C22E1C', // primary（=press red）
+  limeSoft: '#F1E2DB', // 淡い朱の刷り（選択背景）
+  limeDust: '#9A2A1A', // 小さな点・サブアクセント
+  limeInk: '#FBF6EC', // 朱の上の文字＝紙色
+  limeInkSoft: '#6B1C11', // 朱の濃い文字（紙の上で使う見出し朱）
+  limeLine: 'rgba(194,46,28,0.32)', // 朱の細罫
 
-  // 警告
-  warn: '#D9473F', // 人検知時のみ
+  // 警告（人検知）＝同じ朱でよい。新聞の“緊急”は赤。
+  warn: '#C22E1C',
 
-  // 写真未選択時の頭文字アバターのほのかな下地色（互換用に User.avatarColor へ入れる）
-  avatarTint: '#C7E6A6',
-  // 空アバター（画像も名前も無い）の下地とアイコン色
-  avatarFallback: '#EDE6D8',
-  avatarFallbackIcon: '#8A826F',
-  // ライムの面/状態表示用の濃い文字色と細線
-  limeInkSoft: '#3F4518',
-  limeLine: 'rgba(113,126,36,0.28)',
+  // アバター下地（中立の紙グレー）
+  avatarTint: '#D7CFBB',
+  avatarFallback: '#E3DCCB',
+  avatarFallbackIcon: '#8A8268',
 
-  // 写真の上で使う固定色（テーマに依らず白＋暗いスクリム）
-  onMedia: '#FFFDF7',
-  onMediaDim: 'rgba(255,253,247,0.72)',
+  // 写真の上で使う固定色
+  onMedia: '#FBF7EE',
+  onMediaDim: 'rgba(251,247,238,0.72)',
   scrimTop: 'rgba(0,0,0,0.35)',
   scrimBottom: 'rgba(0,0,0,0.55)',
-  mediaChip: 'rgba(18,17,14,0.55)',
-  mediaChipBorder: 'rgba(255,253,247,0.16)',
+  mediaChip: 'rgba(18,17,14,0.58)',
+  mediaChipBorder: 'rgba(251,247,238,0.18)',
 
-  // PCで端末枠の外側（プロダクトショット用の落ち着いた暗色）
-  backdrop: '#1F1D18',
-  backdrop2: '#34301F',
+  // PCで端末枠の外側（印刷工場の暗色）
+  backdrop: '#1C1A15',
+  backdrop2: '#2C281C',
   deviceShell: '#0E0E0B',
 } as const;
 
-// 影は boxShadow 文字列（react-native-web / RN0.85 ともに対応）。光は上から、影は暖色寄りに。
+// 影は基本「使わない」。重さは罫線が担う。残すのは端末枠の落ち影だけ。
+// card は“紙に貼った切り抜き”の硬い小オフセットだけ薄く残す（やわらかい浮遊カードにしない）。
 export const shadow = {
-  card: '0 12px 30px rgba(60,46,18,0.10), 0 2px 6px rgba(60,46,18,0.05)',
-  cardPressed: '0 4px 12px rgba(60,46,18,0.07)',
-  button: '0 10px 22px rgba(96,109,31,0.18)',
-  chip: '0 4px 14px rgba(60,46,18,0.08)',
-  avatar: '0 6px 14px rgba(60,46,18,0.14)',
+  card: '1px 2px 0 rgba(23,21,15,0.06)',
+  cardPressed: 'none',
+  button: 'none',
+  chip: 'none',
+  avatar: '0 1px 2px rgba(23,21,15,0.10)',
   frame: '0 42px 140px rgba(0,0,0,0.52), 0 14px 30px rgba(0,0,0,0.32)',
 } as const;
 
@@ -71,13 +72,14 @@ export const space = {
   xxl: 64,
 } as const;
 
+// 角丸はほぼ無し（新聞は直角）。写真の角だけ気持ち落とす程度。
 export const radius = {
-  xs: 8,
-  sm: 12,
-  md: 16,
-  lg: 20,
-  xl: 28,
-  pill: 999,
+  xs: 2,
+  sm: 2,
+  md: 3,
+  lg: 4,
+  xl: 4,
+  pill: 999, // 互換のため残すが、原則使わない
 } as const;
 
 export const font = {
@@ -88,4 +90,12 @@ export const font = {
   body: 15,
   small: 13,
   tiny: 11,
+} as const;
+
+// 罫線の太さ（紙面の階層）。masthead は二重罫、節は太罫、項目は細罫。
+export const rule = {
+  hair: 1,
+  thin: 1.5,
+  thick: 3,
+  heavy: 5,
 } as const;

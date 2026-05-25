@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: space.lg,
   },
-  title: { color: colors.onMedia, fontSize: font.title, fontWeight: '900', fontFamily: fonts.display },
+  title: { color: colors.onMedia, fontSize: font.title, fontWeight: '900', fontFamily: fonts.display, letterSpacing: -0.5 },
   hint: { color: colors.onMediaDim, fontSize: font.small, marginTop: 4, marginBottom: space.lg },
   stage: { width: V, height: V, alignItems: 'center', justifyContent: 'center' },
   viewport: {
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     borderColor: colors.surfaceMedia,
   },
   actions: { flexDirection: 'row', gap: space.md, marginTop: space.xl },
-  btn: { borderRadius: radius.pill, paddingHorizontal: 28, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
+  btn: { borderRadius: radius.xs, paddingHorizontal: 28, paddingVertical: 13, alignItems: 'center', justifyContent: 'center' },
   cancel: { backgroundColor: colors.mediaChip, borderWidth: 1, borderColor: colors.mediaChipBorder },
   cancelText: { color: colors.onMedia, fontSize: font.body, fontWeight: '800' },
   ok: { backgroundColor: colors.lime, boxShadow: shadow.button },

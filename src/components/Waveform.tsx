@@ -40,5 +40,5 @@ export function Waveform({ color = colors.lime, bars = 7 }: { color?: string; ba
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', height: 56, gap: 6 },
-  bar: { width: 6, height: 56, borderRadius: 3 },
+  bar: { width: 6, height: 56, borderRadius: 0 },
 });

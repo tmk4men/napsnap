@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, space } from '../theme';
+import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
@@ -111,15 +111,15 @@ export function SearchScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.4, marginBottom: space.sm },
+  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5, marginBottom: space.sm },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: space.md,
     backgroundColor: colors.surface,
-    borderRadius: radius.pill,
-    borderWidth: 1,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
   },
   searchInput: { flex: 1, color: colors.text, fontSize: font.body, fontWeight: '600', fontFamily: fonts.ui, paddingVertical: 12 },
@@ -132,15 +132,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: colors.surfaceRaised,
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingLeft: 12,
     paddingRight: 8,
     paddingVertical: 7,
-    borderWidth: 1,
+    borderWidth: rule.hair,
     borderColor: colors.hairline,
   },
   chipText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.handle, letterSpacing: 0.2 },
-  chipX: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
+  chipX: { width: 18, height: 18, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, padding: space.xl },
   emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
@@ -148,18 +148,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: rule.hair,
     borderBottomColor: colors.hairline,
   },
   name: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
   handle: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.handle, letterSpacing: 0.2 },
   followBtn: {
-    borderRadius: radius.pill,
+    borderRadius: radius.xs,
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: colors.lime,
-    borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.10)',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
   },
-  followText: { color: colors.limeInk, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
+  followText: { color: colors.limeInk, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
 });

@@ -86,5 +86,5 @@ const styles = StyleSheet.create({
   stage: { flex: 1, alignSelf: 'stretch', overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.3 },
+  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
 });
