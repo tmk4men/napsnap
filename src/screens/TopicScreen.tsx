@@ -79,13 +79,13 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
   const go = (dir: number) => {
     const len = lenRef.current;
-    const i = idxRef.current;
-    const H = sizeRef.current.h || 560;
-    const target = i + dir;
-    if (target < 0 || target >= len) {
+    if (len <= 1) {
       Animated.spring(ty, { toValue: 0, useNativeDriver: NATIVE }).start();
       return;
     }
+    const i = idxRef.current;
+    const H = sizeRef.current.h || 560;
+    const target = (i + dir + len) % len; // 端を越えたら反対端へループ（最後→先頭 / 先頭→最後）
     Animated.timing(ty, { toValue: dir > 0 ? -H : H, duration: 170, useNativeDriver: NATIVE }).start(() => {
       setIndex(target);
       idxRef.current = target;
