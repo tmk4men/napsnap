@@ -52,5 +52,6 @@ const styles = StyleSheet.create({
   },
   item: { paddingHorizontal: space.md, paddingVertical: 14 },
   itemBorder: { borderTopWidth: rule.hair, borderTopColor: colors.hairline },
-  itemText: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
+  // 事務的な角ゴだと題字/見出し（明朝）から浮くので、メニューもアプリの identity＝明朝に寄せる。
+  itemText: { color: colors.text, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0.3 },
 });

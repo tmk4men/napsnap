@@ -144,7 +144,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
         {showMine ? (
-          <MyPostsSwiper posts={myActive} me={me} />
+          <MyPostsSwiper posts={myActive} me={me} official={s.users.find((u) => u.isOfficial)} onShoot={() => nav.openCamera()} />
         ) : showCard && displayPost ? (
           <FadeIn key={displayPost.id} delay={130} dy={16} style={styles.heroWrap}>
             {cardW > 0 && (
