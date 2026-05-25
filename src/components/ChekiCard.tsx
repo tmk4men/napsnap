@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, rule } from '../theme';
 import { captionFont } from '../lib/fonts';
 import { fonts } from '../lib/fonts';
@@ -70,11 +70,16 @@ export function ChekiCard({
             onChangeText={(t) => onChangeText?.(t.slice(0, 15))}
             placeholder={placeholder}
             placeholderTextColor={colors.textFaint}
-            style={[styles.caption, { fontFamily: f.family, fontWeight: f.weight, fontSize }]}
+            style={[
+              styles.caption,
+              { fontFamily: f.family, fontWeight: f.weight, fontSize },
+              // web の青いフォーカス枠を消し、点滅カーソル（caret）をインク色で見えるように。
+              Platform.OS === 'web' && ({ outlineStyle: 'none', caretColor: colors.text } as any),
+            ]}
             maxLength={15}
             autoFocus
-            cursorColor={colors.lime}
-            selectionColor={colors.lime}
+            cursorColor={colors.text}
+            selectionColor={colors.text}
           />
         ) : redactStrip ? (
           <View style={styles.redact} />

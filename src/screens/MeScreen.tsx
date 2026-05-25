@@ -146,7 +146,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
         )}
 
         {/* カレンダー */}
-        <Text style={styles.sectionLabel}>きろく・{archive.length}</Text>
+        <View style={{ height: space.lg }} />
         <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
 
         {/* 投稿（24h以内）：カルーセルで左右にめくる。誰が押したかは出さず、数だけ。 */}

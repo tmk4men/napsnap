@@ -8,7 +8,7 @@ import { copy } from '../copy';
 import { Avatar, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ReactionBar } from '../components/ReactionBar';
-import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark, VerifiedBadge } from '../components/icons';
+import { ChevronDownIcon, CloseIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -41,13 +41,12 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   const audioSrc = useMemo(() => resolvePostAudioSource(post), [post?.id]);
   const hasSound = postHasSound(post) && open;
   const player = useAudioPlayer(audioSrc ?? null);
-  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     if (!audioSrc || !open) return;
     try {
       player.loop = false;
-      player.muted = muted;
+      player.muted = false;
       player.seekTo(0);
       player.play();
     } catch {}
@@ -58,19 +57,9 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     };
   }, [audioSrc, open]);
 
-  const toggleSound = () => {
-    const next = !muted;
-    setMuted(next);
-    try {
-      player.muted = next;
-      if (!next) {
-        player.seekTo(0);
-        player.play();
-      }
-    } catch {}
-  };
+  // 音はタップで聞き直せる（オン/オフ切替UIは無し＝自動再生）。
   const replaySound = () => {
-    if (!hasSound || muted) return;
+    if (!hasSound) return;
     try {
       player.seekTo(0);
       player.play();
@@ -154,9 +143,6 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
         <View style={styles.topRight}>
-          <Pressable onPress={hasSound ? toggleSound : undefined} style={[styles.iconBtn, !hasSound && { opacity: 0.4 }]} hitSlop={8}>
-            {hasSound && !muted ? <SpeakerOnIcon size={18} color={colors.text} /> : <SpeakerOffIcon size={18} color={colors.text} />}
-          </Pressable>
           <Pill>のこり {queue.length}</Pill>
         </View>
       </View>

@@ -16,7 +16,7 @@ import { currentUser, keptPosts } from '../selectors';
 import { FadeIn } from '../components/ui';
 import { hasSupabase } from '../config';
 
-type Overlay = null | 'camera' | 'preview' | 'feed';
+type Overlay = null | 'camera' | 'preview' | 'feed' | 'search';
 
 export function AppShell() {
   const [tab, setTab] = useState<TabKey>('home');
@@ -57,6 +57,10 @@ export function AppShell() {
       if (hasSupabase) useStore.getState().liveHydrate();
       setOverlay('feed');
     },
+    openSearch: () => {
+      if (hasSupabase) useStore.getState().liveHydrate();
+      setOverlay('search');
+    },
     closeOverlay: () => {
       setOverlay(null);
       setDraftUri(null);
@@ -93,7 +97,6 @@ export function AppShell() {
           {tab === 'home' && <HomeScreen nav={nav} />}
           {tab === 'topic' && <TopicScreen nav={nav} />}
           {tab === 'kept' && <KeptScreen nav={nav} />}
-          {tab === 'search' && <SearchScreen />}
           {tab === 'me' && <MeScreen nav={nav} />}
         </FadeIn>
       </View>
@@ -106,6 +109,7 @@ export function AppShell() {
             <PreviewScreen uri={draftUri} audioUri={draftAudio} topicKey={draftTopic} canRetake={!retakeUsed} nav={nav} />
           )}
           {overlay === 'feed' && <FeedScreen nav={nav} />}
+          {overlay === 'search' && <SearchScreen onClose={nav.closeOverlay} />}
         </FadeIn>
       )}
     </View>

@@ -1,4 +1,4 @@
-export type TabKey = 'home' | 'topic' | 'kept' | 'search' | 'me';
+export type TabKey = 'home' | 'topic' | 'kept' | 'me';
 
 // アプリ内ナビゲーション（URLルーティングは使わず、状態でオーバーレイを出し分ける）。
 // これにより Web 書き出しが単一の index.html になり GitHub Pages に置きやすい。
@@ -7,6 +7,7 @@ export interface Nav {
   openCamera: (topicKey?: string) => void; // 新規撮影（撮り直し回数をリセット）。topicKey 付きで「お題に出す」。
   retake: () => void; // プレビューからの撮り直し（1回だけ）
   openFeed: () => void;
+  openSearch: () => void; // ホームの虫めがねから「さがす」をオーバーレイで開く
   closeOverlay: () => void;
   onCaptured: (uri: string, audioUri?: string) => void; // カメラ（写真＋2.5秒音声）→ プレビュー
   onPosted: () => void; // プレビューで投稿 → フィード（お題ならお題タブ）へ

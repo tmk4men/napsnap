@@ -12,7 +12,7 @@ import { useStore } from '../store';
 // ・検索は @ID のみ（名前は被るため）。
 // ・すでにフォロー中の人は出さない。
 // ・検索履歴は最大4件。各履歴は × で消せる。
-export function SearchScreen() {
+export function SearchScreen({ onClose }: { onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const s = useStore();
   const toggleFollow = useStore((st) => st.toggleFollow);
@@ -38,7 +38,12 @@ export function SearchScreen() {
     <View style={styles.container}>
       <Backdrop />
       <View style={{ paddingTop: insets.top + space.md, paddingHorizontal: space.lg }}>
-        <Text style={styles.title}>さがす</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>さがす</Text>
+          <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
+            <CloseIcon size={18} color={colors.text} />
+          </Pressable>
+        </View>
         <View style={styles.searchWrap}>
           <SearchIcon size={18} color={colors.textFaint} />
           <TextInput
@@ -115,7 +120,9 @@ export function SearchScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5, marginBottom: space.sm },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.sm },
+  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
+  closeBtn: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',

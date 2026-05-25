@@ -12,7 +12,7 @@ import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { DocOverlay } from '../components/DocOverlay';
-import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon, VerifiedBadge } from '../components/icons';
+import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon, SearchIcon, VerifiedBadge } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -97,6 +97,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <View style={styles.ruleHeavy} />
         <View style={styles.utilityRow}>
           <View style={styles.glyphs}>
+            <Pressable onPress={nav.openSearch} style={styles.glyphBtn} hitSlop={8}>
+              <SearchIcon size={20} color={colors.text} />
+            </Pressable>
+            <View style={styles.glyphSep} />
             <Pressable onPress={() => nav.openCamera()} style={styles.glyphBtn} hitSlop={8}>
               <CameraIcon size={21} color={colors.text} />
             </Pressable>
@@ -172,9 +176,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                 </>
               ) : (
                 <>
-                  <Text style={styles.metaName}>
-                    {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'まだ反応なし'}
-                  </Text>
+                  {reactionsOf(displayPost.id) > 0 && (
+                    <Text style={styles.metaName}>{reactionsOf(displayPost.id)}人が反応</Text>
+                  )}
                   {/* ロック中でも、この投稿があと何時間で消えるかを赤で出す（早く撮ろう） */}
                   {!displayAuthor?.isOfficial && (
                     <View style={{ marginLeft: 6 }}>

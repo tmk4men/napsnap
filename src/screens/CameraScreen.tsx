@@ -50,6 +50,9 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
   useEffect(() => {
     // 顔検知モデルを先読みしてプレビューの待ちを減らす
     preloadDetector();
+    // 直前の録音でオーディオセッションが「録音モード」のまま残るとカメラ再起動が不調になることがある。
+    // 起動時に再生モードへ戻してクリーンにする（投稿直後にカメラが真っ暗になる対策）。
+    setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
   }, []);
 
   useEffect(() => {
