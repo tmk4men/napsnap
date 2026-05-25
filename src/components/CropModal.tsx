@@ -135,7 +135,7 @@ export function CropModal({
             />
           )}
         </View>
-        {/* 円形ガイド（アバターは丸く表示される） */}
+        {/* 角版ガイド（アバターは証明写真風に角版で表示される） */}
         <View style={styles.circleGuide} pointerEvents="none" />
       </View>
 
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
     height: V,
     overflow: 'hidden',
     backgroundColor: '#000',
-    borderRadius: V / 2,
+    borderRadius: radius.xs,
   },
   circleGuide: {
     position: 'absolute',
     width: V,
     height: V,
-    borderRadius: V / 2,
+    borderRadius: radius.xs,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.5)',
   },

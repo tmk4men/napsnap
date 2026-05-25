@@ -146,7 +146,8 @@ export function Pill({
 // プロフィール画像があれば写真、なければ頭文字。絵文字は最後のフォールバック。
 // ring=true のときは外側に朱の輪＋内側に紙の隙間（顔なしSNSの“登録写真”的な縁取り）。
 function AvatarInner({ user, size, border, blur }: { user?: User; size: number; border: object; blur?: boolean }) {
-  const wrap = { width: size, height: size, borderRadius: size / 2 };
+  // 角版（証明写真風）。顔なしSNS＝“登録写真の台帳”の質感。丸ではなく直角＋細罫で囲う。
+  const wrap = { width: size, height: size, borderRadius: radius.xs };
   if (user?.avatarImageUri) {
     return (
       <Image
@@ -182,13 +183,14 @@ export function Avatar({
   blur?: boolean;
 }) {
   if (ring) {
+    // 選択中＝角版の枠（証明写真の縁）。塗り＋紙色の隙間で囲う。
     return (
       <View
         style={[
           {
             width: size,
             height: size,
-            borderRadius: size / 2,
+            borderRadius: radius.xs,
             backgroundColor: colors.lime,
             alignItems: 'center',
             justifyContent: 'center',
@@ -351,7 +353,7 @@ const styles = StyleSheet.create({
   pillText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, letterSpacing: 0.5 },
 
   avatar: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  avatarShadow: { borderRadius: radius.pill, boxShadow: shadow.avatar },
+  avatarShadow: { borderRadius: radius.xs, boxShadow: shadow.avatar },
   remaining: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   remainingText: { fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.5 },
 });
