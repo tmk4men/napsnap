@@ -4,13 +4,12 @@ import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
-import { copy } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
 import { TopicNote } from '../components/TopicNote';
 import { ReactionBar } from '../components/ReactionBar';
-import { PlusIcon, TraceMark } from '../components/icons';
+import { PlusIcon, VerifiedBadge } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { myReaction, topicPosts, userById } from '../selectors';
@@ -35,6 +34,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
   const topic = todaysTopic();
   const posts = useMemo(() => topicPosts(s, topic.key), [s.posts, topic.key]);
+  const official = s.users.find((u) => u.isOfficial);
 
   const [index, setIndex] = useState(0);
   const safeIndex = Math.min(index, Math.max(0, posts.length - 1));
@@ -130,9 +130,12 @@ export function TopicScreen({ nav }: { nav: Nav }) {
       >
         {posts.length === 0 ? (
           <View style={styles.empty}>
-            <TraceMark size={44} color={colors.line} />
-            <Text style={styles.emptyTitle}>{copy.topicEmpty}</Text>
-            <Text style={styles.emptySub}>{copy.topicEmptySub}</Text>
+            <View style={styles.promptHead}>
+              <Avatar user={official} size={24} />
+              <Text style={styles.promptName}>napsnap</Text>
+              <VerifiedBadge size={14} />
+            </View>
+            <Text style={styles.promptBig}>最初の一枚を{'\n'}出してみよう</Text>
           </View>
         ) : (
           <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
@@ -198,7 +201,8 @@ const styles = StyleSheet.create({
   metaDot: { color: colors.textFaint, fontSize: font.small },
   metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   reactFloat: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.lg },
-  emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: -0.5 },
-  emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', fontFamily: fonts.ui },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md, paddingHorizontal: space.lg },
+  promptHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  promptName: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif },
+  promptBig: { color: colors.text, fontSize: 40, lineHeight: 50, letterSpacing: -1, textAlign: 'center', fontFamily: fonts.serif, fontWeight: '800' },
 });
