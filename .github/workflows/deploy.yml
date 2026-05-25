@@ -30,6 +30,12 @@ jobs:
       - run: npm ci
       - name: Export web build
         run: npx expo export --platform web
+        # Supabase の鍵を載せてライブ（実データ共有）として書き出す。
+        # publishable(anon) 鍵は元々クライアントに埋まる公開鍵＝公開JSから誰でも見える前提で、データは RLS で保護。
+        # 鍵を替えたいときは Supabase Settings → API でローテーションし、ここを更新する。
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://zpmjykujiycmyvolewys.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_ctqC7vpIr09HvJ0LpI8Bpg_bMUuZSOk
       - name: Inject OGP meta tags
         run: node scripts/inject-ogp.mjs
       - name: Disable Jekyll (keep _expo dir)
