@@ -9,7 +9,7 @@ import { Avatar, Remaining, useTick } from '../components/ui';
 import { ChekiCard } from '../components/ChekiCard';
 import { TopicNote } from '../components/TopicNote';
 import { ReactionBar } from '../components/ReactionBar';
-import { PencilIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
+import { PencilIcon, TraceMark } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { myReaction, topicPosts, userById } from '../selectors';
@@ -24,6 +24,13 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   useTick(30000);
   const s = useStore();
   const reactToTopic = useStore((st) => st.reactToTopic);
+  const markTopicSeen = useStore((st) => st.markTopicSeen);
+
+  // お題タブを開いたら「今日のお題」通知を既読にする。
+  useEffect(() => {
+    markTopicSeen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const topic = todaysTopic();
   const posts = useMemo(() => topicPosts(s, topic.key), [s.posts, topic.key]);
@@ -33,16 +40,14 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   const current = posts[safeIndex];
   const mine = current ? myReaction(s, current.id) : undefined;
 
-  // 現在の投稿の音を、表示時に1回だけ再生（ミュート可）。
+  // 現在の投稿の音を、表示時に1回だけ再生。タップで聞き直せる（オン/オフ切替は無し）。
   const audioSrc = useMemo(() => resolvePostAudioSource(current), [current?.id]);
   const hasSound = postHasSound(current);
   const player = useAudioPlayer(audioSrc ?? null);
-  const [muted, setMuted] = useState(false);
   useEffect(() => {
     if (!audioSrc) return;
     try {
       player.loop = false;
-      player.muted = muted;
       player.seekTo(0);
       player.play();
     } catch {}
@@ -53,19 +58,8 @@ export function TopicScreen({ nav }: { nav: Nav }) {
     };
   }, [audioSrc]);
 
-  const toggleSound = () => {
-    const next = !muted;
-    setMuted(next);
-    try {
-      player.muted = next;
-      if (!next) {
-        player.seekTo(0);
-        player.play();
-      }
-    } catch {}
-  };
   const replaySound = () => {
-    if (!hasSound || muted) return;
+    if (!hasSound) return;
     try {
       player.seekTo(0);
       player.play();
@@ -119,7 +113,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
     <View style={[styles.container, { paddingTop: insets.top + space.sm }]}>
       {/* 今日のお題（ノートの切れ端）。出すボタンは紙の中に。 */}
       <View style={styles.noteWrap}>
-        <TopicNote prompt={topic.prompt} bg={colors.bg}>
+        <TopicNote prompt={topic.prompt}>
           <Pressable
             onPress={() => nav.openCamera(topic.key)}
             style={({ pressed }) => [styles.joinBtn, pressed && { transform: [{ scale: 0.97 }] }]}
@@ -166,15 +160,6 @@ export function TopicScreen({ nav }: { nav: Nav }) {
             </Pressable>
           </Animated.View>
         )}
-
-        {/* 音だけ（何枚目かは出さない） */}
-        {posts.length > 0 && (
-          <View style={styles.hud} pointerEvents="box-none">
-            <Pressable onPress={hasSound ? toggleSound : undefined} style={[styles.soundBtn, !hasSound && { opacity: 0.4 }]} hitSlop={8}>
-              {hasSound && !muted ? <SpeakerOnIcon size={16} color={colors.text} /> : <SpeakerOffIcon size={16} color={colors.text} />}
-            </Pressable>
-          </View>
-        )}
       </View>
 
       {/* リアクション（※残すには入らない）。バーは無し、ボタンだけ浮かせる。 */}
@@ -209,25 +194,6 @@ const styles = StyleSheet.create({
   metaName: { color: colors.text, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
   metaDot: { color: colors.textFaint, fontSize: font.small },
   metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
-  hud: {
-    position: 'absolute',
-    top: space.xs,
-    left: space.lg,
-    right: space.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  soundBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   reactFloat: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.lg },
   emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.ui },

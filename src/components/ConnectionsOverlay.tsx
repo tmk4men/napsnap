@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar, FadeIn } from './ui';
-import { CloseIcon, SearchIcon, TraceMark } from './icons';
+import { CloseIcon, SearchIcon, TraceMark, VerifiedBadge } from './icons';
 import { User } from '../types';
 
 type Tab = 'following' | 'followers';
@@ -84,7 +84,10 @@ export function ConnectionsOverlay({
               <View key={p.id} style={styles.row}>
                 <Avatar user={p} size={44} />
                 <View style={{ flex: 1, marginLeft: space.md }}>
-                  <Text style={styles.name}>{p.displayName}</Text>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.name}>{p.displayName}</Text>
+                    {p.isOfficial && <VerifiedBadge size={13} />}
+                  </View>
                   <Text style={styles.handle}>@{p.handle}</Text>
                 </View>
                 <Pressable
@@ -139,6 +142,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.hairline,
   },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   name: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
   handle: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.handle, letterSpacing: 0.2 },
   followBtn: {

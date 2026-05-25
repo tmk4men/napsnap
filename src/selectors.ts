@@ -3,6 +3,12 @@ import { Post, Reaction, ReactionType, User, ViewRecord } from './types';
 import type { Store } from './store';
 import { HOUR, isActive } from './lib/time';
 import { REACTION_TTL_HOURS } from './copy';
+import { dayIndex } from './topics';
+
+// 「今日のお題」の通知が未読か（今日ぶんをまだ見ていない）。
+export function topicUnseen(s: Pick<Store, 'topicSeenDay'>): boolean {
+  return s.topicSeenDay !== dayIndex();
+}
 
 type Snapshot = Pick<
   Store,

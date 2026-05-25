@@ -21,6 +21,7 @@ export function RootNavigator() {
       useStore.getState().pruneExpired();
       useStore.getState().refreshFollowPostsIfStale();
       useStore.getState().refreshTopicPostsIfStale();
+      useStore.getState().refreshOfficialPostsIfStale();
     }
   }, [hydrated]);
 

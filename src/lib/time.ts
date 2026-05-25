@@ -10,6 +10,14 @@ export function isActive(expiresAt: number): boolean {
   return expiresAt > Date.now();
 }
 
+// 次の0時（ローカル）のタイムスタンプ。お題の投稿は日付がかわると同時に消すため、
+// 24h ではなく「今日の終わり」を期限にする。
+export function nextMidnight(ts: number = Date.now()): number {
+  const d = new Date(ts);
+  d.setHours(24, 0, 0, 0);
+  return d.getTime();
+}
+
 export function remainingMs(expiresAt: number): number {
   return Math.max(0, expiresAt - Date.now());
 }

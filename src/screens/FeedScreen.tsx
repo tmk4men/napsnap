@@ -7,7 +7,7 @@ import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
 import { ReactionBar } from '../components/ReactionBar';
-import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
+import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -185,6 +185,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
               {open ? (
                 <>
                   <Text style={styles.metaName}>{author?.displayName ?? '友達'}</Text>
+                  {author?.isOfficial && <VerifiedBadge size={14} />}
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.metaAgo}>{timeAgo(post.createdAt)}</Text>
                   <View style={{ marginLeft: 6 }}>

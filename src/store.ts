@@ -4,10 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, User, ViewRecord } from './types';
 import { uid } from './lib/id';
-import { HOUR, isActive, now } from './lib/time';
+import { HOUR, isActive, nextMidnight, now } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
-import { makeFollowPosts, makeMyMemories, makeSeedReactions, makeTopicPosts } from './seed';
-import { todaysTopic } from './topics';
+import { makeFollowPosts, makeMyMemories, makeOfficialPosts, makeOfficialUser, makeSeedReactions, makeTopicPosts, OFFICIAL_ID } from './seed';
+import { dayIndex, todaysTopic } from './topics';
+
+const SEARCH_HISTORY_MAX = 4;
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -36,6 +38,8 @@ interface PersistedState {
   lastSeenActivityAt: number; // アクティビティ（通知）を最後に見た時刻
   avatarChangedAt: number; // プロフ画像を最後に変更した時刻（24h変更ロック用）
   profileEditAt: number[]; // 名前/ID変更のタイムスタンプ（2週間に2回まで）
+  topicSeenDay: number; // 「今日のお題」通知を見た日（dayIndex）。違えば未読として出す
+  searchHistory: string[]; // さがすタブの検索履歴（@IDのみ・新しい順・最大4件）
 }
 
 interface Actions {
@@ -49,8 +53,12 @@ interface Actions {
   reactToTopic: (postId: string, type: ReactionType) => void;
   skipPost: (postId: string) => void;
   markActivitySeen: () => void;
+  markTopicSeen: () => void;
+  addSearchHistory: (handle: string) => void;
+  removeSearchHistory: (handle: string) => void;
   refreshFollowPostsIfStale: () => void;
   refreshTopicPostsIfStale: () => void;
+  refreshOfficialPostsIfStale: () => void;
   pruneExpired: () => void;
   resetDemo: () => void;
 }
@@ -70,6 +78,8 @@ const initial: PersistedState = {
   lastSeenActivityAt: 0,
   avatarChangedAt: 0,
   profileEditAt: [],
+  topicSeenDay: -1,
+  searchHistory: [],
 };
 
 export const useStore = create<Store>()(
@@ -120,13 +130,16 @@ export const useStore = create<Store>()(
           const followPosts = makeFollowPosts(followed);
           // お題：今日のお題への、仲間の投稿を仕込む（モザイクなしの別世界）。
           const topicSeed = makeTopicPosts(todaysTopic(), followed);
+          // 公式アカウント：最初からフォロー＆初期フィードを供給（本番でも空にしない）。
+          const official = makeOfficialUser();
+          const officialPosts = makeOfficialPosts(official.id);
           // 相互アンロック：最初はパスを閉じておき、1枚出すと6時間だけ開く。
           set({
             onboarded: true,
             currentUserId: id,
-            users: [me, ...people],
-            following: followingIds,
-            posts: [...followPosts, ...topicSeed, ...makeMyMemories(id)],
+            users: [me, official, ...people],
+            following: [official.id, ...followingIds],
+            posts: [...officialPosts, ...followPosts, ...topicSeed, ...makeMyMemories(id)],
             views: [],
             reactions: [...makeSeedReactions(followPosts, people, id), ...makeSeedReactions(topicSeed, people, id)],
             feedStates: [],
@@ -134,6 +147,8 @@ export const useStore = create<Store>()(
             lastSeenActivityAt: now(),
             avatarChangedAt: 0,
             profileEditAt: [],
+            topicSeenDay: -1, // 初回から「今日のお題」通知を出す
+            searchHistory: [],
           });
         },
 
@@ -186,7 +201,8 @@ export const useStore = create<Store>()(
             caption,
             audioUrl,
             createdAt,
-            expiresAt: createdAt + POST_TTL_HOURS * HOUR,
+            // お題は日付がかわる0時で総入れ替え＝期限は今日の終わり。通常投稿は24時間。
+            expiresAt: topicKey ? nextMidnight(createdAt) : createdAt + POST_TTL_HOURS * HOUR,
           };
           if (topicKey) {
             // お題は独立：ホームの相互アンロック（6h）は開かない。
@@ -246,19 +262,39 @@ export const useStore = create<Store>()(
 
         markActivitySeen: () => set({ lastSeenActivityAt: now() }),
 
-        // デモが古くなってフォロー中の投稿が全部期限切れなら、新しい時刻で作り直す。
+        // 「今日のお題」通知を見た（今日ぶんを既読に）。
+        markTopicSeen: () => set({ topicSeenDay: dayIndex() }),
+
+        addSearchHistory: (handle) => {
+          const h = handle.trim().replace(/^@/, '').toLowerCase();
+          if (!h) return;
+          set((st) => ({
+            searchHistory: [h, ...st.searchHistory.filter((x) => x !== h)].slice(0, SEARCH_HISTORY_MAX),
+          }));
+        },
+        removeSearchHistory: (handle) => {
+          const h = handle.trim().replace(/^@/, '').toLowerCase();
+          set((st) => ({ searchHistory: st.searchHistory.filter((x) => x !== h) }));
+        },
+
+        // デモが古くなってフォロー中（モック仲間）の投稿が全部期限切れなら、新しい時刻で作り直す。
+        // 公式・お題・自分の投稿は触らない（それぞれ別ロジックで管理）。
         refreshFollowPostsIfStale: () => {
-          const { following, posts, currentUserId, users } = get();
-          const activeFollowed = posts.filter(
-            (p) => p.userId !== currentUserId && following.includes(p.userId) && isActive(p.expiresAt)
+          const { following, posts, users } = get();
+          const followedMockIds = new Set(
+            users.filter((u) => u.isMock && following.includes(u.id)).map((u) => u.id)
           );
-          if (activeFollowed.length > 0) return;
+          const activeMock = posts.filter(
+            (p) => !p.topicKey && followedMockIds.has(p.userId) && isActive(p.expiresAt)
+          );
+          if (activeMock.length > 0) return;
           const followedPeople = users.filter((u) => u.isMock && following.includes(u.id));
           if (followedPeople.length === 0) return;
           const fresh = makeFollowPosts(followedPeople);
           const freshIds = new Set(fresh.map((p) => p.id));
           set((st) => ({
-            posts: [...st.posts.filter((p) => p.userId === currentUserId), ...fresh],
+            // モック仲間の通常投稿だけ入れ替え（お題・公式・自分はそのまま残す）。
+            posts: [...st.posts.filter((p) => p.topicKey || !followedMockIds.has(p.userId)), ...fresh],
             feedStates: st.feedStates.filter((f) => !freshIds.has(f.postId)),
           }));
         },
@@ -280,6 +316,17 @@ export const useStore = create<Store>()(
           }));
         },
 
+        // 復帰時、公式アカウントの投稿が無ければ（期限切れ・初期フィード補充）作り直す。
+        // 本番でも「はじめてのフィードが空」を避けるため。
+        refreshOfficialPostsIfStale: () => {
+          const { posts, following, users } = get();
+          const official = users.find((u) => u.isOfficial) ?? users.find((u) => u.id === OFFICIAL_ID);
+          if (!official || !following.includes(official.id)) return;
+          const active = posts.some((p) => p.userId === official.id && !p.topicKey && isActive(p.expiresAt));
+          if (active) return;
+          set((st) => ({ posts: [...st.posts, ...makeOfficialPosts(official.id)] }));
+        },
+
         // 期限切れの投稿を捨ててストレージを増やさない（#4）。
         // ただし「自分の投稿(=思い出)」と「まだ残す枠にあるもの(反応24h以内)」は残す。
         pruneExpired: () => {
@@ -292,7 +339,8 @@ export const useStore = create<Store>()(
                 .map((r) => r.postId)
             );
             const posts = st.posts.filter(
-              (p) => p.userId === currentUserId || isActive(p.expiresAt) || keepReacted.has(p.id)
+              // 自分の通常投稿（=思い出）は残す。お題は0時に消えるので自分のでも残さない。
+              (p) => (p.userId === currentUserId && !p.topicKey) || isActive(p.expiresAt) || keepReacted.has(p.id)
             );
             if (posts.length === st.posts.length) return {} as any; // 変化なし
             const ids = new Set(posts.map((p) => p.id));
@@ -309,7 +357,7 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v10',
+      name: 'napsnap-store-v11',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,
@@ -324,6 +372,8 @@ export const useStore = create<Store>()(
         lastSeenActivityAt: s.lastSeenActivityAt,
         avatarChangedAt: s.avatarChangedAt,
         profileEditAt: s.profileEditAt,
+        topicSeenDay: s.topicSeenDay,
+        searchHistory: s.searchHistory,
       }),
     }
   )

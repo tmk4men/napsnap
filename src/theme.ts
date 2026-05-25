@@ -53,11 +53,11 @@ export const colors = {
 
 // 影は boxShadow 文字列（react-native-web / RN0.85 ともに対応）。光は上から、影は暖色寄りに。
 export const shadow = {
-  card: '0 8px 22px rgba(44,36,22,0.07)',
-  cardPressed: '0 4px 10px rgba(44,36,22,0.06)',
-  button: '0 8px 18px rgba(96,109,31,0.16)',
-  chip: '0 2px 8px rgba(44,36,22,0.07)',
-  avatar: '0 4px 10px rgba(44,36,22,0.12)',
+  card: '0 12px 30px rgba(60,46,18,0.10), 0 2px 6px rgba(60,46,18,0.05)',
+  cardPressed: '0 4px 12px rgba(60,46,18,0.07)',
+  button: '0 10px 22px rgba(96,109,31,0.18)',
+  chip: '0 4px 14px rgba(60,46,18,0.08)',
+  avatar: '0 6px 14px rgba(60,46,18,0.14)',
   frame: '0 42px 140px rgba(0,0,0,0.52), 0 14px 30px rgba(0,0,0,0.32)',
 } as const;
 

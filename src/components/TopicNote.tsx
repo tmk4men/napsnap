@@ -1,28 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { colors, font, space } from '../theme';
+import { colors, font, radius, space } from '../theme';
 import { captionFont, fonts } from '../lib/fonts';
 
-// 「ノートの切れ端に手書き」で今日のお題が書かれている感じのカード。
-// 下端をギザギザに切り取り、赤い罫線・うっすら横罫・washi テープを足して紙っぽく。
-
-function tornPath(w: number, teeth: number, depth: number, h: number): string {
-  const step = w / teeth;
-  let d = `M 0 ${depth} `;
-  for (let i = 0; i < teeth; i++) {
-    const mid = step * (i + 0.5);
-    const end = step * (i + 1);
-    d += `L ${mid.toFixed(1)} 0 L ${end.toFixed(1)} ${depth} `;
-  }
-  d += `L ${w} ${h} L 0 ${h} Z`;
-  return d;
-}
+// 「今日のお題」を上質な一枚のカードで見せる。
+// クリーム紙 × 金の二重キーライン × 明朝体の大文字で、手帳の高級な扉ページのような佇まい。
+const GOLD = '#A8843E';
+const GOLD_SOFT = 'rgba(168,132,62,0.34)';
+const GOLD_HAIR = 'rgba(168,132,62,0.20)';
 
 export function TopicNote({
   prompt,
   kicker = '今日のお題',
-  bg = colors.bg,
   style,
   children,
 }: {
@@ -32,72 +21,76 @@ export function TopicNote({
   style?: StyleProp<ViewStyle>;
   children?: React.ReactNode; // 紙の中に置くもの（例：このお題に出すボタン）
 }) {
-  const [w, setW] = useState(0);
-  const hand = captionFont('hand');
-  const tornH = 16;
-  const depth = 9;
+  const serif = captionFont('mincho'); // 明朝で品よく
 
   return (
     <View style={[styles.wrap, style]}>
-      <View style={styles.paper} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
-        {/* washi テープ */}
-        <View style={styles.tape} />
-        {/* 赤い縦の余白線 */}
-        <View style={styles.margin} />
+      <View style={styles.card}>
+        {/* 上からの淡い光（紙の艶） */}
+        <View style={styles.sheen} pointerEvents="none" />
+        {/* 金の二重キーライン（内側の細い罫） */}
+        <View style={styles.keyline} pointerEvents="none" />
 
-        <Text style={styles.kicker}>{kicker}</Text>
-        <Text style={[styles.prompt, { fontFamily: hand.family, fontWeight: hand.weight }]}>{prompt}</Text>
-        <View style={styles.rule} />
+        <View style={styles.kickerRow}>
+          <View style={styles.kickerRule} />
+          <Text style={styles.kicker}>{kicker}</Text>
+          <View style={styles.kickerRule} />
+        </View>
+
+        <Text style={[styles.prompt, { fontFamily: serif.family, fontWeight: serif.weight }]}>{prompt}</Text>
 
         {children ? <View style={styles.footer}>{children}</View> : null}
-
-        {/* 下端の切り取り（ギザギザ） */}
-        {w > 0 && (
-          <Svg width={w} height={tornH} style={styles.torn}>
-            <Path d={tornPath(w, Math.max(10, Math.round(w / 16)), depth, tornH)} fill={bg} />
-          </Svg>
-        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', transform: [{ rotate: '-1.4deg' }] },
-  paper: {
+  wrap: { alignItems: 'center' },
+  card: {
     width: '100%',
-    backgroundColor: '#FFFDF4',
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    paddingTop: space.md,
-    paddingBottom: space.lg + 10,
-    paddingLeft: space.lg + 8,
-    paddingRight: space.lg,
-    boxShadow: '0 10px 22px rgba(44,36,22,0.16)',
+    backgroundColor: '#FFFDF6',
+    borderRadius: radius.lg,
+    paddingVertical: space.lg,
+    paddingHorizontal: space.lg,
+    borderWidth: 1,
+    borderColor: GOLD_SOFT,
+    boxShadow: '0 18px 40px rgba(60,46,18,0.16), 0 3px 10px rgba(60,46,18,0.08)',
     overflow: 'hidden',
   },
-  tape: {
+  sheen: {
     position: 'absolute',
-    top: -7,
-    alignSelf: 'center',
-    width: 78,
-    height: 20,
-    backgroundColor: 'rgba(207,234,69,0.30)',
-    borderWidth: 1,
-    borderColor: 'rgba(150,168,63,0.25)',
-    transform: [{ rotate: '-2.5deg' }],
-  },
-  margin: {
-    position: 'absolute',
-    left: 16,
     top: 0,
-    bottom: 0,
-    width: 1.5,
-    backgroundColor: 'rgba(217,71,63,0.35)',
+    left: 0,
+    right: 0,
+    height: '52%',
+    backgroundColor: 'rgba(255,255,255,0.5)',
   },
-  kicker: { color: colors.textDim, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui, marginBottom: 2 },
-  prompt: { color: colors.text, fontSize: 30, lineHeight: 38 },
-  rule: { height: 1, backgroundColor: 'rgba(23,23,19,0.10)', marginTop: 8 },
-  footer: { marginTop: space.sm, alignItems: 'center' },
-  torn: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  keyline: {
+    position: 'absolute',
+    top: 7,
+    left: 7,
+    right: 7,
+    bottom: 7,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: GOLD_HAIR,
+  },
+  kickerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  kickerRule: { width: 22, height: 1, backgroundColor: GOLD_SOFT },
+  kicker: {
+    color: GOLD,
+    fontSize: font.tiny,
+    fontWeight: '800',
+    letterSpacing: 4,
+    fontFamily: fonts.ui,
+  },
+  prompt: {
+    color: colors.text,
+    fontSize: 32,
+    lineHeight: 42,
+    textAlign: 'center',
+    marginTop: space.sm,
+  },
+  footer: { marginTop: space.md, alignItems: 'center' },
 });

@@ -4,9 +4,49 @@
 import { Post, Reaction, ReactionType, User } from './types';
 import { uid } from './lib/id';
 import { avatarImage, lifeImage, TRACE_SEEDS } from './lib/images';
-import { HOUR } from './lib/time';
+import { HOUR, nextMidnight } from './lib/time';
 import { POST_TTL_HOURS } from './copy';
 import { Topic, TOPIC_CAPTIONS } from './topics';
+
+// napsnap 公式アカウント。最初からフォローされ、初期フィードを供給する（本番でも空にしない）。
+// id は固定にして「公式は1つだけ」を保証する。
+export const OFFICIAL_ID = 'u_napsnap_official';
+
+export function makeOfficialUser(): User {
+  return {
+    id: OFFICIAL_ID,
+    handle: 'napsnap',
+    displayName: 'napsnap',
+    avatarEmoji: '🌙',
+    avatarColor: '#CFEA45',
+    avatarImageUri: avatarImage('napsnap-official'),
+    createdAt: Date.now() - 365 * 24 * HOUR,
+    isOfficial: true,
+  };
+}
+
+// 公式アカウントの投稿（＝はじめてでも見るものがある初期フィード）。
+// ※文面は仮。あとで本決めする。やわらかい世界観のあいさつ。
+export function makeOfficialPosts(officialId: string): Post[] {
+  const t = Date.now();
+  const plan: { minutesAgo: number; seed: string; cap?: Post['caption'] }[] = [
+    { minutesAgo: 40, seed: 'official-welcome', cap: { text: 'ようこそ', fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.85 } },
+    { minutesAgo: 230, seed: 'official-trace', cap: { text: '素のままで', fontKey: 'hand', color: '#1A1A14', x: 0.5, y: 0.85 } },
+    { minutesAgo: 520, seed: 'official-night', cap: { text: 'おやすみ', fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.85 } },
+  ];
+  return plan.map((p) => {
+    const createdAt = t - p.minutesAgo * 60 * 1000;
+    return {
+      id: uid('p_'),
+      userId: officialId,
+      imageUrl: lifeImage(p.seed),
+      caption: p.cap,
+      audioSeed: p.seed,
+      createdAt,
+      expiresAt: createdAt + POST_TTL_HOURS * HOUR,
+    };
+  });
+}
 
 export function makeMockPeople(): User[] {
   const base = [
@@ -59,9 +99,11 @@ export function makeFollowPosts(people: User[]): Post[] {
 }
 
 // 「お題」への投稿（フォロー中のモック仲間が今日のお題に出した体）。
-// 残り時間がバラけるよう作成時刻を散らす＝「残りが短い順」表示のデモになる。すべて期限内。
+// お題は日付がかわる0時に総入れ替え＝期限は「今日の終わり（翌0時）」で揃える。
+// 作成時刻は散らして「○時間前」に変化を出す。
 export function makeTopicPosts(topic: Topic, people: User[]): Post[] {
   const t = Date.now();
+  const endOfToday = nextMidnight(t);
   const posts: Post[] = [];
   // 何時間前に出したか（バラけさせる）。人が一巡したら使い回す。
   const minutesAgoPlan = [35, 110, 200, 320, 470, 610];
@@ -80,7 +122,7 @@ export function makeTopicPosts(topic: Topic, people: User[]): Post[] {
         : undefined,
       audioSeed: `${topic.seed}-${person.id}-${i}`,
       createdAt,
-      expiresAt: createdAt + POST_TTL_HOURS * HOUR,
+      expiresAt: endOfToday,
     });
   });
   return posts;

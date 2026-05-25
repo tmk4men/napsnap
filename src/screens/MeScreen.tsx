@@ -7,7 +7,8 @@ import { copy } from '../copy';
 import { Avatar, GhostButton, Remaining, ShootButton, useTick } from '../components/ui';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
-import { FootprintIcon, PencilIcon, TraceMark } from '../components/icons';
+import { FootprintIcon, PencilIcon, ShareIcon, TraceMark } from '../components/icons';
+import { shareInvite } from '../lib/share';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { ConnectionsOverlay } from '../components/ConnectionsOverlay';
@@ -36,14 +37,24 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
   const archive = useMemo(() => myArchive(s), [s.posts, s.currentUserId]);
   const highlights = useMemo(() => memoryHighlights(s), [s.posts, s.currentUserId]);
-  const people = s.users.filter((u) => u.isMock);
-  const followingUsers = people.filter((p) => s.following.includes(p.id));
-  const followers = people; // デモ：モックの人はみんな自分をフォローしている
+  const mockPeople = s.users.filter((u) => u.isMock);
+  // フォロー中＝公式＋モック仲間（自分は除く）。フォロワーはデモのモック仲間。
+  const followingUsers = s.users.filter((u) => u.id !== me?.id && s.following.includes(u.id));
+  const followers = mockPeople;
 
   const [viewing, setViewing] = useState<Post[] | null>(null);
   const [conn, setConn] = useState<'following' | 'followers' | null>(null);
   const [cropUri, setCropUri] = useState<string | null>(null);
   const [editProfile, setEditProfile] = useState(false);
+  const [shareNote, setShareNote] = useState<string | null>(null);
+
+  async function onShare() {
+    const r = await shareInvite(me?.handle ?? '');
+    if (r === 'copied') setShareNote('共有リンクをコピーした');
+    else if (r === 'none') setShareNote('共有できなかった');
+    else setShareNote(null);
+    if (r !== 'shared') setTimeout(() => setShareNote(null), 2200);
+  }
 
   // プロフ画像は一度変えると24時間変更できない
   const avatarLockMs = s.avatarChangedAt + 24 * 60 * 60 * 1000 - Date.now();
@@ -95,7 +106,13 @@ export function MeScreen({ nav }: { nav: Nav }) {
               </Pressable>
             </View>
           </View>
+          {/* 共有：自分の@IDと招待文を他サイトへ */}
+          <Pressable onPress={onShare} style={({ pressed }) => [styles.shareBtn, pressed && { opacity: 0.85 }]} hitSlop={8}>
+            <ShareIcon size={18} color={colors.limeInkSoft} />
+          </Pressable>
         </View>
+
+        {shareNote && <Text style={styles.shareNote}>{shareNote}</Text>}
 
         {avatarLocked && (
           <Text style={styles.avatarLockNote}>プロフ画像はあと{avatarLockHours}時間は変えられない</Text>
@@ -236,6 +253,18 @@ const styles = StyleSheet.create({
     borderColor: colors.bg,
   },
   editBadgeLocked: { backgroundColor: colors.surfaceSunken },
+  shareBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.limeSoft,
+    borderWidth: 1,
+    borderColor: colors.limeLine,
+    alignSelf: 'flex-start',
+  },
+  shareNote: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   name: { color: colors.text, fontSize: font.title, fontWeight: '700', fontFamily: fonts.name },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 3 },

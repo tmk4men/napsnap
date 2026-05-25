@@ -4,12 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar, FadeIn, PrimaryButton } from './ui';
-import { CloseIcon, TraceMark } from './icons';
+import { CloseIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
 import { timeAgo } from '../lib/time';
 import { ActivityItem } from '../selectors';
 
 function lineFor(item: ActivityItem): string {
   const name = item.user?.displayName ?? '友達';
+  if (item.user?.isOfficial) return `${name} が投稿した`;
   if (item.kind === 'react') return `${name} が反応した`;
   if (item.kind === 'view') return `${name} が見た`;
   return `${name} が痕跡を残した`;
@@ -20,11 +21,15 @@ function lineFor(item: ActivityItem): string {
 export function ActivityOverlay({
   items,
   passOpen,
+  topicPrompt,
+  onOpenTopic,
   onClose,
   onShoot,
 }: {
   items: ActivityItem[];
   passOpen: boolean;
+  topicPrompt?: string;
+  onOpenTopic?: () => void;
   onClose: () => void;
   onShoot: () => void;
 }) {
@@ -39,6 +44,20 @@ export function ActivityOverlay({
       </View>
 
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: insets.bottom + space.xl }} showsVerticalScrollIndicator={false}>
+        {!!topicPrompt && (
+          <Pressable onPress={onOpenTopic} style={({ pressed }) => [styles.topicNotice, pressed && { opacity: 0.92 }]}>
+            <View style={styles.topicIcon}>
+              <NoteIcon size={20} color={colors.limeInk} filled />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.topicLine}>
+                今日のお題は「{topicPrompt}」だよ。
+              </Text>
+              <Text style={styles.topicSub}>投稿してみよう！</Text>
+            </View>
+          </Pressable>
+        )}
+
         {!passOpen && (
           <View style={styles.turn}>
             <View style={{ flex: 1 }}>
@@ -59,7 +78,10 @@ export function ActivityOverlay({
             <View key={it.id} style={styles.row}>
               <Avatar user={it.user} size={40} />
               <View style={{ flex: 1, marginLeft: space.sm }}>
-                <Text style={styles.line}>{lineFor(it)}</Text>
+                <View style={styles.lineRow}>
+                  <Text style={styles.line}>{lineFor(it)}</Text>
+                  {it.user?.isOfficial && <VerifiedBadge size={13} />}
+                </View>
                 <Text style={styles.time}>{timeAgo(it.at)}</Text>
               </View>
               {it.postImage && <Image source={{ uri: it.postImage }} style={styles.thumb} resizeMode="cover" />}
@@ -100,7 +122,29 @@ const styles = StyleSheet.create({
   turnSub: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.ui },
   empty: { alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingVertical: space.xxl },
   emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
+  topicNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.limeSoft,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.limeLine,
+    padding: space.md,
+    marginBottom: space.md,
+  },
+  topicIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.md,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topicLine: { color: colors.limeInkSoft, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  topicSub: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: 1 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.hairline },
+  lineRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   line: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
   time: { color: colors.textFaint, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
   thumb: { width: 40, height: 40, borderRadius: radius.sm, backgroundColor: colors.surfaceSunken, marginLeft: space.sm },

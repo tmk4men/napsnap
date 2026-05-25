@@ -9,11 +9,12 @@ import { ChekiCard } from '../components/ChekiCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { HamburgerMenu } from '../components/HamburgerMenu';
-import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon } from '../components/icons';
+import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon, VerifiedBadge } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { activityItems, currentUser, feedQueue, isPassOpen, memoryHighlights, userById } from '../selectors';
+import { activityItems, currentUser, feedQueue, isPassOpen, memoryHighlights, topicUnseen, userById } from '../selectors';
 import { isActive, timeAgo } from '../lib/time';
+import { todaysTopic } from '../topics';
 import { Post } from '../types';
 
 export function HomeScreen({ nav }: { nav: Nav }) {
@@ -22,9 +23,12 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
   const s = useStore();
   const markActivitySeen = useStore((st) => st.markActivitySeen);
+  const markTopicSeen = useStore((st) => st.markTopicSeen);
   const resetDemo = useStore((st) => st.resetDemo);
   const open = isPassOpen(s);
   const me = currentUser(s);
+  const topic = todaysTopic();
+  const topicNew = topicUnseen(s); // 今日のお題をまだ見ていない＝通知あり
 
   const queue = useMemo(() => feedQueue(s), [s.posts, s.feedStates, s.following, s.currentUserId]);
   const myActive = useMemo(
@@ -36,7 +40,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   );
   const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
   const activity = useMemo(() => activityItems(s), [s.posts, s.views, s.reactions, s.following, s.currentUserId]);
-  const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length;
+  const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length + (topicNew ? 1 : 0);
 
   const count = queue.length;
   const followedLatest = queue[0]; // 残りが短い順の先頭
@@ -62,6 +66,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const openActivity = () => {
     setShowActivity(true);
     markActivitySeen();
+    markTopicSeen(); // 通知を開いたら今日のお題も既読に
   };
 
   return (
@@ -127,7 +132,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
               <Avatar user={displayAuthor} size={26} blur={mediaMode} />
               {openHero ? (
                 <>
-                  <Text style={styles.metaName}>{heroIsMine ? 'あなたの今' : `${displayAuthor?.displayName} たちの今`}</Text>
+                  <Text style={styles.metaName}>
+                    {heroIsMine ? 'あなたの今' : displayAuthor?.isOfficial ? 'napsnap' : `${displayAuthor?.displayName} たちの今`}
+                  </Text>
+                  {displayAuthor?.isOfficial && <VerifiedBadge size={15} />}
                   <View style={{ marginLeft: 6 }}>
                     <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
                   </View>
@@ -181,6 +189,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <ActivityOverlay
           items={activity}
           passOpen={open}
+          topicPrompt={topic.prompt}
+          onOpenTopic={() => {
+            setShowActivity(false);
+            nav.setTab('topic');
+          }}
           onClose={() => setShowActivity(false)}
           onShoot={() => {
             setShowActivity(false);

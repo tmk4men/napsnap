@@ -11,6 +11,7 @@ export interface User {
   avatarImageUri?: string; // プロフィール画像（選んだ写真／プリセット）。あれば表示の主役。
   createdAt: number;
   isMock?: boolean; // デモ用のモックの人
+  isOfficial?: boolean; // napsnap 公式アカウント（最初からフォロー・初期フィードを供給・認証バッジ）
 }
 
 export interface Group {
