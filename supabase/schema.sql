@@ -1,0 +1,134 @@
+-- napsnap Supabase スキーマ。Supabase の SQL Editor に貼って上から実行する。
+-- 認証は Supabase Auth（匿名サインイン推奨：Authentication → Providers → Anonymous を ON）。
+-- 各テーブルは RLS で「本人」と「フォロー関係」に限定。共有が要るのは下の5テーブルのみ。
+-- （feedState / accessPass / 検索履歴 / 既読時刻 は端末ローカルUI状態なのでサーバには持たない）
+
+-- ============ profiles（= アプリの User）============
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  handle text unique not null,
+  display_name text not null default '',
+  avatar_url text,
+  is_official boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- ============ follows ============
+create table if not exists public.follows (
+  follower_id  uuid not null references public.profiles(id) on delete cascade,
+  following_id uuid not null references public.profiles(id) on delete cascade,
+  created_at   timestamptz not null default now(),
+  primary key (follower_id, following_id)
+);
+create index if not exists follows_following_idx on public.follows(following_id);
+
+-- ============ posts ============
+create table if not exists public.posts (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  topic_key  text,                 -- お題への投稿ならそのキー（topics.ts）
+  image_url  text not null,
+  caption    jsonb,                -- { text, fontKey, color, x, y }
+  audio_url  text,                 -- シャッター時の2.5秒
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null  -- 通常=24h後 / お題=その日の終わり
+);
+create index if not exists posts_user_idx    on public.posts(user_id);
+create index if not exists posts_expires_idx on public.posts(expires_at);
+
+-- ============ reactions（1人1投稿につき1つ）============
+create table if not exists public.reactions (
+  id         uuid primary key default gen_random_uuid(),
+  post_id    uuid not null references public.posts(id) on delete cascade,
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  type       text not null,        -- love / lol / whoa
+  created_at timestamptz not null default now(),
+  unique (post_id, user_id)
+);
+create index if not exists reactions_post_idx on public.reactions(post_id);
+
+-- ============ views（足跡。1人1投稿につき1つ）============
+create table if not exists public.views (
+  id        uuid primary key default gen_random_uuid(),
+  post_id   uuid not null references public.posts(id) on delete cascade,
+  viewer_id uuid not null references public.profiles(id) on delete cascade,
+  viewed_at timestamptz not null default now(),
+  unique (post_id, viewer_id)
+);
+create index if not exists views_post_idx on public.views(post_id);
+
+-- ============ RLS 有効化 ============
+alter table public.profiles  enable row level security;
+alter table public.follows   enable row level security;
+alter table public.posts     enable row level security;
+alter table public.reactions enable row level security;
+alter table public.views     enable row level security;
+
+-- profiles: 誰でも読める（検索/表示）。作成・更新は自分の行のみ。
+drop policy if exists profiles_read   on public.profiles;
+create policy profiles_read   on public.profiles for select using (true);
+drop policy if exists profiles_insert on public.profiles;
+create policy profiles_insert on public.profiles for insert with check (id = auth.uid());
+drop policy if exists profiles_update on public.profiles;
+create policy profiles_update on public.profiles for update using (id = auth.uid());
+
+-- follows: 自分が関わる行だけ読める。作成/削除は follower=自分のみ。
+drop policy if exists follows_read   on public.follows;
+create policy follows_read   on public.follows for select using (follower_id = auth.uid() or following_id = auth.uid());
+drop policy if exists follows_insert on public.follows;
+create policy follows_insert on public.follows for insert with check (follower_id = auth.uid());
+drop policy if exists follows_delete on public.follows;
+create policy follows_delete on public.follows for delete using (follower_id = auth.uid());
+
+-- posts: 自分＋フォロー中の人の投稿だけ読める。作成/削除は本人のみ。
+drop policy if exists posts_read   on public.posts;
+create policy posts_read   on public.posts for select using (
+  user_id = auth.uid()
+  or exists (select 1 from public.follows f where f.follower_id = auth.uid() and f.following_id = posts.user_id)
+);
+drop policy if exists posts_insert on public.posts;
+create policy posts_insert on public.posts for insert with check (user_id = auth.uid());
+drop policy if exists posts_delete on public.posts;
+create policy posts_delete on public.posts for delete using (user_id = auth.uid());
+
+-- reactions: 見える投稿への反応は読める。作成/更新/削除は本人のみ。
+drop policy if exists reactions_read   on public.reactions;
+create policy reactions_read   on public.reactions for select using (
+  exists (select 1 from public.posts p where p.id = reactions.post_id and (
+    p.user_id = auth.uid()
+    or exists (select 1 from public.follows f where f.follower_id = auth.uid() and f.following_id = p.user_id)
+  ))
+);
+drop policy if exists reactions_insert on public.reactions;
+create policy reactions_insert on public.reactions for insert with check (user_id = auth.uid());
+drop policy if exists reactions_update on public.reactions;
+create policy reactions_update on public.reactions for update using (user_id = auth.uid());
+drop policy if exists reactions_delete on public.reactions;
+create policy reactions_delete on public.reactions for delete using (user_id = auth.uid());
+
+-- views: 自分の足跡＋自分の投稿への足跡だけ読める。作成は本人のみ。
+drop policy if exists views_read   on public.views;
+create policy views_read   on public.views for select using (
+  viewer_id = auth.uid()
+  or exists (select 1 from public.posts p where p.id = views.post_id and p.user_id = auth.uid())
+);
+drop policy if exists views_insert on public.views;
+create policy views_insert on public.views for insert with check (viewer_id = auth.uid());
+
+-- ============ Storage（画像/音声を1つの公開バケット media に）============
+insert into storage.buckets (id, name, public) values ('media', 'media', true)
+  on conflict (id) do nothing;
+-- 公開読み取り（URLを埋め込むため）。アップロードは認証ユーザーが自分のフォルダ <uid>/... のみ。
+drop policy if exists media_read   on storage.objects;
+create policy media_read   on storage.objects for select using (bucket_id = 'media');
+drop policy if exists media_insert on storage.objects;
+create policy media_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'media' and (storage.foldername(name))[1] = auth.uid()::text);
+drop policy if exists media_delete on storage.objects;
+create policy media_delete on storage.objects for delete to authenticated
+  using (bucket_id = 'media' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ============ 任意: 期限切れ投稿の自動掃除（pg_cron が使えるプランで）============
+-- 思い出（自分の通常投稿）は残したいので、ここでは「お題＝topic_key 付き」だけ掃除する例。
+-- select cron.schedule('napsnap-prune-topics', '*/30 * * * *',
+--   $$ delete from public.posts where topic_key is not null and expires_at < now() $$);
