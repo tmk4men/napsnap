@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ResponsiveFrame } from './src/components/ResponsiveFrame';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { loadWebFonts } from './src/lib/fonts';
+import { themeMode } from './src/theme';
 
 export default function App() {
   useEffect(() => {
@@ -16,7 +17,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <ResponsiveFrame>
         <RootNavigator />
       </ResponsiveFrame>

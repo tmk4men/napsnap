@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, rule, space } from '../theme';
+import { colors, font, rule, space, themeMode, toggleThemeMode } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, FadeIn, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
@@ -244,6 +244,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             { label: '通知', onPress: openActivity },
             { label: 'さがす', onPress: () => nav.setTab('search') },
             { label: '自分', onPress: () => nav.setTab('me') },
+            ...(Platform.OS === 'web'
+              ? [{ label: themeMode === 'dark' ? 'ライトモードにする' : 'ダークモードにする', onPress: toggleThemeMode }]
+              : []),
             { label: 'プライバシーポリシー', onPress: () => setDoc(PRIVACY_POLICY) },
             { label: '利用規約', onPress: () => setDoc(TERMS_OF_SERVICE) },
             { label: 'デモを最初からやり直す', onPress: resetDemo, danger: true },

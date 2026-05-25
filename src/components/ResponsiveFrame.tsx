@@ -45,9 +45,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // web のみ効く線形グラデ（未対応環境では backgroundColor にフォールバック）
+  // web のみ効く線形グラデ（未対応環境では backgroundColor にフォールバック）。テーマ連動。
   pageGradient: {
-    experimental_backgroundImage: 'linear-gradient(150deg, #2C281C 0%, #1C1A15 100%)',
+    experimental_backgroundImage: `linear-gradient(150deg, ${colors.backdrop} 0%, ${colors.backdrop2} 100%)`,
   } as any,
   // 端末枠の角丸は“スマホらしさ”のため radius トークン（紙面用に直角化）とは独立に固定する。
   device: {
