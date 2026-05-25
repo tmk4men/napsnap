@@ -8,6 +8,7 @@ const WEB = Platform.OS === 'web';
 export const fonts = {
   brand: WEB ? 'Caveat' : undefined, // napsnap のロゴ＝手書き風
   display: WEB ? 'Zen Kaku Gothic New' : undefined, // 大見出し
+  serif: WEB ? 'Shippori Mincho' : undefined, // 情緒/高級感のある明朝（“今”の見出しや余韻のコピー）
   ui: WEB ? 'Zen Kaku Gothic New' : undefined, // UI本文・ラベル（全体の統一感）
   name: WEB ? 'Zen Maru Gothic' : undefined, // 表示名＝丸ゴで親しみのある人格
   handle: WEB ? 'DM Mono' : undefined, // @ID＝等幅で“ユーザー名”らしい質感

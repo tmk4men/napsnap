@@ -4,7 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
+import { Avatar, FadeIn, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -71,6 +72,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
   return (
     <View style={styles.container}>
+      {/* 紙の空気感（放射グラデ＋フィルムグレイン） */}
+      <Backdrop />
+
       {/* ヘッダー */}
       <View style={[styles.header, { paddingTop: insets.top + space.md }]}>
         <Text style={styles.brand}>napsnap</Text>
@@ -95,19 +99,21 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
       {/* 思い出の入口（1年前の今日 など） */}
       {memory && (
-        <Pressable
-          onPress={() => setViewingMemory([memory.post])}
-          style={({ pressed }) => [styles.memoryCard, pressed && { backgroundColor: colors.surfaceSunken }]}
-        >
-          <Image source={{ uri: memory.post.imageUrl }} style={styles.memoryThumb} resizeMode="cover" />
-          <View style={{ flex: 1, marginLeft: space.sm }}>
-            <Text style={styles.memoryLabel}>{memory.label}</Text>
-            <Text style={styles.memorySub} numberOfLines={1}>
-              {memory.post.caption?.text ? memory.post.caption.text.replace(/\n/g, ' ') : 'あの日の痕跡'}
-            </Text>
-          </View>
-          <ChevronRightIcon size={18} color={colors.textFaint} />
-        </Pressable>
+        <FadeIn delay={70} dy={8}>
+          <Pressable
+            onPress={() => setViewingMemory([memory.post])}
+            style={({ pressed }) => [styles.memoryCard, pressed && { backgroundColor: colors.surfaceSunken }]}
+          >
+            <Image source={{ uri: memory.post.imageUrl }} style={styles.memoryThumb} resizeMode="cover" />
+            <View style={{ flex: 1, marginLeft: space.sm }}>
+              <Text style={styles.memoryLabel}>{memory.label}</Text>
+              <Text style={styles.memorySub} numberOfLines={1}>
+                {memory.post.caption?.text ? memory.post.caption.text.replace(/\n/g, ' ') : 'あの日の痕跡'}
+              </Text>
+            </View>
+            <ChevronRightIcon size={18} color={colors.textFaint} />
+          </Pressable>
+        </FadeIn>
       )}
 
       {/* 中央：チェキのヒーロー or メッセージ */}
@@ -116,7 +122,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
         {showCard && displayPost ? (
-          <View style={styles.heroWrap}>
+          <FadeIn key={displayPost.id} delay={130} dy={16} style={styles.heroWrap}>
             {cardW > 0 && (
               <ChekiCard
                 uri={displayPost.imageUrl}
@@ -152,7 +158,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                 </>
               )}
             </View>
-          </View>
+          </FadeIn>
         ) : open ? (
           <View style={styles.msg}>
             <Text style={styles.big}>{copy.allSeenTitle}</Text>
@@ -173,7 +179,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       </View>
 
       {/* 下部CTA */}
-      <View style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
+      <FadeIn delay={220} dy={12} style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
         {open ? (
           count > 0 ? (
             <PrimaryButton label={copy.see} onPress={nav.openFeed} />
@@ -183,7 +189,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         ) : (
           <ShootButton block label={copy.revealChip} onPress={() => nav.openCamera()} />
         )}
-      </View>
+      </FadeIn>
 
       {showActivity && (
         <ActivityOverlay
@@ -269,12 +275,12 @@ const styles = StyleSheet.create({
   memoryLabel: { color: colors.text, fontSize: font.small, fontWeight: '900', fontFamily: fonts.ui },
   memorySub: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.ui },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },
-  heroWrap: { alignItems: 'center', gap: space.sm },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  heroWrap: { alignItems: 'center', gap: space.md },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.3 },
   msg: { alignItems: 'flex-start', alignSelf: 'stretch' },
-  big: { fontSize: font.display, fontWeight: '800', lineHeight: 56, fontFamily: fonts.display, color: colors.text },
-  sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.5, fontFamily: fonts.ui, color: colors.textDim },
+  big: { fontSize: 44, fontWeight: '800', lineHeight: 54, fontFamily: fonts.serif, color: colors.text, letterSpacing: 0.5 },
+  sub: { fontSize: font.lead, marginTop: space.md, lineHeight: font.lead * 1.6, fontFamily: fonts.ui, color: colors.textDim },
   lockChip: {
     flexDirection: 'row',
     alignItems: 'center',

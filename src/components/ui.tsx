@@ -65,6 +65,8 @@ export function ShootButton({
         style,
       ]}
     >
+      {/* 上からの艶（質感）＝のっぺりしたベタ塗りを避ける */}
+      <View style={styles.shootSheen} pointerEvents="none" />
       <View style={styles.shootRow}>
         <CameraIcon size={block ? 22 : 23} color={colors.limeInk} />
         {label ? <Text style={styles.shootLabel}>{label}</Text> : null}
@@ -225,20 +227,23 @@ export function Remaining({
 }
 
 // マウント時にふわっと（フェード＋少し上へ）。key を変えると再生される。
+// delay を変えると“ずらして現れる”演出（ページロードのステージング）に使える。
 export function FadeIn({
   children,
   style,
   dy = 10,
   duration = 240,
+  delay = 0,
 }: {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   dy?: number;
   duration?: number;
+  delay?: number;
 }) {
   const v = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(v, { toValue: 1, duration, useNativeDriver: true }).start();
+    Animated.timing(v, { toValue: 1, duration, delay, useNativeDriver: true }).start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
@@ -288,12 +293,13 @@ const styles = StyleSheet.create({
   shootBlock: {
     backgroundColor: colors.lime,
     borderRadius: radius.pill,
-    paddingVertical: 18,
+    paddingVertical: 19,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.10)',
+    borderColor: 'rgba(24,26,13,0.12)',
     boxShadow: shadow.button,
+    overflow: 'hidden',
   },
   shootRound: {
     width: 56,
@@ -303,11 +309,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.10)',
+    borderColor: 'rgba(24,26,13,0.12)',
     boxShadow: shadow.button,
+    overflow: 'hidden',
   },
-  shootRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  shootLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.ui },
+  shootSheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '52%',
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  shootRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9 },
+  shootLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.ui, letterSpacing: 0.4 },
 
   ghost: {
     paddingVertical: 14,
