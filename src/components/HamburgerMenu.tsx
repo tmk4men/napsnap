@@ -25,7 +25,7 @@ export function HamburgerMenu({ items, onClose }: { items: MenuItem[]; onClose: 
               onClose();
               it.onPress();
             }}
-            style={({ pressed }) => [styles.item, pressed && { backgroundColor: colors.surfaceSunken }, i > 0 && styles.itemBorder]}
+            style={({ pressed }) => [styles.item, pressed && { backgroundColor: colors.surface }, i > 0 && styles.itemBorder]}
           >
             <Text style={[styles.itemText, it.danger && { color: colors.warn }]}>{it.label}</Text>
           </Pressable>
@@ -41,10 +41,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: space.lg,
     minWidth: 196,
-    backgroundColor: colors.surfaceRaised,
+    // 背景と同色で“浮いて”見えないよう、地は一段沈めた面＋はっきりした罫で囲う。
+    backgroundColor: colors.surfaceSunken,
     borderRadius: radius.xs,
-    borderWidth: rule.hair,
-    borderColor: colors.hairline,
+    borderWidth: rule.thin,
+    borderColor: colors.line,
     boxShadow: shadow.card,
     paddingVertical: space.xxs,
     overflow: 'hidden',
