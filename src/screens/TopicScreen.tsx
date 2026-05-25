@@ -6,6 +6,7 @@ import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
 import { TopicNote } from '../components/TopicNote';
 import { ReactionBar } from '../components/ReactionBar';
@@ -111,7 +112,8 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.sm }]}>
-      {/* 今日のお題（ノートの切れ端）。出すボタンは紙の中に。 */}
+      <Backdrop />
+      {/* 今日のお題（上質なカード）。出すボタンは紙の中に。 */}
       <View style={styles.noteWrap}>
         <TopicNote prompt={topic.prompt}>
           <Pressable
@@ -191,11 +193,11 @@ const styles = StyleSheet.create({
   stage: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingBottom: 96 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
+  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.2 },
   metaDot: { color: colors.textFaint, fontSize: font.small },
   metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
   reactFloat: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs, paddingHorizontal: space.lg },
-  emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.ui },
+  emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: 0.3 },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', fontFamily: fonts.ui },
 });

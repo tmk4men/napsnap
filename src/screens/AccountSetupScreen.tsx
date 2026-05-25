@@ -14,6 +14,7 @@ import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { ImageIcon, PencilIcon } from '../components/icons';
 import { useStore } from '../store';
 import { makeMockPeople } from '../seed';
@@ -61,6 +62,7 @@ export function AccountSetupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={[styles.container, { paddingTop: insets.top + space.xl }]}
       >
+        <Backdrop />
         <Text style={styles.brand}>napsnap</Text>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* 大きいアバタープレビュー＋写真を選ぶ */}
@@ -129,6 +131,7 @@ export function AccountSetupScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.xl }]}>
+      <Backdrop />
       <Text style={styles.brand}>napsnap</Text>
       <Text style={styles.title}>{copy.setupFollowTitle}</Text>
       <Text style={styles.followHint}>{copy.setupFollowSub}</Text>
@@ -172,7 +175,7 @@ export function AccountSetupScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   brand: { color: colors.text, fontSize: 28, fontWeight: '700', marginBottom: space.md, fontFamily: fonts.brand },
-  title: { color: colors.text, fontSize: font.hero, fontWeight: '900', lineHeight: 48, fontFamily: fonts.display },
+  title: { color: colors.text, fontSize: font.hero, fontWeight: '800', lineHeight: 50, fontFamily: fonts.serif, letterSpacing: 0.5 },
   followHint: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, fontFamily: fonts.ui },
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 

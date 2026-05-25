@@ -38,6 +38,7 @@ export function PrimaryButton({
         style,
       ]}
     >
+      {!disabled && <View style={styles.shootSheen} pointerEvents="none" />}
       <Text style={[styles.primaryLabel, disabled && styles.primaryLabelDisabled]}>{label}</Text>
     </Pressable>
   );
@@ -282,12 +283,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(24,26,13,0.10)',
+    borderColor: 'rgba(24,26,13,0.12)',
+    overflow: 'hidden',
   },
   primaryShadow: { boxShadow: shadow.button },
   primaryDisabled: { backgroundColor: colors.surfaceSunken, borderColor: colors.hairline },
   primaryPressed: { transform: [{ scale: 0.985 }, { translateY: 1 }], boxShadow: shadow.cardPressed },
-  primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.ui },
+  primaryLabel: { color: colors.limeInk, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.ui, letterSpacing: 0.4 },
   primaryLabelDisabled: { color: colors.textFaint },
 
   shootBlock: {

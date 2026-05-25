@@ -5,9 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { copy } from '../copy';
 import { GhostButton, PrimaryButton } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
 import { SpeakerOnIcon, CloseIcon } from '../components/icons';
-import { CAPTION_FONTS } from '../lib/fonts';
+import { CAPTION_FONTS, fonts } from '../lib/fonts';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { PostCaption } from '../types';
@@ -83,6 +84,7 @@ export function PreviewScreen({
 
   return (
     <View style={styles.container}>
+      <Backdrop />
       {/* 上部 */}
       <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <Pressable onPress={nav.closeOverlay} style={styles.iconBtn} hitSlop={12}>
@@ -177,7 +179,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heading: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: undefined },
+  heading: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.3 },
   soundChip: {
     width: 36,
     height: 36,

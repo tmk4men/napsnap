@@ -6,6 +6,7 @@ import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy, reactionMeta } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { Nav } from '../navigation/nav';
 import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
@@ -104,6 +105,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
   if (kept.length === 0) {
     return (
       <View style={styles.empty}>
+        <Backdrop />
         <TraceMark size={48} />
         <Text style={styles.emptySub}>{copy.emptyKeptSub}</Text>
       </View>
@@ -116,6 +118,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.sm }]}>
+      <Backdrop />
       {/* 上部：何件中いくつ＋音＋あなたの反応 */}
       <View style={styles.top}>
         <View style={styles.topLeft}>
@@ -199,7 +202,7 @@ const styles = StyleSheet.create({
   stage: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
+  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.2 },
   metaDot: { color: colors.textFaint, fontSize: font.small },
   metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
   swipeHint: {

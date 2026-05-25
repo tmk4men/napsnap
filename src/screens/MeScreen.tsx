@@ -5,6 +5,7 @@ import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, Remaining, ShootButton, useTick } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
 import { FootprintIcon, PencilIcon, ShareIcon, TraceMark } from '../components/icons';
@@ -71,6 +72,7 @@ export function MeScreen({ nav }: { nav: Nav }) {
 
   return (
     <View style={styles.container}>
+      <Backdrop />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + space.md,
@@ -303,7 +305,7 @@ const styles = StyleSheet.create({
   hlCap: { color: colors.onMediaDim, fontSize: font.tiny, fontWeight: '700', paddingHorizontal: 10, paddingBottom: 10, paddingTop: 2 },
 
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.lg, gap: space.xs },
-  emptyTitle: { color: colors.text, fontSize: font.lead, fontWeight: '800', marginTop: space.sm },
+  emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: 0.3 },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
   meStatRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space.sm, paddingHorizontal: 2 },
   meStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },

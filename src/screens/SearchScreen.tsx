@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { CloseIcon, SearchIcon, TraceMark } from '../components/icons';
 import { useStore } from '../store';
 
@@ -35,6 +36,7 @@ export function SearchScreen() {
 
   return (
     <View style={styles.container}>
+      <Backdrop />
       <View style={{ paddingTop: insets.top + space.md, paddingHorizontal: space.lg }}>
         <Text style={styles.title}>さがす</Text>
         <View style={styles.searchWrap}>
@@ -109,7 +111,7 @@ export function SearchScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.display, marginBottom: space.sm },
+  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.4, marginBottom: space.sm },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',

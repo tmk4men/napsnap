@@ -6,6 +6,7 @@ import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
+import { Backdrop } from '../components/Backdrop';
 import { ReactionBar } from '../components/ReactionBar';
 import { ChevronDownIcon, CloseIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
@@ -129,6 +130,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   if (!post) {
     return (
       <View style={[styles.done, { paddingTop: insets.top, paddingBottom: insets.bottom + space.lg }]}>
+        <Backdrop />
         <View style={styles.doneCenter}>
           <TraceMark size={52} />
           <Text style={styles.doneTitle}>{copy.feedDoneTitle}</Text>
@@ -145,6 +147,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
 
   return (
     <View style={styles.container}>
+      <Backdrop />
       {/* 上部 */}
       <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <Pressable onPress={nav.closeOverlay} style={styles.iconBtn} hitSlop={12}>
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
   stage: { flex: 1, overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
+  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: 0.2 },
   metaDot: { color: colors.textFaint, fontSize: font.small },
   metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '600' },
   redactBar: { width: 96, height: 13, borderRadius: 7, backgroundColor: colors.surfaceSunken },
@@ -259,6 +262,6 @@ const styles = StyleSheet.create({
   // done
   done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   doneCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs },
-  doneTitle: { color: colors.text, fontSize: font.title, fontWeight: '900', marginTop: space.sm },
-  doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
+  doneTitle: { color: colors.text, fontSize: 36, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: 0.5 },
+  doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', fontFamily: fonts.ui },
 });
