@@ -1,65 +1,65 @@
 // napsnap デザイントークン。
-// 設計言語＝「号外（新聞紙面）」。生成りの紙にインクの黒、差し色は速報の朱赤“1色”だけ。
-// 角丸カード・光沢・やわ影・グラデ＋グレインは使わない。骨格は「罫線＋詰めた明朝」でつくる。
-// 色キーは旧来のまま（lime=朱赤に読み替え）。全画面が自動で紙面化する。
+// 設計言語＝「号外（新聞紙面）」の構成・書体はそのまま、配色だけ Twitter/Instagram のような“白黒”に。
+// 白地に黒。差し色は廃し、強調はすべて黒（lime キー＝黒に読み替え）。
+// 例外は warn（顔検知・禁止ワード・破壊的操作）の赤だけ＝主要SNSと同じ運用。
+// 角丸カード・光沢・やわ影は使わない。骨格は「罫線＋詰めた明朝」でつくる。
 export const colors = {
-  // 紙（生成り。クリームより彩度を落とした“新聞紙”の灰寄り）
-  bg: '#F1ECE0', // ベース＝新聞紙
-  bgWarm: '#E9E2D2', // 題字裏・欄の地に少し沈める
-  surface: '#E9E3D5', // 基本サーフェス
-  surfaceRaised: '#FAF7EE', // 貼り込んだ写真の白フチ（紙より明るい）
-  surfaceSunken: '#DCD5C2', // 押し込み・非アクティブ
-  surfaceMedia: '#14130F', // 写真系の暗い面
-  card: '#E9E3D5', // 後方互換エイリアス（= surface）
+  // 面（白地＋ごく薄いグレーの階層）
+  bg: '#FFFFFF', // ベース＝白
+  bgWarm: '#FAFAFA', // 帯の地に少し沈める
+  surface: '#F4F4F5', // 基本サーフェス（薄グレー）
+  surfaceRaised: '#FFFFFF', // 浮いた面＝白（境界は罫線で出す）
+  surfaceSunken: '#E9E9EB', // 押し込み・非アクティブ
+  surfaceMedia: '#0A0A0A', // 写真系の暗い面
+  card: '#F4F4F5', // 後方互換エイリアス（= surface）
 
-  // インク（紙に染みた黒。真っ黒よりわずかに暖）
-  text: '#17150F',
-  textDim: '#56503F',
-  textFaint: '#8A8268',
+  // 文字（黒〜グレー）
+  text: '#0F0F0F',
+  textDim: '#5B5B5B',
+  textFaint: '#9C9C9C',
 
   // 罫線
-  line: '#C8C0AB', // 区切り罫
-  hairline: 'rgba(23,21,15,0.18)', // 細罫（“印刷された線”として読めるよう少し濃く）
+  line: '#E4E4E7', // 区切り罫
+  hairline: 'rgba(0,0,0,0.12)', // 細罫
 
-  // 差し色 速報赤（号外の朱。面で塗らず、罫・印・見出しの一点に）
-  lime: '#C22E1C', // primary（=press red）
-  limeSoft: '#F1E2DB', // 淡い朱の刷り（選択背景）
-  limeDust: '#9A2A1A', // 小さな点・サブアクセント
-  limeInk: '#FBF6EC', // 朱の上の文字＝紙色
-  limeInkSoft: '#6B1C11', // 朱の濃い文字（紙の上で使う見出し朱）
-  limeLine: 'rgba(194,46,28,0.32)', // 朱の細罫
+  // 強調＝黒（旧 lime キーを黒に読み替え。ベタは黒、上の文字は白＝X の Post ボタン的）
+  lime: '#111111', // primary（黒のベタ）
+  limeSoft: '#F0F0F0', // 選択背景・ハイライト（薄グレー）
+  limeDust: '#000000', // 黒ボタンの縁・小さな点
+  limeInk: '#FFFFFF', // 黒の上の文字＝白
+  limeInkSoft: '#111111', // 白地で使う“強調文字”＝黒
+  limeLine: 'rgba(0,0,0,0.16)', // 強調の細罫
 
-  // 警告（人検知）＝同じ朱でよい。新聞の“緊急”は赤。
-  warn: '#C22E1C',
+  // 警告（人検知・禁止ワード・削除）＝唯一の色。主要SNSと同じく赤。
+  warn: '#E0245E',
 
-  // アバター下地（中立の紙グレー）
-  avatarTint: '#D7CFBB',
-  avatarFallback: '#E3DCCB',
-  avatarFallbackIcon: '#8A8268',
+  // アバター下地（中立グレー）
+  avatarTint: '#E6E6E8',
+  avatarFallback: '#EFEFF1',
+  avatarFallbackIcon: '#9C9C9C',
 
   // 写真の上で使う固定色
-  onMedia: '#FBF7EE',
-  onMediaDim: 'rgba(251,247,238,0.72)',
+  onMedia: '#FFFFFF',
+  onMediaDim: 'rgba(255,255,255,0.72)',
   scrimTop: 'rgba(0,0,0,0.35)',
   scrimBottom: 'rgba(0,0,0,0.55)',
-  mediaChip: 'rgba(18,17,14,0.58)',
-  mediaChipBorder: 'rgba(251,247,238,0.18)',
+  mediaChip: 'rgba(0,0,0,0.55)',
+  mediaChipBorder: 'rgba(255,255,255,0.18)',
 
-  // PCで端末枠の外側（印刷工場の暗色）
-  backdrop: '#1C1A15',
-  backdrop2: '#2C281C',
-  deviceShell: '#0E0E0B',
+  // PCで端末枠の外側（白黒のプロダクトショット用に近黒）
+  backdrop: '#0E0E0E',
+  backdrop2: '#1A1A1A',
+  deviceShell: '#000000',
 } as const;
 
 // 影は基本「使わない」。重さは罫線が担う。残すのは端末枠の落ち影だけ。
-// card は“紙に貼った切り抜き”の硬い小オフセットだけ薄く残す（やわらかい浮遊カードにしない）。
 export const shadow = {
-  card: '1px 2px 0 rgba(23,21,15,0.06)',
+  card: '0 1px 2px rgba(0,0,0,0.05)',
   cardPressed: 'none',
   button: 'none',
   chip: 'none',
-  avatar: '0 1px 2px rgba(23,21,15,0.10)',
-  frame: '0 42px 140px rgba(0,0,0,0.52), 0 14px 30px rgba(0,0,0,0.32)',
+  avatar: '0 1px 2px rgba(0,0,0,0.10)',
+  frame: '0 42px 140px rgba(0,0,0,0.55), 0 14px 30px rgba(0,0,0,0.35)',
 } as const;
 
 export const space = {

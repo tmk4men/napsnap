@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#08080a',
   },
   brandRow: { marginTop: space.lg, alignItems: 'center', gap: 4 },
-  brand: { color: 'rgba(255,253,247,0.94)', fontSize: 24, fontWeight: '700', fontFamily: fonts.brand },
-  tagline: { color: 'rgba(255,253,247,0.40)', fontSize: font.small, letterSpacing: 0.5 },
+  brand: { color: 'rgba(255,255,255,0.95)', fontSize: 26, letterSpacing: -0.5, fontFamily: fonts.brand },
+  tagline: { color: 'rgba(255,255,255,0.45)', fontSize: font.small, letterSpacing: 0.5, fontFamily: fonts.ui },
 });

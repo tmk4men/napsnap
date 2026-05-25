@@ -23,7 +23,7 @@ export function MediaImage({ uri, blurRadius }: { uri?: string; blurRadius?: num
         <View style={[StyleSheet.absoluteFill, styles.fill]} pointerEvents="none">
           {state === 'error' || !uri ? (
             <>
-              <TraceMark size={40} color="rgba(255,253,247,0.38)" dot="rgba(255,253,247,0.5)" />
+              <TraceMark size={40} color="rgba(255,255,255,0.38)" dot="rgba(255,255,255,0.5)" />
               <Text style={styles.text}>読み込めない</Text>
             </>
           ) : (

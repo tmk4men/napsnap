@@ -302,7 +302,7 @@ export function VerifiedBadge({ size = 15 }: { size?: number }) {
       <Path
         d="M12 1.6l2.5 1.9 3.1-.2 1 2.9 2.6 1.7-1 3 1 3-2.6 1.7-1 2.9-3.1-.2L12 22.4l-2.5-1.9-3.1.2-1-2.9L2.8 16l1-3-1-3 2.6-1.7 1-2.9 3.1.2z"
         fill={colors.lime}
-        stroke="rgba(24,26,13,0.12)"
+        stroke="rgba(0,0,0,0.12)"
         strokeWidth={0.8}
       />
       <Path d="M8.2 12.2l2.5 2.5 5.1-5.4" stroke={colors.limeInk} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />

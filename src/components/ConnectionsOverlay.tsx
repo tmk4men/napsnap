@@ -58,7 +58,7 @@ export function ConnectionsOverlay({
           value={q}
           onChangeText={setQ}
           placeholder="@IDや名前でさがす"
-          placeholderTextColor="rgba(110,104,89,0.42)"
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="none"
           style={styles.searchInput}
         />
@@ -145,15 +145,16 @@ const styles = StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   name: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
   handle: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.handle, letterSpacing: 0.2 },
+  // フォロー＝黒ベタ（CTA）／フォロー中＝枠線（X・IG の作法）
   followBtn: {
     borderRadius: radius.xs,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: colors.surfaceRaised,
+    backgroundColor: colors.lime,
     borderWidth: rule.hair,
-    borderColor: colors.line,
+    borderColor: colors.limeDust,
   },
-  followBtnOn: { backgroundColor: colors.limeSoft, borderColor: colors.limeLine },
-  followText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
-  followTextOn: { color: colors.limeInkSoft },
+  followBtnOn: { backgroundColor: 'transparent', borderColor: colors.text },
+  followText: { color: colors.limeInk, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  followTextOn: { color: colors.text },
 });

@@ -93,11 +93,11 @@ export function ChekiCard({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surfaceRaised, // 紙白の切り抜き
+    backgroundColor: colors.surfaceRaised, // 白の切り抜き
     borderRadius: 2,
     borderWidth: rule.hair,
     borderColor: colors.hairline,
-    boxShadow: '2px 3px 0 rgba(23,21,15,0.10)', // 紙に貼った硬い小オフセット（やわ影にしない）
+    boxShadow: '0 6px 18px rgba(0,0,0,0.10)', // 白地に浮く写真のごく控えめな影
   },
   photo: {
     borderRadius: 1,

@@ -84,7 +84,7 @@ export function AccountSetupScreen() {
             value={name}
             onChangeText={setName}
             placeholder={copy.setupNamePlaceholder}
-            placeholderTextColor="rgba(110,104,89,0.42)"
+            placeholderTextColor={colors.textFaint}
             style={styles.input}
             maxLength={12}
           />
@@ -96,7 +96,7 @@ export function AccountSetupScreen() {
               value={handle}
               onChangeText={(t) => setHandle(sanitizeHandle(t))}
               placeholder="username"
-              placeholderTextColor="rgba(110,104,89,0.42)"
+              placeholderTextColor={colors.textFaint}
               autoCapitalize="none"
               style={styles.handleInput}
               maxLength={16}

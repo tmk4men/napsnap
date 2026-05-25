@@ -65,7 +65,7 @@ function ReactionButton({ type, active, onPress }: { type: ReactionType; active:
         pointerEvents="none"
         style={[styles.burst, { opacity: burstOpacity, transform: [{ translateY: burstY }, { scale: burstScale }] }]}
       >
-        <ReactionIcon type={type} size={30} color={colors.lime} />
+        <ReactionIcon type={type} size={30} color={colors.onMedia} />
       </Animated.View>
 
       <Animated.View style={[styles.item, active && styles.itemActive, { transform: [{ scale }] }]}>
@@ -80,7 +80,7 @@ function ReactionButton({ type, active, onPress }: { type: ReactionType; active:
             },
           ]}
         />
-        <ReactionIcon type={type} size={28} color={active ? colors.lime : colors.onMedia} />
+        <ReactionIcon type={type} size={28} color={active ? colors.text : colors.onMedia} />
       </Animated.View>
     </Pressable>
   );
@@ -96,13 +96,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.xs,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(18,17,14,0.55)',
+    backgroundColor: colors.mediaChip,
     borderWidth: rule.hair,
     borderColor: colors.mediaChipBorder,
   },
   itemActive: {
-    backgroundColor: 'rgba(194,46,28,0.18)',
-    borderColor: 'rgba(194,46,28,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    borderColor: '#FFFFFF',
   },
   ring: {
     position: 'absolute',
@@ -110,6 +110,6 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: radius.xs,
     borderWidth: rule.thin,
-    borderColor: colors.lime,
+    borderColor: colors.onMedia,
   },
 });

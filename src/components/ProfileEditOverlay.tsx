@@ -73,7 +73,7 @@ export function ProfileEditOverlay({
         ) : (
           <View>
             <Text style={styles.fieldLabel}>name</Text>
-            <TextInput value={name} onChangeText={setName} maxLength={12} style={styles.input} placeholderTextColor="rgba(110,104,89,0.42)" />
+            <TextInput value={name} onChangeText={setName} maxLength={12} style={styles.input} placeholderTextColor={colors.textFaint} />
             <Text style={styles.fieldLabel}>ID</Text>
             <View style={styles.handleWrap}>
               <Text style={styles.at}>@</Text>
@@ -83,7 +83,7 @@ export function ProfileEditOverlay({
                 autoCapitalize="none"
                 maxLength={16}
                 style={styles.handleInput}
-                placeholderTextColor="rgba(110,104,89,0.42)"
+                placeholderTextColor={colors.textFaint}
               />
             </View>
             <View style={{ height: space.lg }} />

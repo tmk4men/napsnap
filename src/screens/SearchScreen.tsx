@@ -46,7 +46,7 @@ export function SearchScreen() {
             onChangeText={setQ}
             onSubmitEditing={submit}
             placeholder="@IDでさがす"
-            placeholderTextColor="rgba(110,104,89,0.42)"
+            placeholderTextColor={colors.textFaint}
             autoCapitalize="none"
             returnKeyType="search"
             style={styles.searchInput}

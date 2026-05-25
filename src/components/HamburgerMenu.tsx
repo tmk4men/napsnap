@@ -36,7 +36,7 @@ export function HamburgerMenu({ items, onClose }: { items: MenuItem[]; onClose: 
 }
 
 const styles = StyleSheet.create({
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(23,23,19,0.10)' },
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.10)' },
   panel: {
     position: 'absolute',
     right: space.lg,
