@@ -6,6 +6,7 @@ import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, FadeIn, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
+import { MyPostsSwiper } from '../components/MyPostsSwiper';
 import { ChekiCard } from '../components/ChekiCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -51,8 +52,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const heroPost = [myActive[0], followedLatest].filter((p): p is Post => !!p).sort((a, b) => a.expiresAt - b.expiresAt)[0];
   const heroIsMine = !!heroPost && heroPost.userId === s.currentUserId;
 
+  // 他の人を見終わったら（残り0）、自分の24時間以内の投稿だけがホームに残り、上下スワイプで全部見れる。
+  const showMine = open && count === 0 && myActive.length > 0;
   const mediaMode = !open && !!followedLatest; // 未投稿：チェキをモザイク予告
-  const openHero = open && !!heroPost; // 投稿済み：くっきり
+  const openHero = open && !showMine && !!heroPost; // 投稿済み＆まだ他の人がいる：くっきり1枚
   const showCard = mediaMode || openHero;
 
   const displayPost = mediaMode ? followedLatest : openHero ? heroPost : undefined;
@@ -124,7 +127,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         style={styles.stage}
         onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
-        {showCard && displayPost ? (
+        {showMine ? (
+          <MyPostsSwiper posts={myActive} me={me} />
+        ) : showCard && displayPost ? (
           <FadeIn key={displayPost.id} delay={130} dy={16} style={styles.heroWrap}>
             {cardW > 0 && (
               <ChekiCard
