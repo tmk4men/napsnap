@@ -10,7 +10,8 @@ const HTML = path.resolve(__dirname, '../dist/index.html');
 
 // 公開先（GitHub Pages）。リポジトリ名/ユーザー名が変わったらここを直す。
 const SITE_URL = process.env.SITE_URL || 'https://tmk4men.github.io/napsnap';
-const IMAGE = `${SITE_URL}/og.png`;
+// 画像はSNS側が強くキャッシュするので、デザイン更新時はクエリ版数を上げて再取得させる。
+const IMAGE = `${SITE_URL}/og.png?v=2`;
 const TITLE = 'napsnap — 顔のない、今日の痕跡。';
 const DESC =
   '顔を出さない写真SNS。机・ごはん・足元…今日の“痕跡”を1枚。撮ると6時間みんなが見えて、24時間で消える。';
@@ -28,14 +29,14 @@ if (html.includes('<!-- ogp:start -->')) {
 }
 
 const FONTS_HREF =
-  'https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;800;900&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&family=Shippori+Mincho:wght@600;800&family=DM+Mono:wght@400;500&display=swap';
+  'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Shippori+Mincho:wght@600;700;800&family=BIZ+UDPGothic:wght@400;700&family=DM+Mono:wght@400;500&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&display=swap';
 
 const tags = `  <!-- ogp:start -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link id="napsnap-fonts" rel="stylesheet" href="${FONTS_HREF}" />
     <meta name="description" content="${DESC}" />
-    <meta name="theme-color" content="#FFF8E8" />
+    <meta name="theme-color" content="#FFFFFF" />
     <link rel="canonical" href="${SITE_URL}/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="napsnap" />
@@ -61,3 +62,13 @@ html = html.replace('</head>', `${tags}  </head>`);
 
 fs.writeFileSync(HTML, html);
 console.log('OGP を dist/index.html に注入した。');
+
+// 念のため og 画像を dist へコピー（expo が public/ を写し損ねても 404 にしない）。
+try {
+  const src = path.resolve(__dirname, '../public/og.png');
+  const dst = path.resolve(__dirname, '../dist/og.png');
+  if (fs.existsSync(src) && !fs.existsSync(dst)) {
+    fs.copyFileSync(src, dst);
+    console.log('og.png を dist へコピーした。');
+  }
+} catch {}

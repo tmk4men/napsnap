@@ -12,6 +12,7 @@ const MODEL =
 
 let libPromise: Promise<any> | null = null;
 let detectorPromise: Promise<any> | null = null;
+let videoDetectorPromise: Promise<any> | null = null;
 
 // CDN の ESM を inline module script で読み込む（Metro のバンドルを経由しない）。
 function loadLib(): Promise<any> {
@@ -45,6 +46,40 @@ async function getDetector(): Promise<any> {
     });
   })();
   return detectorPromise;
+}
+
+// ライブ映像用（VIDEO モード）の検知器。静止画用とは別インスタンス。
+async function getVideoDetector(): Promise<any> {
+  if (videoDetectorPromise) return videoDetectorPromise;
+  videoDetectorPromise = (async () => {
+    const { FaceDetector, FilesetResolver } = await loadLib();
+    const fileset = await FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${VER}/wasm`);
+    return FaceDetector.createFromOptions(fileset, {
+      baseOptions: { modelAssetPath: MODEL },
+      runningMode: 'VIDEO',
+      minDetectionConfidence: 0.5,
+    });
+  })();
+  return videoDetectorPromise;
+}
+
+// カメラ起動時に動画検知器を先読み（Webのみ）。
+export function preloadVideoDetector() {
+  if (!WEB) return;
+  getVideoDetector().catch(() => {});
+}
+
+// ライブの <video> 要素から顔の数を返す（撮影前のシャッター制御用）。検知不能時は 0。
+export async function detectFacesInVideo(video: any, tsMs: number): Promise<number> {
+  if (!WEB || !video) return 0;
+  try {
+    if (video.readyState < 2 || !video.videoWidth) return 0; // まだ描画前
+    const d = await getVideoDetector();
+    const res = d.detectForVideo(video, tsMs);
+    return res?.detections?.length ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 function loadImage(uri: string): Promise<any> {

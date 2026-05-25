@@ -93,8 +93,8 @@ export function MeScreen({ nav }: { nav: Nav }) {
             <Text style={styles.name}>{me?.displayName}</Text>
             <View style={styles.handleRow}>
               <Text style={styles.handle}>@{me?.handle}</Text>
-              <Pressable onPress={() => setEditProfile(true)} hitSlop={8}>
-                <Text style={styles.editLink}>編集</Text>
+              <Pressable onPress={() => setEditProfile(true)} hitSlop={8} style={styles.editBtn}>
+                <PencilIcon size={13} color={colors.textDim} />
               </Pressable>
             </View>
             <View style={styles.stats}>
@@ -273,17 +273,15 @@ const styles = StyleSheet.create({
   name: { color: colors.text, fontSize: font.title, fontWeight: '700', fontFamily: fonts.name },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 3 },
   handle: { color: colors.textDim, fontSize: font.body, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.2 },
-  editLink: {
-    color: colors.textDim,
-    fontSize: font.small,
-    fontWeight: '700',
-    fontFamily: fonts.ui,
+  editBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: radius.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: colors.surface,
     borderWidth: rule.hair,
     borderColor: colors.hairline,
-    borderRadius: radius.xs,
-    paddingHorizontal: 10,
-    paddingVertical: 2,
   },
   stats: { flexDirection: 'row', gap: space.lg, marginTop: space.sm },
   connStat: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },

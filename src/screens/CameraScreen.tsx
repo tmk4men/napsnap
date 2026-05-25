@@ -10,16 +10,19 @@ import {
 } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { BoltIcon, CameraIcon, CloseIcon, FlipCameraIcon } from '../components/icons';
 import { Waveform } from '../components/Waveform';
-import { preloadDetector } from '../lib/faceCheck';
+import { detectFacesInVideo, preloadDetector, preloadVideoDetector } from '../lib/faceCheck';
 import { Nav } from '../navigation/nav';
 import { demoCapture } from '../lib/images';
 import { RECORD_SECONDS } from '../lib/audio';
 import { topicByKey } from '../topics';
 
 type Phase = 'live' | 'recording';
+
+const WEB = Platform.OS === 'web';
 
 // 2秒の環境音には十分な軽量設定（モノ・低ビットレート）。保存/配信を軽くする（#5）。
 // プリセットを土台に共通フィールドだけ上書きし、端末ごとの enum 設定は壊さない。
@@ -44,16 +47,39 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
   const [withSound, setWithSound] = useState(true);
   const [facing, setFacing] = useState<CameraType>('back');
   const [torch, setTorch] = useState(false); // ライト（トーチ）on/off
+  const [faceLive, setFaceLive] = useState(false); // ライブ映像に顔が写っている＝シャッター無効
   const progress = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // 顔検知モデルを先読みしてプレビューの待ちを減らす
+    // 顔検知モデルを先読みしてプレビューの待ちを減らす（静止画用＋ライブ用）
     preloadDetector();
+    preloadVideoDetector();
     // 直前の録音でオーディオセッションが「録音モード」のまま残るとカメラ再起動が不調になることがある。
     // 起動時に再生モードへ戻してクリーンにする（投稿直後にカメラが真っ暗になる対策）。
     setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
   }, []);
+
+  // 撮影前のライブ顔検知（Webのみ）。顔が写っている間はシャッターを無効にする。
+  useEffect(() => {
+    if (!WEB || !permission?.granted || phase !== 'live') {
+      setFaceLive(false);
+      return;
+    }
+    let alive = true;
+    const id = setInterval(async () => {
+      const g: any = globalThis;
+      const video = g?.document?.querySelector?.('video');
+      if (!video) return;
+      const n = await detectFacesInVideo(video, (g.performance?.now?.() ?? Date.now()));
+      if (alive) setFaceLive(n > 0);
+    }, 450);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permission?.granted, phase]);
 
   useEffect(() => {
     if (permission && !permission.granted && permission.canAskAgain) requestPermission();
@@ -136,6 +162,7 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
 
   async function shoot() {
     if (phase !== 'live') return;
+    if (faceLive) return; // 顔が写っている間は撮らせない
     let uri: string;
     try {
       const photo = await camRef.current?.takePictureAsync({ quality: 0.6 });
@@ -220,7 +247,16 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
       <View pointerEvents="none" style={styles.frame} />
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.lg }]}>
-        <Pressable onPress={shoot} style={({ pressed }) => [styles.shutterOuter, pressed && { transform: [{ scale: 0.94 }] }]}>
+        {faceLive && (
+          <View style={styles.faceWarn}>
+            <Text style={styles.faceWarnText}>顔が写ってる。napsnapは顔なしで。</Text>
+          </View>
+        )}
+        <Pressable
+          onPress={shoot}
+          disabled={faceLive}
+          style={({ pressed }) => [styles.shutterOuter, faceLive && styles.shutterDisabled, pressed && !faceLive && { transform: [{ scale: 0.94 }] }]}
+        >
           <View style={styles.shutterInner}>
             <View style={styles.shutterCore} />
           </View>
@@ -322,6 +358,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   shutterCore: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.lime },
+  shutterDisabled: { opacity: 0.35 },
+  faceWarn: { backgroundColor: colors.warn, borderRadius: radius.xs, paddingHorizontal: 14, paddingVertical: 8 },
+  faceWarnText: { color: '#FFFFFF', fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
   demoBtn: {
     backgroundColor: colors.mediaChip,
     borderRadius: radius.xs,
