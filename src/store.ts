@@ -142,7 +142,11 @@ export const useStore = create<Store>()(
             following: [official.id, ...followingIds],
             posts: [...officialPosts, ...followPosts, ...topicSeed, ...makeMyMemories(id)],
             views: [],
-            reactions: [...makeSeedReactions(followPosts, people, id), ...makeSeedReactions(topicSeed, people, id)],
+            reactions: [
+              ...makeSeedReactions(followPosts, people, id),
+              ...makeSeedReactions(topicSeed, people, id),
+              ...makeSeedReactions(officialPosts, people, id),
+            ],
             feedStates: [],
             accessPass: null,
             lastSeenActivityAt: now(),
@@ -341,7 +345,12 @@ export const useStore = create<Store>()(
           if (!official || !following.includes(official.id)) return;
           const active = posts.some((p) => p.userId === official.id && !p.topicKey && isActive(p.expiresAt));
           if (active) return;
-          set((st) => ({ posts: [...st.posts, ...makeOfficialPosts(official.id)] }));
+          const fresh = makeOfficialPosts(official.id);
+          const mock = users.filter((u) => u.isMock);
+          set((st) => ({
+            posts: [...st.posts, ...fresh],
+            reactions: [...st.reactions, ...makeSeedReactions(fresh, mock, st.currentUserId ?? '')],
+          }));
         },
 
         // 期限切れの投稿を捨ててストレージを増やさない（#4）。

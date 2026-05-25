@@ -8,7 +8,7 @@ import { Avatar, GhostButton, Remaining, ShootButton, useTick } from '../compone
 import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
-import { FootprintIcon, PencilIcon, ShareIcon, TraceMark } from '../components/icons';
+import { FootprintIcon, HeartIcon, PencilIcon, ShareIcon, TraceMark } from '../components/icons';
 import { shareInvite } from '../lib/share';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -174,8 +174,10 @@ export function MeScreen({ nav }: { nav: Nav }) {
                     <FootprintIcon size={14} color={colors.textDim} />
                     <Text style={styles.meStatText}>{viewCount}</Text>
                   </View>
-                  <Text style={styles.meStatText}>·</Text>
-                  <Text style={styles.meStatText}>{reactionCount} 反応</Text>
+                  <View style={styles.meStat}>
+                    <HeartIcon size={13} color={colors.textDim} />
+                    <Text style={styles.meStatText}>{reactionCount}</Text>
+                  </View>
                   <View style={{ marginLeft: 'auto' }}>
                     <Remaining expiresAt={post.expiresAt} color={colors.warn} size={12} />
                   </View>
@@ -307,7 +309,7 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.lg, gap: space.xs },
   emptyTitle: { color: colors.text, fontSize: font.title, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: 0.3 },
   emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center' },
-  meStatRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: space.sm, paddingHorizontal: 2 },
+  meStatRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: space.sm, paddingHorizontal: 2 },
   meStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   meStatText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
   meSound: { marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 2 },

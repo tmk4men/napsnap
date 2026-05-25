@@ -10,7 +10,9 @@ import { ChekiCard } from '../components/ChekiCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { HamburgerMenu } from '../components/HamburgerMenu';
+import { DocOverlay } from '../components/DocOverlay';
 import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon, VerifiedBadge } from '../components/icons';
+import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { activityItems, currentUser, feedQueue, isPassOpen, memoryHighlights, topicUnseen, userById } from '../selectors';
@@ -63,6 +65,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
   const [showActivity, setShowActivity] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [doc, setDoc] = useState<LegalDoc | null>(null);
   const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
   const openActivity = () => {
     setShowActivity(true);
@@ -149,7 +152,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
               ) : (
                 <>
                   <Text style={styles.metaName}>
-                    {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'だれかの今'}
+                    {reactionsOf(displayPost.id) > 0 ? `${reactionsOf(displayPost.id)}人が反応` : 'まだ反応なし'}
                   </Text>
                   {/* ロック中でも、この投稿があと何時間で消えるかを赤で出す（早く撮ろう） */}
                   <View style={{ marginLeft: 6 }}>
@@ -215,10 +218,13 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             { label: '通知', onPress: openActivity },
             { label: 'さがす', onPress: () => nav.setTab('search') },
             { label: '自分', onPress: () => nav.setTab('me') },
+            { label: 'プライバシーポリシー', onPress: () => setDoc(PRIVACY_POLICY) },
+            { label: '利用規約', onPress: () => setDoc(TERMS_OF_SERVICE) },
             { label: 'デモを最初からやり直す', onPress: resetDemo, danger: true },
           ]}
         />
       )}
+      {doc && <DocOverlay doc={doc} onClose={() => setDoc(null)} />}
     </View>
   );
 }
