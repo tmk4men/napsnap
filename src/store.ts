@@ -59,6 +59,7 @@ interface Actions {
   refreshFollowPostsIfStale: () => void;
   refreshTopicPostsIfStale: () => void;
   refreshOfficialPostsIfStale: () => void;
+  ensureOfficialFollowed: () => void;
   pruneExpired: () => void;
   resetDemo: () => void;
 }
@@ -316,6 +317,22 @@ export const useStore = create<Store>()(
           }));
         },
 
+        // 既存ユーザー（公式導入より前にアカウント作成した人）にも、公式アカウントを
+        // 後付けでフォローさせる。冪等＝何度呼んでも重複しない。
+        ensureOfficialFollowed: () => {
+          const s = get();
+          if (!s.onboarded) return;
+          const existing = s.users.find((u) => u.isOfficial || u.id === OFFICIAL_ID);
+          const official = existing ?? makeOfficialUser();
+          const needUser = !existing;
+          const needFollow = !s.following.includes(official.id);
+          if (!needUser && !needFollow) return;
+          set((st) => ({
+            users: needUser ? [...st.users, official] : st.users,
+            following: needFollow ? [official.id, ...st.following] : st.following,
+          }));
+        },
+
         // 復帰時、公式アカウントの投稿が無ければ（期限切れ・初期フィード補充）作り直す。
         // 本番でも「はじめてのフィードが空」を避けるため。
         refreshOfficialPostsIfStale: () => {
@@ -357,7 +374,11 @@ export const useStore = create<Store>()(
       };
     },
     {
-      name: 'napsnap-store-v11',
+      // ⚠ この name は固定。デプロイのたびにデータが消えないよう、もう絶対に変えない。
+      // スキーマ/シードを変えたら name を変える代わりに、下の version を上げて migrate で移行する
+      // （保存データを捨てずに不足分だけ補う）。
+      name: 'napsnap-store-v10',
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s): PersistedState => ({
         onboarded: s.onboarded,
@@ -375,6 +396,9 @@ export const useStore = create<Store>()(
         topicSeenDay: s.topicSeenDay,
         searchHistory: s.searchHistory,
       }),
+      // 既存の保存データを消さずに移行する。新フィールドは初期値で補う（公式アカウントの
+      // 後付けは復帰時の ensureOfficialFollowed で行う＝確実・冪等）。
+      migrate: (persisted): PersistedState => ({ ...initial, ...(persisted as object) } as PersistedState),
     }
   )
 );
