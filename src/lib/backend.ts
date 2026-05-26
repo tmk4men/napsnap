@@ -138,10 +138,11 @@ export async function isHandleTaken(handle: string): Promise<boolean> {
   return (data?.length ?? 0) > 0;
 }
 
+// 検索は @ID の完全一致のみ（入力中の部分一致＝予測サジェストはしない）。
 export async function searchProfiles(query: string): Promise<User[]> {
-  const q = query.trim().replace(/^@/, '');
+  const q = query.trim().replace(/^@/, '').toLowerCase();
   if (!q) return [];
-  const { data, error } = await db().from('profiles').select('*').ilike('handle', `%${q}%`).limit(20);
+  const { data, error } = await db().from('profiles').select('*').eq('handle', q).limit(5);
   if (error) throw error;
   return (data ?? []).map(rowToUser);
 }

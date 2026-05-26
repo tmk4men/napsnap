@@ -47,17 +47,13 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
   }, [query]);
 
   // 候補プール：ライブは「store の users + 直近DB検索結果」、モックは isMock 仲間。
-  // 自分・フォロー中・公式は除外（探す＝まだ繋がってない人）。
+  // 自分・napsnap ブランド本人は除外。フォロー中の人は結果に出す（ボタンで状態を見せる）。
   const pool = hasSupabase
     ? [...s.users, ...remote.filter((u) => !s.users.some((x) => x.id === u.id))]
     : s.users.filter((u) => u.isMock);
-  const candidates = pool.filter(
-    (u) => u.id !== s.currentUserId && !s.following.includes(u.id) && !isBrandUser(u)
-  );
-  // 検索クエリがあるときだけリストを出す（空のときは履歴だけ見せて、何も表示しない）。
-  const list = query
-    ? candidates.filter((u) => u.handle.toLowerCase().includes(query))
-    : [];
+  const candidates = pool.filter((u) => u.id !== s.currentUserId && !isBrandUser(u));
+  // 検索クエリの完全一致のみ表示（入力中の予測サジェストはしない）。
+  const list = query ? candidates.filter((u) => u.handle.toLowerCase() === query) : [];
 
   const submit = () => {
     if (query) addSearchHistory(query);
@@ -130,21 +126,30 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
           contentContainerStyle={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + 100 }}
           showsVerticalScrollIndicator={false}
         >
-          {list.map((p) => (
-            <View key={p.id} style={styles.row}>
-              <Avatar user={p} size={44} />
-              <View style={{ flex: 1, marginLeft: space.md }}>
-                <Text style={styles.name}>{p.displayName}</Text>
-                <Text style={styles.handle}>@{p.handle}</Text>
+          {list.map((p) => {
+            const following = s.following.includes(p.id);
+            return (
+              <View key={p.id} style={styles.row}>
+                <Avatar user={p} size={44} />
+                <View style={{ flex: 1, marginLeft: space.md }}>
+                  <Text style={styles.name}>{p.displayName}</Text>
+                  <Text style={styles.handle}>@{p.handle}</Text>
+                </View>
+                <Pressable
+                  onPress={() => onFollow(p.id, p.handle)}
+                  style={({ pressed }) => [
+                    styles.followBtn,
+                    following && styles.followingBtn,
+                    pressed && { opacity: 0.8 },
+                  ]}
+                >
+                  <Text style={[styles.followText, following && styles.followingText]}>
+                    {following ? 'フォロー中' : 'フォロー'}
+                  </Text>
+                </Pressable>
               </View>
-              <Pressable
-                onPress={() => onFollow(p.id, p.handle)}
-                style={({ pressed }) => [styles.followBtn, pressed && { opacity: 0.8 }]}
-              >
-                <Text style={styles.followText}>フォロー</Text>
-              </Pressable>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
     </View>
@@ -205,4 +210,6 @@ const styles = StyleSheet.create({
     borderColor: colors.limeDust,
   },
   followText: { color: colors.limeInk, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  followingBtn: { backgroundColor: colors.surfaceRaised, borderColor: colors.hairline },
+  followingText: { color: colors.textDim },
 });
