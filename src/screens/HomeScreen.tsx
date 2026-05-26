@@ -164,7 +164,8 @@ export function HomeScreen({ nav }: { nav: Nav }) {
               />
             )}
             <View style={styles.metaRow}>
-              <Avatar user={displayAuthor} size={26} blur={mediaMode} />
+              {/* ロック中でも投稿者のアイコンはぼかさない（誰の投稿かは分かるようにする）。 */}
+              <Avatar user={displayAuthor} size={26} />
               {openHero ? (
                 <>
                   {!heroIsMine && (
