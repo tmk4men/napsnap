@@ -91,44 +91,15 @@ const initial: PersistedState = {
 };
 
 // ライブのスナップショットをローカル state に反映。
+// 方針：サーバを真実とみなし、snap をそのまま採用する（楽観マージは入れない）。
+// その代わり、書き込み系（addPost / react）は呼び出し側で await してから set するので、
+// hydrate 競合で「押したのに消える／投稿が消える」は構造的に起きない。
 // パス（6h解錠）は「自分の有効な通常投稿」から導出する＝過去のローカル accessPass の残留で
 // 「今日はここまで＋謎の残り時間」が出るのを防ぐ。投稿が無ければパス無し＝ロック表示。
 function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap: LiveSnapshot) {
   const st = get();
   const me = snap.currentUserId;
-
-  // ローカルの楽観的更新（自分が直近で押したリアクション・直近に出した投稿）を保護してマージする。
-  // be.react() は fire-and-forget で、liveHydrate が同時に走ると snap で上書きされて
-  // 「押したのに消える」が起きる。逆に snap が新しければ snap を採用するため id/タイムスタンプで判定。
-  const PROTECT_MS = 5 * 60 * 1000;
-  const tNow = Date.now();
-
-  // ---- reactions: (postId,userId) ペアで自分の最近の楽観値を保護 ----
-  const snapReactionKey = new Set(
-    snap.reactions
-      .filter((r) => r.userId === me)
-      .map((r) => `${r.postId}_${r.userId}`)
-  );
-  const protectedMyReactions = st.reactions.filter(
-    (r) =>
-      r.userId === me &&
-      tNow - r.createdAt < PROTECT_MS &&
-      !snapReactionKey.has(`${r.postId}_${r.userId}`)
-  );
-  const reactions = [...snap.reactions, ...protectedMyReactions];
-
-  // ---- posts: 自分の直近 posts のうち snap に未到達の id を残す（DB レプリカ遅延対策） ----
-  const snapPostIds = new Set(snap.posts.map((p) => p.id));
-  const protectedMyPosts = st.posts.filter(
-    (p) =>
-      p.userId === me &&
-      tNow - p.createdAt < PROTECT_MS &&
-      !snapPostIds.has(p.id)
-  );
-  const posts = [...snap.posts, ...protectedMyPosts];
-
-  // パス（6h解錠）はマージ済み posts から導出。
-  const myActive = posts
+  const myActive = snap.posts
     .filter((p) => p.userId === me && !p.topicKey && isActive(p.expiresAt))
     .sort((a, b) => b.createdAt - a.createdAt);
   const latest = myActive[0];
@@ -143,8 +114,8 @@ function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap:
     currentUserId: snap.currentUserId,
     users: snap.users,
     following: snap.following,
-    posts,
-    reactions,
+    posts: snap.posts,
+    reactions: snap.reactions,
     views: [...snap.views, ...myLocalViews],
     accessPass,
   });
@@ -363,9 +334,18 @@ export const useStore = create<Store>()(
           if (hasSupabase) be.markViewed(postId).catch((e) => console.warn('markViewed failed', e));
         },
 
-        reactToPost: (postId, type) => {
+        reactToPost: async (postId, type) => {
           const { currentUserId } = get();
           if (!currentUserId) return;
+          // ライブ：DBに書き込んでからローカル更新。hydrate 競合で消えるのを防ぐ。
+          if (hasSupabase) {
+            try {
+              await be.react(postId, type);
+            } catch (e) {
+              console.warn('react failed', e);
+              return;
+            }
+          }
           set((st) => {
             const hadReaction = st.reactions.some((r) => r.postId === postId && r.userId === currentUserId);
             return {
@@ -383,13 +363,20 @@ export const useStore = create<Store>()(
                 : st.posts.map((p) => (p.id === postId ? { ...p, reactionCount: (p.reactionCount ?? 0) + 1 } : p)),
             };
           });
-          if (hasSupabase) be.react(postId, type).catch((e) => console.warn('react failed', e));
         },
 
         // お題でのリアクション：反応は記録するが「残す」には入れない（feedStateも触らない）。
-        reactToTopic: (postId, type) => {
+        reactToTopic: async (postId, type) => {
           const { currentUserId } = get();
           if (!currentUserId) return;
+          if (hasSupabase) {
+            try {
+              await be.react(postId, type);
+            } catch (e) {
+              console.warn('react failed', e);
+              return;
+            }
+          }
           set((st) => {
             const hadReaction = st.reactions.some((r) => r.postId === postId && r.userId === currentUserId);
             return {
@@ -402,7 +389,6 @@ export const useStore = create<Store>()(
                 : st.posts.map((p) => (p.id === postId ? { ...p, reactionCount: (p.reactionCount ?? 0) + 1 } : p)),
             };
           });
-          if (hasSupabase) be.react(postId, type).catch((e) => console.warn('react failed', e));
         },
 
         skipPost: (postId) => {
