@@ -93,8 +93,19 @@ export function PreviewScreen({
       nav.onPosted();
     } catch (e) {
       // 失敗時は画面を閉じず、もう一度押せるようにする。原因が分かるよう短く表示。
-      const msg = e instanceof Error ? e.message : String(e);
-      setPostError(`送れなかった：${msg.slice(0, 80)}`);
+      // Supabase は Error ではなく { message, code, details, hint } の素オブジェクトを投げてくる
+      // ので個別に拾う。読みづらい [object Object] にしない。
+      let msg: string;
+      if (e instanceof Error) {
+        msg = e.message;
+      } else if (e && typeof e === 'object') {
+        const o = e as Record<string, unknown>;
+        msg = (o.message as string) || (o.error_description as string) || (o.error as string) || JSON.stringify(o);
+      } else {
+        msg = String(e);
+      }
+      console.warn('postIt failed', e);
+      setPostError(`送れなかった：${msg.slice(0, 160)}`);
       setPosting(false);
     }
   }
