@@ -22,7 +22,7 @@ export function topicUnseen(s: Pick<Store, 'topicSeenDay'>): boolean {
 
 type Snapshot = Pick<
   Store,
-  'currentUserId' | 'following' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass'
+  'currentUserId' | 'following' | 'followers' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass'
 >;
 
 export function isPassOpen(s: Pick<Store, 'accessPass'>): boolean {
@@ -162,10 +162,10 @@ export function nextProfileEditDays(s: Pick<Store, 'profileEditAt'>): number {
   return Math.max(1, Math.ceil((recent[0] + TWO_WEEKS - Date.now()) / (24 * HOUR)));
 }
 
-// アクティビティ（通知）：自分の投稿への反応/足跡＋フォロー中の新着痕跡。
+// アクティビティ（通知）：自分の投稿への反応/足跡＋フォロー中の新着痕跡＋自分がフォローされた。
 export interface ActivityItem {
   id: string;
-  kind: 'react' | 'view' | 'post';
+  kind: 'react' | 'view' | 'post' | 'follow';
   user?: User;
   at: number;
   postImage?: string;
@@ -192,6 +192,10 @@ export function activityItems(s: Snapshot): ActivityItem[] {
   }
   for (const p of followedActivePosts(s)) {
     out.push({ id: 'p_' + p.id, kind: 'post', user: userById(s.users, p.userId), at: p.createdAt, postImage: p.imageUrl });
+  }
+  // 自分をフォローしてくれた人。
+  for (const f of s.followers) {
+    out.push({ id: 'f_' + f.followerId, kind: 'follow', user: userById(s.users, f.followerId), at: f.followedAt });
   }
   return out.sort((a, b) => b.at - a.at).slice(0, 40);
 }

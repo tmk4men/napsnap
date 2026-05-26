@@ -156,6 +156,19 @@ export async function listFollowing(): Promise<string[]> {
   return (data ?? []).map((r: any) => r.following_id);
 }
 
+// 自分をフォローしている人（アクティビティ通知に「○○ がフォローした」を出すため）。
+// follows_read RLS は `follower_id = auth.uid() or following_id = auth.uid()` で自分の関わりを読める。
+export async function listFollowers(): Promise<{ followerId: string; followedAt: number }[]> {
+  const id = await myId();
+  if (!id) return [];
+  const { data, error } = await db()
+    .from('follows')
+    .select('follower_id, created_at')
+    .eq('following_id', id);
+  if (error) throw error;
+  return (data ?? []).map((r: any) => ({ followerId: r.follower_id, followedAt: toMs(r.created_at) }));
+}
+
 export async function follow(targetId: string) {
   const id = await myId();
   if (!id) throw new Error('未サインイン');

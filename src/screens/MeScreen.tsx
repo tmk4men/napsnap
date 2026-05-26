@@ -38,7 +38,12 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const archive = useMemo(() => myArchive(s), [s.posts, s.currentUserId]);
   const mockPeople = s.users.filter((u) => u.isMock);
   const followingUsers = s.users.filter((u) => u.id !== me?.id && s.following.includes(u.id));
-  const followers = mockPeople;
+  // 自分をフォローしている人。ライブ：s.followers から profile を引く。モック：従来通り mock 全員。
+  const followers = s.followers.length > 0
+    ? s.followers
+        .map((f) => s.users.find((u) => u.id === f.followerId))
+        .filter((u): u is NonNullable<typeof u> => !!u)
+    : mockPeople;
 
   const [viewing, setViewing] = useState<Post[] | null>(null);
   const [conn, setConn] = useState<'following' | 'followers' | null>(null);

@@ -13,6 +13,7 @@ export interface LiveSnapshot {
   onboarded: boolean; // display_name が設定済み＝オンボ完了
   users: User[];
   following: string[];
+  followers: { followerId: string; followedAt: number }[]; // 自分をフォローしている人＋時刻
   posts: Post[];
   reactions: Reaction[];
   views: ViewRecord[];
@@ -33,12 +34,13 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
       console.warn('follow official failed', e);
     }
   }
-  const [active, mine, reactions, views, suggestions] = await Promise.all([
+  const [active, mine, reactions, views, suggestions, followers] = await Promise.all([
     be.listActivePosts(),
     be.listMyPosts(),
     be.listReactions(),
     be.listViews(),
     be.suggestProfiles(30), // 発見用の候補（総数に依存しない少数）
+    be.listFollowers(),     // 自分をフォローしている人（アクティビティ通知用）
   ]);
   // active(自分＋フォローの期限内) と mine(自分の全投稿＝思い出) を id でマージ。
   const map = new Map<string, Post>();
@@ -52,6 +54,7 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
   posts.forEach((p) => ids.add(p.userId));
   reactions.forEach((r) => ids.add(r.userId));
   views.forEach((v) => ids.add(v.viewerId));
+  followers.forEach((f) => ids.add(f.followerId));
   const needed = await be.listProfilesByIds([...ids]);
 
   // 必要な人＋発見用候補をマージ（id で重複排除）。
@@ -69,6 +72,7 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
     onboarded: !!me && me.displayName.trim().length > 0,
     users,
     following,
+    followers,
     posts,
     reactions,
     views,
