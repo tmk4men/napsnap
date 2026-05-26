@@ -42,6 +42,9 @@ create index if not exists posts_expires_idx on public.posts(expires_at);
 -- 既存DBへの追加分（再実行安全）：列が無ければ足す。
 alter table public.posts add column if not exists reaction_count int not null default 0;
 alter table public.posts add column if not exists view_count int not null default 0;
+-- お題投稿の公開範囲。通常投稿では未使用だが、列が NOT NULL のため insert 時にも値が要る。
+-- default 'public' を持たせて、クライアントが省略しても制約違反にならないようにする。
+alter table public.posts add column if not exists topic_visibility text not null default 'public';
 
 -- ============ reactions（1人1投稿につき1つ）============
 create table if not exists public.reactions (
