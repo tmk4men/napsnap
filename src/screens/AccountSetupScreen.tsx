@@ -10,10 +10,10 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, rule, space } from '../theme';
+import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
+import { Avatar, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { PencilIcon } from '../components/icons';
 import { useStore } from '../store';
@@ -23,27 +23,29 @@ import { pickRawImage } from '../lib/avatar';
 import { hasBanned } from '../lib/words';
 import { CropModal } from '../components/CropModal';
 
+// オンボは「名前＋ID＋（任意）写真」だけの1ページ。フォロー選択は廃止（ノイズになるため）。
+// ライブは公式だけ自動フォロー、モックは全モックを自動フォロー（デモが空にならないように）。
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
   const completeAccountSetup = useStore((s) => s.completeAccountSetup);
-  // ライブ：フォロー候補は実在ユーザー（自分以外）。モック：従来のシード（IDが変わらないよう安定生成）。
-  const storeUsers = useStore((s) => s.users);
-  const myId = useStore((s) => s.currentUserId);
   const mockPeople = useMemo(() => makeMockPeople(), []);
-  // 公式は自動フォローなので候補からは除く。
-  const livePeople = useMemo(() => storeUsers.filter((u) => u.id !== myId && !u.isOfficial), [storeUsers, myId]);
-  const people = hasSupabase ? livePeople : mockPeople;
 
-  const [step, setStep] = useState<0 | 1>(0);
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [avatarUri, setAvatarUri] = useState<string>('');
   const [cropUri, setCropUri] = useState<string | null>(null);
-  const [followingIds, setFollowingIds] = useState<string[]>(() => people.map((p) => p.id));
 
   const sanitizeHandle = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16);
-  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: colors.avatarTint, avatarImageUri: avatarUri || undefined, createdAt: 0 };
+  const previewUser = {
+    id: 'preview',
+    handle,
+    displayName: name,
+    avatarEmoji: '🟡',
+    avatarColor: colors.avatarTint,
+    avatarImageUri: avatarUri || undefined,
+    createdAt: 0,
+  };
 
   async function choosePhoto() {
     const uri = await pickRawImage();
@@ -54,6 +56,7 @@ export function AccountSetupScreen() {
 
   async function finish() {
     if (submitting) return;
+    if (!name.trim() || hasBanned(name) || hasBanned(handle)) return;
     setSubmitting(true);
     try {
       await completeAccountSetup({
@@ -62,8 +65,10 @@ export function AccountSetupScreen() {
         avatarEmoji: '🟡',
         avatarColor: colors.avatarTint,
         avatarImageUri: avatarUri || undefined,
-        people,
-        followingIds,
+        // ライブ：完全に空からスタート（公式は liveCompleteSetup 側で自動フォロー）。
+        // モック：デモが空にならないよう全モックを自動フォロー。
+        people: hasSupabase ? [] : mockPeople,
+        followingIds: hasSupabase ? [] : mockPeople.map((p) => p.id),
       });
       // 成功するとオンボ完了で画面が切り替わる（このコンポーネントは外れる）。
     } catch (e) {
@@ -72,124 +77,77 @@ export function AccountSetupScreen() {
     }
   }
 
-  if (step === 0) {
-    return (
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={[styles.container, { paddingTop: insets.top + space.xl }]}
-      >
-        <Backdrop />
-        <Text style={styles.brand}>napsnap</Text>
-        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {/* アバタープレビュー：隅の鉛筆バッジをタップでフォトピッカー（テキストボタンは廃止） */}
-          <View style={styles.avatarStage}>
-            <Pressable onPress={choosePhoto} style={styles.avatarPreviewWrap}>
-              <Avatar user={previewUser} size={104} />
-              <View style={styles.editBadge}>
-                <PencilIcon size={13} color={colors.limeInkSoft} />
-              </View>
-            </Pressable>
-          </View>
-
-          <Text style={styles.fieldLabel}>name</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder={copy.setupNamePlaceholder}
-            placeholderTextColor={colors.textFaint}
-            style={styles.input}
-            maxLength={12}
-          />
-
-          <Text style={styles.fieldLabel}>ID</Text>
-          <View style={styles.handleWrap}>
-            <Text style={styles.at}>@</Text>
-            <TextInput
-              value={handle}
-              onChangeText={(t) => setHandle(sanitizeHandle(t))}
-              placeholder="username"
-              placeholderTextColor={colors.textFaint}
-              autoCapitalize="none"
-              style={styles.handleInput}
-              maxLength={16}
-            />
-          </View>
-        </ScrollView>
-
-        <View style={{ paddingBottom: insets.bottom + space.md, paddingTop: space.sm }}>
-          {(hasBanned(name) || hasBanned(handle)) && (
-            <Text style={styles.bannedNote}>使えない言葉が入ってるみたい。</Text>
-          )}
-          <PrimaryButton
-            label={copy.setupNext}
-            disabled={!name.trim() || hasBanned(name) || hasBanned(handle)}
-            onPress={() => setStep(1)}
-          />
-        </View>
-
-        {cropUri && (
-          <CropModal
-            uri={cropUri}
-            onCancel={() => setCropUri(null)}
-            onDone={(d) => {
-              setAvatarUri(d);
-              setCropUri(null);
-            }}
-          />
-        )}
-      </KeyboardAvoidingView>
-    );
-  }
-
   return (
-    <View style={[styles.container, { paddingTop: insets.top + space.xl }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={[styles.container, { paddingTop: insets.top + space.xl }]}
+    >
       <Backdrop />
       <Text style={styles.brand}>napsnap</Text>
-      <Text style={styles.title}>{copy.setupFollowTitle}</Text>
-      <Text style={styles.followHint}>{copy.setupFollowSub}</Text>
+      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {/* アバタープレビュー：隅の鉛筆バッジをタップでフォトピッカー（テキストボタンは廃止） */}
+        <View style={styles.avatarStage}>
+          <Pressable onPress={choosePhoto} style={styles.avatarPreviewWrap}>
+            <Avatar user={previewUser} size={104} />
+            <View style={styles.editBadge}>
+              <PencilIcon size={13} color={colors.limeInkSoft} />
+            </View>
+          </Pressable>
+        </View>
 
-      <ScrollView style={{ flex: 1, marginTop: space.lg }} showsVerticalScrollIndicator={false}>
-        {people.map((p) => {
-          const on = followingIds.includes(p.id);
-          return (
-            <Pressable
-              key={p.id}
-              onPress={() =>
-                setFollowingIds((cur) =>
-                  cur.includes(p.id) ? cur.filter((x) => x !== p.id) : [...cur, p.id]
-                )
-              }
-              style={({ pressed }) => [styles.person, pressed && styles.personPressed]}
-            >
-              <Avatar user={p} size={44} />
-              <View style={{ flex: 1, marginLeft: space.md }}>
-                <Text style={styles.personName}>{p.displayName}</Text>
-                <Text style={styles.personHandle}>@{p.handle}</Text>
-              </View>
-              <View style={[styles.followBtn, on && styles.followBtnOn]}>
-                <Text style={[styles.followText, on && styles.followTextOn]}>
-                  {on ? 'フォロー中' : 'フォロー'}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+        <Text style={styles.fieldLabel}>name</Text>
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder={copy.setupNamePlaceholder}
+          placeholderTextColor={colors.textFaint}
+          style={styles.input}
+          maxLength={12}
+        />
+
+        <Text style={styles.fieldLabel}>ID</Text>
+        <View style={styles.handleWrap}>
+          <Text style={styles.at}>@</Text>
+          <TextInput
+            value={handle}
+            onChangeText={(t) => setHandle(sanitizeHandle(t))}
+            placeholder="username"
+            placeholderTextColor={colors.textFaint}
+            autoCapitalize="none"
+            style={styles.handleInput}
+            maxLength={16}
+          />
+        </View>
       </ScrollView>
 
-      <View style={{ paddingBottom: insets.bottom + space.md }}>
-        <PrimaryButton label={submitting ? '作成中…' : copy.setupStart} disabled={submitting} onPress={finish} />
-        <GhostButton label={copy.setupBack} onPress={() => setStep(0)} style={{ marginTop: space.xs }} />
+      <View style={{ paddingBottom: insets.bottom + space.md, paddingTop: space.sm }}>
+        {(hasBanned(name) || hasBanned(handle)) && (
+          <Text style={styles.bannedNote}>使えない言葉が入ってるみたい。</Text>
+        )}
+        <PrimaryButton
+          label={submitting ? '作成中…' : copy.setupStart}
+          disabled={submitting || !name.trim() || hasBanned(name) || hasBanned(handle)}
+          onPress={finish}
+        />
       </View>
-    </View>
+
+      {cropUri && (
+        <CropModal
+          uri={cropUri}
+          onCancel={() => setCropUri(null)}
+          onDone={(d) => {
+            setAvatarUri(d);
+            setCropUri(null);
+          }}
+        />
+      )}
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   brand: { color: colors.text, fontSize: 34, letterSpacing: -1, marginBottom: space.md, fontFamily: fonts.brand },
-  title: { color: colors.text, fontSize: font.hero, fontWeight: '800', lineHeight: 48, fontFamily: fonts.serif, letterSpacing: -1 },
-  followHint: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, fontFamily: fonts.ui },
-  sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 
   avatarStage: { alignItems: 'center', marginTop: space.xl, gap: space.md },
   avatarPreviewWrap: { position: 'relative' },
@@ -231,29 +189,5 @@ const styles = StyleSheet.create({
   },
   at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.handle },
   handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.3, paddingVertical: 15, marginLeft: 4 },
-  hint: { color: colors.textFaint, fontSize: font.small, marginTop: space.xs },
   bannedNote: { color: colors.warn, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginBottom: space.xs },
-
-  // 罫線で区切った“名簿”。塗りカードにはしない。
-  person: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space.sm,
-    borderBottomWidth: rule.hair,
-    borderBottomColor: colors.hairline,
-  },
-  personPressed: { backgroundColor: colors.surfaceSunken },
-  personName: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
-  personHandle: { color: colors.textDim, fontSize: font.small, marginTop: 1, fontFamily: fonts.handle },
-  followBtn: {
-    borderRadius: radius.xs,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: 'transparent',
-    borderWidth: rule.hair,
-    borderColor: colors.text,
-  },
-  followBtnOn: { backgroundColor: colors.lime, borderColor: colors.limeDust },
-  followText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
-  followTextOn: { color: colors.limeInk },
 });

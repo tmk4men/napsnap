@@ -5,7 +5,7 @@ import { fonts } from '../lib/fonts';
 import { Avatar } from './ui';
 import { VerifiedBadge } from './icons';
 import { ChekiCard } from './ChekiCard';
-import { lifeImage, officialPhotoSeed } from '../lib/images';
+import { officialPhotoUri } from '../lib/images';
 import { User } from '../types';
 
 // napsnap公式の「お手本／案内」投稿。空状態でも、他のユーザーの投稿と同じ見た目
@@ -23,18 +23,19 @@ export function OfficialCard({
   width: number;
   mosaic?: boolean;
 }) {
-  const seed = useMemo(officialPhotoSeed, []);
+  // 同梱画像から1枚をランダム。URIに解決済みなのでネット越しの取得は発生しない＝オフラインでも常に出る。
+  const uri = useMemo(officialPhotoUri, []);
   if (width <= 0) return null;
   return (
     <View style={styles.wrap}>
       {/* 一言は写真の下余白（チェキの白いキャプション欄）に。モザイク時も写真だけ伏せ、文字は読める。 */}
       <ChekiCard
-        uri={lifeImage(seed)}
+        uri={uri}
         caption={{ text: message, fontKey: 'mincho', color: colors.text, x: 0.5, y: 0.85 }}
         captionLines={2}
         width={width}
         blur={mosaic}
-        tiltSeed={seed}
+        tiltSeed={uri}
       />
       <View style={styles.meta}>
         <Avatar user={official} size={26} />

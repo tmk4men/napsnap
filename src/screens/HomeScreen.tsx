@@ -105,11 +105,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <View style={styles.utilityRow}>
           <View style={styles.glyphs}>
             <Pressable onPress={nav.openSearch} style={styles.glyphBtn} hitSlop={8}>
-              <SearchIcon size={20} color={colors.text} />
+              <SearchIcon size={23} color={colors.text} />
             </Pressable>
             <View style={styles.glyphSep} />
             <Pressable onPress={openActivity} style={styles.glyphBtn} hitSlop={8}>
-              <BellIcon size={20} color={colors.text} />
+              <BellIcon size={23} color={colors.text} />
               {unread > 0 && (
                 <View style={styles.bellBadge}>
                   <Text style={styles.bellBadgeText}>{unread}</Text>
@@ -118,7 +118,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             </Pressable>
             <View style={styles.glyphSep} />
             <Pressable onPress={() => setShowMenu(true)} style={styles.glyphBtn} hitSlop={8}>
-              <MenuIcon size={21} color={colors.text} />
+              <MenuIcon size={24} color={colors.text} />
             </Pressable>
           </View>
         </View>
@@ -199,10 +199,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <Remaining expiresAt={s.accessPass!.expiresAt} color={colors.text} size={15} />
           </View>
         ) : s.following.length === 0 ? (
-          <View style={styles.msg}>
-            <Text style={styles.big}>{copy.noFollowing}</Text>
-            <Text style={styles.sub}>自分タブから、見たい人をフォロー。</Text>
-          </View>
+          <OfficialCard official={s.users.find((u) => u.isOfficial)} message="ようこそ" width={Math.min(cardW, 320)} />
         ) : (
           <OfficialCard official={s.users.find((u) => u.isOfficial)} message="日常を投稿してみよう" width={Math.min(cardW, 320)} />
         )}

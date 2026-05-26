@@ -27,18 +27,25 @@ export function demoCapture(): string {
   return lifeImage(seed);
 }
 
-// napsnap公式の「お手本」カード用の写真。毎回ランダムだと体験がブレるので、
-// 固定の数枚プールから1枚だけランダムで選ぶ（中身を入れ替えたいときはここを編集）。
-export const OFFICIAL_PHOTO_SEEDS = [
-  'official-still-1',
-  'official-still-2',
-  'official-still-3',
-  'official-still-4',
-  'official-still-5',
-] as const;
+// napsnap公式の「お手本」カード用の写真。
+// 以前は picsum を都度フェッチしていたが、読み込み失敗があると死活問題なので
+// 固定の数枚を **アプリに同梱**（オフラインでも常に表示できる）。
+// 中身を入れ替えたいときは assets/official/*.jpg を差し替えてここを編集。
+import { Image as RNImage } from 'react-native';
+const OFFICIAL_PHOTO_SOURCES = [
+  require('../../assets/official/1015.jpg'),
+  require('../../assets/official/1018.jpg'),
+  require('../../assets/official/1019.jpg'),
+  require('../../assets/official/1043.jpg'),
+  require('../../assets/official/1067.jpg'),
+];
+// 起動時に1回だけ URI 解決。以降は文字列URIとして扱うのでChekiCard等のAPIを変えずに済む。
+export const OFFICIAL_PHOTO_URIS: string[] = OFFICIAL_PHOTO_SOURCES.map(
+  (src) => RNImage.resolveAssetSource(src).uri
+);
 
-export function officialPhotoSeed(): string {
-  return OFFICIAL_PHOTO_SEEDS[Math.floor(Math.random() * OFFICIAL_PHOTO_SEEDS.length)];
+export function officialPhotoUri(): string {
+  return OFFICIAL_PHOTO_URIS[Math.floor(Math.random() * OFFICIAL_PHOTO_URIS.length)];
 }
 
 // プロフィール画像（正方形）。顔なしの世界観に合う「痕跡」をプリセットにする。

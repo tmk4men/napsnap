@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, GhostButton, Remaining, ShootButton, useTick } from '../components/ui';
+import { Avatar, Remaining, ShootButton, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
@@ -29,7 +29,6 @@ export function MeScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
   useTick(30000);
   const s = useStore();
-  const resetDemo = useStore((st) => st.resetDemo);
   const toggleFollow = useStore((st) => st.toggleFollow);
   const updateProfileImage = useStore((st) => st.updateProfileImage);
   const updateProfile = useStore((st) => st.updateProfile);
@@ -198,7 +197,6 @@ export function MeScreen({ nav }: { nav: Nav }) {
         )}
 
         <View style={{ height: space.xl }} />
-        <GhostButton label="デモを最初からやり直す" onPress={resetDemo} />
       </ScrollView>
 
       {viewing && <MemoryViewer posts={viewing} onClose={() => setViewing(null)} />}
