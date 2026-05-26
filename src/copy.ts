@@ -52,9 +52,7 @@ export const copy = {
   post: '出す',
   retake: '撮り直す',
 
-  // フィード
-  feedDoneTitle: 'ぜんぶ見た',
-  feedDoneSub: '誰かが出したら通知が届く',
+  // フィード（全部見た後は自動でホームに戻すので「ぜんぶ見た」画面は無し）
   close: 'とじる',
 
   // 残した

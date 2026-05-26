@@ -59,8 +59,8 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const heroPost = [myActive[0], followedLatest].filter((p): p is Post => !!p).sort((a, b) => a.expiresAt - b.expiresAt)[0];
   const heroIsMine = !!heroPost && heroPost.userId === s.currentUserId;
 
-  // 他の人を見終わったら（残り0）、自分の24時間以内の投稿だけがホームに残り、上下スワイプで全部見れる。
-  const showMine = open && count === 0 && myActive.length > 0;
+  // 自分の投稿がある時はホームに自分の投稿（上下スワイプ）を表示。他人の投稿は「見る」ボタン→FeedScreen で。
+  const showMine = open && myActive.length > 0;
   const mediaMode = !open && !!followedLatest; // 未投稿：チェキをモザイク予告
   const openHero = open && !showMine && !!heroPost; // 投稿済み＆まだ他の人がいる：くっきり1枚
   const showCard = mediaMode || openHero;

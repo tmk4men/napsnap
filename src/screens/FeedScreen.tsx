@@ -8,7 +8,7 @@ import { copy } from '../copy';
 import { Avatar, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ReactionBar } from '../components/ReactionBar';
-import { ChevronDownIcon, CloseIcon, TraceMark, VerifiedBadge } from '../components/icons';
+import { ChevronDownIcon, CloseIcon, VerifiedBadge } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -36,6 +36,11 @@ export function FeedScreen({ nav }: { nav: Nav }) {
   useEffect(() => {
     if (post && open) markViewed(post.id);
   }, [post?.id, open]);
+
+  // 全部見終わったら「ぜんぶ見た」画面は出さず、そのままホームへ戻す。
+  useEffect(() => {
+    if (!post) nav.closeOverlay();
+  }, [post, nav]);
 
   // この投稿の2.5秒の音を表示時に1回再生（ロック中は鳴らさない）
   const audioSrc = useMemo(() => resolvePostAudioSource(post), [post?.id]);
@@ -116,21 +121,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
     })
   ).current;
 
-  if (!post) {
-    return (
-      <View style={[styles.done, { paddingTop: insets.top, paddingBottom: insets.bottom + space.lg }]}>
-        <Backdrop />
-        <View style={styles.doneCenter}>
-          <TraceMark size={52} />
-          <Text style={styles.doneTitle}>{copy.feedDoneTitle}</Text>
-          <Text style={styles.doneSub}>{copy.feedDoneSub}</Text>
-        </View>
-        <View style={{ gap: space.xs }}>
-          <PrimaryButton label={copy.close} onPress={nav.closeOverlay} />
-        </View>
-      </View>
-    );
-  }
+  if (!post) return null;
 
   const cardW = Math.min(Math.max(0, stageW - 72), 320);
 
@@ -246,10 +237,4 @@ const styles = StyleSheet.create({
   skip: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.xs },
   relock: { gap: space.sm, alignSelf: 'stretch' },
   relockText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center' },
-
-  // done
-  done: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
-  doneCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xs },
-  doneTitle: { color: colors.text, fontSize: 36, fontWeight: '800', marginTop: space.sm, fontFamily: fonts.serif, letterSpacing: -0.5 },
-  doneSub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', fontFamily: fonts.ui },
 });
