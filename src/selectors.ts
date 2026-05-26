@@ -89,10 +89,20 @@ export function reactionCount(s: Pick<Store, 'reactions' | 'posts'>, postId: str
   return s.reactions.filter((r) => r.postId === postId).length;
 }
 
-// 閲覧フィードのキュー：フォロー中の投稿のうち、まだ流してもいない・反応もしていないもの。
+// 閲覧フィードのキュー：自分＋フォロー中の投稿（通常投稿）のうち、まだ流してない・反応してないもの。
+// 「自分の投稿もホームに流す」UX のため、自分の投稿もここに混ぜる。並びは残り時間が短い順。
 export function feedQueue(s: Snapshot): Post[] {
   const acted = new Set(s.feedStates.map((f) => f.postId));
-  return followedActivePosts(s).filter((p) => !acted.has(p.id));
+  const meId = s.currentUserId;
+  return s.posts
+    .filter(
+      (p) =>
+        !p.topicKey &&
+        (p.userId === meId || s.following.includes(p.userId)) &&
+        isActive(p.expiresAt)
+    )
+    .sort((a, b) => a.expiresAt - b.expiresAt)
+    .filter((p) => !acted.has(p.id));
 }
 
 // 「残した」：自分が反応した投稿のうち、反応が24時間以内のもの。

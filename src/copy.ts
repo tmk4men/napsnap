@@ -54,7 +54,7 @@ export const copy = {
 
   // フィード
   feedDoneTitle: 'ぜんぶ見た',
-  feedDoneSub: 'また誰かが出したら、ここに増える。',
+  feedDoneSub: '誰かが出したら通知が届く',
   close: 'とじる',
 
   // 残した

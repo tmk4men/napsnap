@@ -7,7 +7,7 @@ import { copy } from '../copy';
 import { GhostButton, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
-import { SpeakerOnIcon, CloseIcon } from '../components/icons';
+import { CloseIcon, PostArrowIcon, SpeakerOnIcon } from '../components/icons';
 import { fonts } from '../lib/fonts';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -123,7 +123,7 @@ export function PreviewScreen({
             tilt={0}
             editable
             onChangeText={(t) => setCaption((c) => ({ ...c, text: t }))}
-            placeholder="ひとこと"
+            placeholder=""
           />
         )}
       </View>
@@ -152,8 +152,16 @@ export function PreviewScreen({
           /* 顔ブロックは出せない＝撮り直しは回数に数えず、何度でも */
           <PrimaryButton label="撮り直す" onPress={() => nav.openCamera(topicKey)} />
         ) : (
-          <PrimaryButton label={posting ? '出してる…' : checking ? '確認中…' : copy.post} onPress={postIt} disabled={!canPost} />
+          /* 投稿ボタン：矢印アイコンだけのミニマル。投稿中は下に小さく状態表示。 */
+          <Pressable
+            onPress={postIt}
+            disabled={!canPost}
+            style={({ pressed }) => [styles.postBtn, !canPost && styles.postBtnDisabled, pressed && canPost && styles.postBtnPressed]}
+          >
+            <PostArrowIcon size={28} color={canPost ? colors.limeInk : colors.textFaint} />
+          </Pressable>
         )}
+        {posting && <Text style={styles.postingHint}>送ってる…</Text>}
         {canRetake && !hasFace && (
           <GhostButton label="撮り直す（あと1回）" onPress={nav.retake} style={{ marginTop: space.xs }} />
         )}
@@ -215,4 +223,17 @@ const styles = StyleSheet.create({
   warnDot: { width: 7, height: 7, borderRadius: 0, backgroundColor: colors.warn },
   warnText: { color: colors.warn, fontSize: font.small, fontWeight: '800' },
   checking: { color: colors.textDim, fontSize: font.small, fontWeight: '700', textAlign: 'center', marginBottom: space.xs },
+  // 投稿ボタン（矢印SVG・PrimaryButtonと同じ寸法感）
+  postBtn: {
+    height: 56,
+    borderRadius: radius.xs,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
+  },
+  postBtnDisabled: { backgroundColor: colors.surfaceSunken, borderColor: colors.hairline },
+  postBtnPressed: { transform: [{ translateY: 1 }], opacity: 0.92 },
+  postingHint: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginTop: space.xs },
 });

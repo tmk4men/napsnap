@@ -9,19 +9,22 @@ import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
 import { FootprintIcon, HeartIcon, PencilIcon, ShareIcon, TraceMark } from '../components/icons';
 import { shareInvite } from '../lib/share';
+import { MemoryCalendar } from '../components/MemoryCalendar';
+import { MemoryViewer } from '../components/MemoryViewer';
 import { ConnectionsOverlay } from '../components/ConnectionsOverlay';
 import { CropModal } from '../components/CropModal';
 import { ProfileEditOverlay } from '../components/ProfileEditOverlay';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { currentUser, myPosts, nextProfileEditDays, profileEditsLeft } from '../selectors';
+import { currentUser, myArchive, myPosts, nextProfileEditDays, profileEditsLeft } from '../selectors';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
+import { Post } from '../types';
 
-const ME_ITEM_W = 210; // 「投稿」カルーセルのチェキ幅
+const ME_ITEM_W = 210;
 
-// 自分タブ：上下スクロール無し・1画面に収める構成。
-// プロフィール（上）＋自分の投稿カルーセル（下）。思い出・カレンダー・カメラボタンは廃止。
+// 自分タブ：プロフィール + 自分の投稿カルーセル + カレンダー（カレンダーが入る分だけ縦スクロール可）。
+// カメラボタンと「思い出ハイライト」は廃止済み。
 export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
   useTick(30000);
@@ -32,11 +35,12 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const { play, playingId } = useClipPlayer();
   const me = currentUser(s);
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
+  const archive = useMemo(() => myArchive(s), [s.posts, s.currentUserId]);
   const mockPeople = s.users.filter((u) => u.isMock);
-  // フォロー中＝公式＋モック仲間（自分は除く）。フォロワーはデモのモック仲間。
   const followingUsers = s.users.filter((u) => u.id !== me?.id && s.following.includes(u.id));
   const followers = mockPeople;
 
+  const [viewing, setViewing] = useState<Post[] | null>(null);
   const [conn, setConn] = useState<'following' | 'followers' | null>(null);
   const [cropUri, setCropUri] = useState<string | null>(null);
   const [editProfile, setEditProfile] = useState(false);
@@ -50,7 +54,6 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
     if (r !== 'shared') setTimeout(() => setShareNote(null), 2200);
   }
 
-  // プロフ画像は一度変えると24時間変更できない
   const avatarLockMs = s.avatarChangedAt + 24 * 60 * 60 * 1000 - Date.now();
   const avatarLocked = s.avatarChangedAt > 0 && avatarLockMs > 0;
   const avatarLockHours = Math.ceil(avatarLockMs / (60 * 60 * 1000));
@@ -64,50 +67,55 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + space.md, paddingBottom: insets.bottom + space.md }]}>
+    <View style={styles.container}>
       <Backdrop />
-
-      {/* プロフィール */}
-      <View style={[styles.profile, { paddingHorizontal: space.lg }]}>
-        <Pressable onPress={changePhoto} style={styles.avatarWrap}>
-          <Avatar user={me} size={64} />
-          <View style={[styles.editBadge, avatarLocked && styles.editBadgeLocked]}>
-            <PencilIcon size={12} color={avatarLocked ? colors.textFaint : colors.limeInkSoft} />
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: insets.top + space.md,
+          paddingHorizontal: space.lg,
+          paddingBottom: insets.bottom + 100,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* プロフィール */}
+        <View style={styles.profile}>
+          <Pressable onPress={changePhoto} style={styles.avatarWrap}>
+            <Avatar user={me} size={64} />
+            <View style={[styles.editBadge, avatarLocked && styles.editBadgeLocked]}>
+              <PencilIcon size={12} color={avatarLocked ? colors.textFaint : colors.limeInkSoft} />
+            </View>
+          </Pressable>
+          <View style={{ marginLeft: space.md, flex: 1 }}>
+            <Text style={styles.name}>{me?.displayName}</Text>
+            <View style={styles.handleRow}>
+              <Text style={styles.handle}>@{me?.handle}</Text>
+              <Pressable onPress={() => setEditProfile(true)} hitSlop={8} style={styles.editBtn}>
+                <PencilIcon size={13} color={colors.textDim} />
+              </Pressable>
+            </View>
+            <View style={styles.stats}>
+              <Pressable onPress={() => setConn('following')} style={styles.connStat} hitSlop={6}>
+                <Text style={styles.connNum}>{followingUsers.length}</Text>
+                <Text style={styles.connLabel}>フォロー</Text>
+              </Pressable>
+              <Pressable onPress={() => setConn('followers')} style={styles.connStat} hitSlop={6}>
+                <Text style={styles.connNum}>{followers.length}</Text>
+                <Text style={styles.connLabel}>フォロワー</Text>
+              </Pressable>
+            </View>
           </View>
-        </Pressable>
-        <View style={{ marginLeft: space.md, flex: 1 }}>
-          <Text style={styles.name}>{me?.displayName}</Text>
-          <View style={styles.handleRow}>
-            <Text style={styles.handle}>@{me?.handle}</Text>
-            <Pressable onPress={() => setEditProfile(true)} hitSlop={8} style={styles.editBtn}>
-              <PencilIcon size={13} color={colors.textDim} />
-            </Pressable>
-          </View>
-          <View style={styles.stats}>
-            <Pressable onPress={() => setConn('following')} style={styles.connStat} hitSlop={6}>
-              <Text style={styles.connNum}>{followingUsers.length}</Text>
-              <Text style={styles.connLabel}>フォロー</Text>
-            </Pressable>
-            <Pressable onPress={() => setConn('followers')} style={styles.connStat} hitSlop={6}>
-              <Text style={styles.connNum}>{followers.length}</Text>
-              <Text style={styles.connLabel}>フォロワー</Text>
-            </Pressable>
-          </View>
+          <Pressable onPress={onShare} style={({ pressed }) => [styles.shareBtn, pressed && { opacity: 0.85 }]} hitSlop={8}>
+            <ShareIcon size={18} color={colors.limeInkSoft} />
+          </Pressable>
         </View>
-        <Pressable onPress={onShare} style={({ pressed }) => [styles.shareBtn, pressed && { opacity: 0.85 }]} hitSlop={8}>
-          <ShareIcon size={18} color={colors.limeInkSoft} />
-        </Pressable>
-      </View>
 
-      {shareNote && <Text style={[styles.shareNote, { paddingHorizontal: space.lg }]}>{shareNote}</Text>}
-      {avatarLocked && (
-        <Text style={[styles.avatarLockNote, { paddingHorizontal: space.lg }]}>プロフ画像はあと{avatarLockHours}時間は変えられない</Text>
-      )}
+        {shareNote && <Text style={styles.shareNote}>{shareNote}</Text>}
+        {avatarLocked && (
+          <Text style={styles.avatarLockNote}>プロフ画像はあと{avatarLockHours}時間は変えられない</Text>
+        )}
 
-      <Text style={[styles.sectionLabel, { paddingHorizontal: space.lg }]}>投稿</Text>
-
-      {/* 投稿（24h以内）：横カルーセル。空ならアイコンだけ。 */}
-      <View style={styles.feed}>
+        {/* 投稿（24h以内） */}
+        <Text style={styles.sectionLabel}>投稿</Text>
         {mine.length === 0 ? (
           <View style={styles.empty}>
             <TraceMark size={48} />
@@ -118,7 +126,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
             showsHorizontalScrollIndicator={false}
             snapToInterval={ME_ITEM_W + space.md}
             decelerationRate="fast"
-            contentContainerStyle={{ gap: space.md, paddingHorizontal: space.lg, paddingVertical: 4 }}
+            contentContainerStyle={{ gap: space.md, paddingVertical: 4, paddingRight: space.lg }}
           >
             {mine.map(({ post, viewCount, reactionCount }) => (
               <View key={post.id} style={{ width: ME_ITEM_W }}>
@@ -150,8 +158,15 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
             ))}
           </ScrollView>
         )}
-      </View>
 
+        {/* カレンダー（過去の自分の投稿を日別に。タップで MemoryViewer 起動） */}
+        <View style={{ height: space.lg }} />
+        <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
+
+        <View style={{ height: space.xl }} />
+      </ScrollView>
+
+      {viewing && <MemoryViewer posts={viewing} onClose={() => setViewing(null)} />}
       {cropUri && (
         <CropModal
           uri={cropUri}
@@ -191,7 +206,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  profile: { flexDirection: 'row', alignItems: 'center', marginBottom: space.md },
+  profile: { flexDirection: 'row', alignItems: 'center', marginBottom: space.lg },
   avatarWrap: { position: 'relative' },
   editBadge: {
     position: 'absolute',
@@ -218,8 +233,8 @@ const styles = StyleSheet.create({
     borderColor: colors.limeLine,
     alignSelf: 'flex-start',
   },
-  shareNote: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginBottom: space.xs },
-  avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginBottom: space.xs },
+  shareNote: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
+  avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   name: { color: colors.text, fontSize: font.title, fontWeight: '700', fontFamily: fonts.name },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 3 },
   handle: { color: colors.textDim, fontSize: font.body, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.2 },
@@ -244,12 +259,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.2,
     fontFamily: fonts.ui,
-    marginTop: space.sm,
+    marginTop: space.lg,
     marginBottom: space.sm,
   },
-  feed: { flex: 1 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
+  empty: { alignItems: 'center', justifyContent: 'center', paddingVertical: space.lg, gap: space.xs },
   meStatRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: space.sm, paddingHorizontal: 2 },
   meStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   meStatText: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },

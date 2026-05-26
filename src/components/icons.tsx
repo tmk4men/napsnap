@@ -300,6 +300,22 @@ export function PlusIcon({ size = 24, color = colors.text }: IconProps) {
   );
 }
 
+// --- 投稿（送信）：上向きの太い矢印 ---
+export function PostArrowIcon({ size = 24, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12 4v16M5 11l7-7 7 7"
+        stroke={color}
+        strokeWidth={2.6}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 // --- ハンバーガーメニュー ---
 export function MenuIcon({ size = 22, color = colors.text }: IconProps) {
   return (

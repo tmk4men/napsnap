@@ -195,7 +195,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.md }]}>
         {open ? (
           <>
-            <ReactionBar onReact={doReact} />
+            {post && post.userId !== s.currentUserId && <ReactionBar onReact={doReact} />}
             <Pressable onPress={doSkip} style={styles.skip} hitSlop={10}>
               <Animated.View style={{ alignItems: 'center', transform: [{ translateY: bounceY }], opacity: bounceOpacity }}>
                 <ChevronDownIcon size={24} color={colors.textDim} />
