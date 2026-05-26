@@ -7,6 +7,7 @@ import { Avatar, FadeIn, PrimaryButton } from './ui';
 import { CloseIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
 import { timeAgo } from '../lib/time';
 import { ActivityItem } from '../selectors';
+import { useStore } from '../store';
 
 function lineFor(item: ActivityItem): string {
   const name = item.user?.displayName ?? '友達';
@@ -35,6 +36,8 @@ export function ActivityOverlay({
   onShoot: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const following = useStore((s) => s.following);
+  const toggleFollow = useStore((s) => s.toggleFollow);
   return (
     <FadeIn style={styles.container} dy={16} duration={220}>
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
@@ -75,19 +78,39 @@ export function ActivityOverlay({
             <Text style={styles.emptyText}>まだ何もない</Text>
           </View>
         ) : (
-          items.map((it) => (
-            <View key={it.id} style={styles.row}>
-              <Avatar user={it.user} size={40} />
-              <View style={{ flex: 1, marginLeft: space.sm }}>
-                <View style={styles.lineRow}>
-                  <Text style={styles.line}>{lineFor(it)}</Text>
-                  {it.user?.isOfficial && <VerifiedBadge size={13} />}
+          items.map((it) => {
+            const isFollow = it.kind === 'follow' && !!it.user;
+            const followingBack = isFollow && following.includes(it.user!.id);
+            return (
+              <View key={it.id} style={styles.row}>
+                <Avatar user={it.user} size={40} />
+                <View style={{ flex: 1, marginLeft: space.sm }}>
+                  <View style={styles.lineRow}>
+                    <Text style={styles.line}>{lineFor(it)}</Text>
+                    {it.user?.isOfficial && <VerifiedBadge size={13} />}
+                  </View>
+                  <Text style={styles.time}>{timeAgo(it.at)}</Text>
                 </View>
-                <Text style={styles.time}>{timeAgo(it.at)}</Text>
+                {isFollow ? (
+                  <Pressable
+                    onPress={() => toggleFollow(it.user!.id)}
+                    style={({ pressed }) => [
+                      styles.followBtn,
+                      followingBack && styles.followingBtn,
+                      pressed && { opacity: 0.85 },
+                    ]}
+                    hitSlop={6}
+                  >
+                    <Text style={[styles.followText, followingBack && styles.followingText]}>
+                      {followingBack ? 'フォロー中' : 'フォローし返す'}
+                    </Text>
+                  </Pressable>
+                ) : it.postImage ? (
+                  <Image source={{ uri: it.postImage }} style={styles.thumb} resizeMode="cover" />
+                ) : null}
               </View>
-              {it.postImage && <Image source={{ uri: it.postImage }} style={styles.thumb} resizeMode="cover" />}
-            </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
     </FadeIn>
@@ -148,4 +171,16 @@ const styles = StyleSheet.create({
   line: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
   time: { color: colors.textFaint, fontSize: font.small, marginTop: 1, fontFamily: fonts.handle },
   thumb: { width: 40, height: 40, borderRadius: radius.xs, backgroundColor: colors.surfaceSunken, marginLeft: space.sm },
+  followBtn: {
+    marginLeft: space.sm,
+    borderRadius: radius.xs,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: colors.lime,
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
+  },
+  followText: { color: colors.limeInk, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
+  followingBtn: { backgroundColor: colors.surfaceRaised, borderColor: colors.hairline },
+  followingText: { color: colors.textDim },
 });
