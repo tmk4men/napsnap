@@ -133,7 +133,7 @@ export function makeTopicPosts(topic: Topic, people: User[]): Post[] {
 // フォロー中の投稿に、他のモック仲間からのリアクションを少し付ける（未投稿時の予告で
 // 「N人が反応」を見せるため）。自分の投稿には付けない。
 export function makeSeedReactions(posts: Post[], people: User[], meId: string): Reaction[] {
-  const types: ReactionType[] = ['love', 'lol', 'whoa'];
+  const types: ReactionType[] = ['love', 'whoa'];
   const out: Reaction[] = [];
   for (const post of posts) {
     if (post.userId === meId) continue;

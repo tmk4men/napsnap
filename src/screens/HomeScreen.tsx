@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import { Animated, Image, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, rule, space, themeMode, toggleThemeMode } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, FadeIn, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
+import { Avatar, FadeIn, Remaining, ShootButton, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { MyPostsSwiper } from '../components/MyPostsSwiper';
 import { ChekiCard } from '../components/ChekiCard';
@@ -14,7 +14,7 @@ import { MemoryViewer } from '../components/MemoryViewer';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { DocOverlay } from '../components/DocOverlay';
 import { SettingsOverlay } from '../components/SettingsOverlay';
-import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon, VerifiedBadge } from '../components/icons';
+import { BellIcon, ChevronRightIcon, ChevronUpIcon, MenuIcon, SearchIcon, VerifiedBadge } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -208,14 +208,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         )}
       </View>
 
-      {/* 下部CTA */}
+      {/* 下部CTA：自分が出した後・他人の投稿あり ＝ 上スワイプで見る（ボタンは廃止）。
+          それ以外（未投稿 / 全部見終わった）＝ 撮るボタン。 */}
       <FadeIn delay={220} dy={12} style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
-        {open ? (
-          count > 0 ? (
-            <PrimaryButton label={copy.see} onPress={nav.openFeed} />
-          ) : (
-            <ShootButton block onPress={() => nav.openCamera()} />
-          )
+        {open && count > 0 ? (
+          <SwipeUpToFeed count={count} onTrigger={nav.openFeed} />
         ) : (
           <ShootButton block onPress={() => nav.openCamera()} />
         )}
@@ -258,8 +255,67 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   );
 }
 
+// 「上スワイプで他人の投稿を見る」ヒント。タップでは反応せず、上方向にスワイプしたときだけ
+// 発火する（ユーザーから「見るボタンは撤廃。スワイプだけで見れるように」の要望）。
+function SwipeUpToFeed({ count, onTrigger }: { count: number; onTrigger: () => void }) {
+  const dy = useRef(new Animated.Value(0)).current;
+  const triggeredRef = useRef(false);
+  const responder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => g.dy < -8 && Math.abs(g.dy) > Math.abs(g.dx),
+      onPanResponderMove: (_, g) => {
+        if (g.dy < 0) dy.setValue(g.dy);
+      },
+      onPanResponderRelease: (_, g) => {
+        if (g.dy < -40 && !triggeredRef.current) {
+          triggeredRef.current = true;
+          onTrigger();
+        }
+        Animated.spring(dy, { toValue: 0, useNativeDriver: Platform.OS !== 'web' }).start(() => {
+          triggeredRef.current = false;
+        });
+      },
+    })
+  ).current;
+  // 控えめなふわっとした上下バウンス。
+  const bob = useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, { toValue: 1, duration: 900, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(bob, { toValue: 0, duration: 900, useNativeDriver: Platform.OS !== 'web' }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [bob]);
+  const bobY = bob.interpolate({ inputRange: [0, 1], outputRange: [0, -5] });
+  return (
+    <Animated.View
+      {...responder.panHandlers}
+      style={[styles.swipeHint, { transform: [{ translateY: Animated.add(dy, bobY) }] }]}
+    >
+      <ChevronUpIcon size={22} color={colors.textDim} />
+      <Text style={styles.swipeHintText}>↑ 上にスワイプで他の人の投稿（{count}）</Text>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
+  swipeHint: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: space.sm,
+  },
+  swipeHintText: {
+    color: colors.textDim,
+    fontSize: font.small,
+    fontWeight: '700',
+    fontFamily: fonts.ui,
+    letterSpacing: 0.2,
+  },
 
   // マストヘッド
   masthead: { paddingHorizontal: space.lg },

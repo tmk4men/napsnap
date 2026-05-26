@@ -7,10 +7,9 @@ export const PASS_HOURS = 6;
 export const POST_TTL_HOURS = 24;
 export const REACTION_TTL_HOURS = 24;
 
-// リアクションは3種に絞る。表示はSVGアイコン（emojiはテキスト箇所のフォールバック用）。
+// リアクションは2種に絞る（笑いは廃止）。表示はSVGアイコン（emojiはテキスト箇所のフォールバック用）。
 export const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
-  { type: 'love', emoji: '🫶', label: 'すき' },
-  { type: 'lol', emoji: '😂', label: 'わら' },
+  { type: 'love', emoji: '👍', label: 'いいね' },
   { type: 'whoa', emoji: '👀', label: 'やば' },
 ];
 

@@ -5,12 +5,25 @@ import { colors } from '../theme';
 
 type IconProps = { size?: number; color?: string };
 
-// --- リアクション（3種） ---
+// --- リアクション ---
+// HeartIcon は旧データ互換のため残置（直接呼ばれなくなったら削除可）。
 export function HeartIcon({ size = 24, color = colors.text }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       <Path
         d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+// 「いいね」＝👍（thumbs up）。love リアクションの新アイコン。
+export function ThumbsUpIcon({ size = 24, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M2 10h4v11H2zM22 10.5c0-1.1-.9-2-2-2h-5.5l.8-3.9c.1-.4 0-.8-.3-1.1-.4-.5-1.1-.6-1.6-.2L7 9v12h11.5c.8 0 1.6-.5 1.8-1.3l1.6-7.4c.1-.3.1-.5.1-.8z"
         fill={color}
       />
     </Svg>
@@ -415,18 +428,27 @@ export function ChevronDownIcon({ size = 18, color = colors.text }: IconProps) {
   );
 }
 
+// --- 上向き矢印（「上スワイプで見る」のヒント） ---
+export function ChevronUpIcon({ size = 18, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M6 15l6-6 6 6" stroke={color} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 const REACTION_ICONS: Record<ReactionType, (p: IconProps) => React.JSX.Element> = {
-  love: HeartIcon,
-  lol: SmileIcon,
+  love: ThumbsUpIcon, // 「いいね」=👍 に統一（旧ハートマークから変更）
+  lol: ThumbsUpIcon,  // 旧データ用：削除されたタイプが残っていても👍で表示
   whoa: EyesIcon,
   // 旧データ用フォールバック（現在は未使用の種類）
-  saw: SmileIcon,
-  feel: SmileIcon,
+  saw: ThumbsUpIcon,
+  feel: ThumbsUpIcon,
   nap: EyesIcon,
 };
 
 export function ReactionIcon({ type, size = 24, color }: { type: ReactionType } & IconProps) {
-  const Cmp = REACTION_ICONS[type] ?? HeartIcon;
+  const Cmp = REACTION_ICONS[type] ?? ThumbsUpIcon;
   return <Cmp size={size} color={color} />;
 }
 

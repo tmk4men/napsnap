@@ -7,7 +7,7 @@ import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
-import { FootprintIcon, HeartIcon, PencilIcon, ShareIcon, TraceMark } from '../components/icons';
+import { FootprintIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark } from '../components/icons';
 import { shareInvite } from '../lib/share';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -142,7 +142,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
                     <Text style={styles.meStatText}>{viewCount}</Text>
                   </View>
                   <View style={styles.meStat}>
-                    <HeartIcon size={13} color={colors.textDim} />
+                    <ThumbsUpIcon size={13} color={colors.textDim} />
                     <Text style={styles.meStatText}>{reactionCount}</Text>
                   </View>
                   <View style={{ marginLeft: 'auto' }}>
