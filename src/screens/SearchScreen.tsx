@@ -39,7 +39,6 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
       <Backdrop />
       <View style={{ paddingTop: insets.top + space.md, paddingHorizontal: space.lg }}>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>さがす</Text>
           <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={12}>
             <CloseIcon size={18} color={colors.text} />
           </Pressable>
@@ -120,8 +119,7 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.sm },
-  title: { color: colors.text, fontSize: font.title, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: space.sm },
   closeBtn: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   searchWrap: {
     flexDirection: 'row',
