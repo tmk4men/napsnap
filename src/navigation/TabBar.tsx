@@ -22,7 +22,7 @@ export function TabBar({
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + space.sm }]}>
       <Tab active={active === 'home'} onPress={() => onChange('home')}>
-        <HouseIcon size={24} color={active === 'home' ? colors.text : colors.textFaint} />
+        <HouseIcon size={24} color={active === 'home' ? colors.text : colors.textFaint} filled={active === 'home'} />
       </Tab>
 
       <Tab active={active === 'topic'} onPress={() => onChange('topic')}>

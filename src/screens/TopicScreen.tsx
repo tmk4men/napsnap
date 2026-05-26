@@ -7,9 +7,10 @@ import { fonts } from '../lib/fonts';
 import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
+import { OfficialCard } from '../components/OfficialCard';
 import { TopicNote } from '../components/TopicNote';
 import { ReactionBar } from '../components/ReactionBar';
-import { PlusIcon, VerifiedBadge } from '../components/icons';
+import { PlusIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { myReaction, topicPosts, userById } from '../selectors';
@@ -130,12 +131,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
       >
         {posts.length === 0 ? (
           <View style={styles.empty}>
-            <View style={styles.promptHead}>
-              <Avatar user={official} size={24} />
-              <Text style={styles.promptName}>napsnap</Text>
-              <VerifiedBadge size={14} />
-            </View>
-            <Text style={styles.promptBig}>最初の一枚を{'\n'}出してみよう</Text>
+            <OfficialCard official={official} message="最初の一枚を出してみよう" width={cardW} seed="official-topic-first" mosaic />
           </View>
         ) : (
           <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
@@ -202,7 +198,4 @@ const styles = StyleSheet.create({
   metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   reactFloat: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md, paddingHorizontal: space.lg },
-  promptHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  promptName: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif },
-  promptBig: { color: colors.text, fontSize: 40, lineHeight: 50, letterSpacing: -1, textAlign: 'center', fontFamily: fonts.serif, fontWeight: '800' },
 });

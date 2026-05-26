@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { BoltIcon, CameraIcon, CloseIcon, FlipCameraIcon } from '../components/icons';
+import { BoltIcon, CameraIcon, CloseIcon, FlipCameraIcon, NoFaceIcon } from '../components/icons';
 import { Waveform } from '../components/Waveform';
 import { detectFacesInVideo, preloadDetector, preloadVideoDetector } from '../lib/faceCheck';
 import { Nav } from '../navigation/nav';
@@ -114,50 +114,54 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
     setFrozenUri(photoUri);
     setPhase('recording');
 
-    let micOk = micGranted;
-    if (!micOk) {
-      try {
-        const r = await requestRecordingPermissionsAsync();
-        micOk = r.granted;
-        setMicGranted(r.granted);
-      } catch {}
-    }
-    setWithSound(micOk);
+    // 待ちの体感をなくす：固定画面に切り替えた瞬間にゲージと締切タイマーを走らせ、
+    // 録音の準備（権限／audioMode／prepare）は裏で進める。準備が間に合った分だけ音が乗る。
+    setWithSound(true);
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: RECORD_SECONDS * 1000,
+      useNativeDriver: false,
+    }).start();
 
-    let recording = false;
-    if (micOk) {
+    const rec = { active: false };
+    (async () => {
+      let micOk = micGranted;
+      if (!micOk) {
+        try {
+          const r = await requestRecordingPermissionsAsync();
+          micOk = r.granted;
+          setMicGranted(r.granted);
+        } catch {}
+      }
+      if (!micOk) {
+        setWithSound(false);
+        return;
+      }
       try {
         await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
         await recorder.prepareToRecordAsync();
         recorder.record();
-        recording = true;
+        rec.active = true;
       } catch {
-        recording = false;
+        rec.active = false;
         setWithSound(false);
       }
-    }
+    })();
 
-    if (recording) {
-      progress.setValue(0);
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: RECORD_SECONDS * 1000,
-        useNativeDriver: false,
-      }).start();
-      timeoutRef.current = setTimeout(async () => {
-        let audioUri: string | undefined;
+    timeoutRef.current = setTimeout(async () => {
+      let audioUri: string | undefined;
+      if (rec.active) {
         try {
           await recorder.stop();
           audioUri = recorder.uri ?? undefined;
         } catch {}
-        try {
-          await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-        } catch {}
-        nav.onCaptured(photoUri, audioUri);
-      }, RECORD_SECONDS * 1000);
-    } else {
-      timeoutRef.current = setTimeout(() => nav.onCaptured(photoUri, undefined), 700);
-    }
+      }
+      try {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      } catch {}
+      nav.onCaptured(photoUri, audioUri);
+    }, RECORD_SECONDS * 1000);
   }
 
   async function shoot() {
@@ -212,7 +216,7 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.noCam]}>
           <CameraIcon size={46} color={colors.onMediaDim} />
-          <Text style={styles.noCamText}>カメラが使えない環境でも、{'\n'}デモ写真で体験できる。</Text>
+          <Text style={styles.noCamText}>カメラを許可すると{'\n'}撮影できる。</Text>
         </View>
       )}
 
@@ -220,28 +224,18 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
         <Pressable onPress={nav.closeOverlay} style={styles.close} hitSlop={12}>
           <CloseIcon size={18} color={colors.onMedia} />
         </Pressable>
-        <View style={styles.guidePill}>
-          <View style={styles.guideDot} />
-          <Text style={styles.guideText}>{topic ? `お題：${topic.prompt}` : copy.cameraGuide}</Text>
-        </View>
-        {granted ? (
-          <View style={styles.topRightRow}>
-            <Pressable onPress={() => setTorch((t) => !t)} style={styles.flip} hitSlop={12}>
-              <BoltIcon size={18} color={torch ? colors.lime : colors.onMedia} />
-              <Text style={[styles.flipLabel, !torch && { color: colors.onMediaDim }]}>{torch ? 'ON' : 'OFF'}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
-              style={styles.flip}
-              hitSlop={12}
-            >
-              <FlipCameraIcon size={18} color={colors.onMedia} />
-              <Text style={styles.flipLabel}>{facing === 'back' ? '外' : '内'}</Text>
-            </Pressable>
+        {topic ? (
+          <View style={styles.guidePill}>
+            <View style={styles.guideDot} />
+            <Text style={styles.guideText}>{`お題：${topic.prompt}`}</Text>
           </View>
         ) : (
-          <View style={{ width: 44 }} />
+          // 人を写さない合図。顔を検知したら赤に変わる（Web）。
+          <View style={styles.noFaceChip}>
+            <NoFaceIcon size={22} color={faceLive ? colors.warn : colors.onMedia} />
+          </View>
         )}
+        <View style={{ width: 36 }} />
       </View>
 
       <View pointerEvents="none" style={styles.frame} />
@@ -252,23 +246,33 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
             <Text style={styles.faceWarnText}>顔が写ってる。napsnapは顔なしで。</Text>
           </View>
         )}
-        <Pressable
-          onPress={shoot}
-          disabled={faceLive}
-          style={({ pressed }) => [styles.shutterOuter, faceLive && styles.shutterDisabled, pressed && !faceLive && { transform: [{ scale: 0.94 }] }]}
-        >
-          <View style={styles.shutterInner}>
-            <View style={styles.shutterCore} />
-          </View>
-        </Pressable>
-        {granted && (
+        <View style={styles.shutterRow}>
           <Pressable
-            onPress={() => startCapture(demoCapture())}
-            style={({ pressed }) => [styles.demoBtn, pressed && { opacity: 0.8 }]}
+            onPress={shoot}
+            disabled={faceLive}
+            style={({ pressed }) => [styles.shutterOuter, faceLive && styles.shutterDisabled, pressed && !faceLive && { transform: [{ scale: 0.94 }] }]}
           >
-            <Text style={styles.demoBtnText}>カメラが使えない時はデモ写真で</Text>
+            <View style={styles.shutterInner}>
+              <View style={styles.shutterCore} />
+            </View>
           </Pressable>
-        )}
+          {/* シャッターの右に小さく：フラッシュ on/off と 内外カメラの切替（アイコンだけで「切替」と分かる）。 */}
+          {granted && (
+            <View style={styles.sideControls}>
+              <Pressable onPress={() => setTorch((t) => !t)} style={styles.sideBtn} hitSlop={10}>
+                <BoltIcon size={18} color={torch ? colors.lime : colors.onMedia} />
+                <Text style={[styles.sideLabel, !torch && { color: colors.onMediaDim }]}>{torch ? 'ON' : 'OFF'}</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+                style={styles.sideBtn}
+                hitSlop={10}
+              >
+                <FlipCameraIcon size={22} color={colors.onMedia} />
+              </Pressable>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -298,20 +302,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   closeText: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
-  flip: {
-    minWidth: 44,
-    height: 36,
-    borderRadius: 18,
-    paddingHorizontal: 10,
+  // シャッター右の小さな操作（フラッシュ／内外切替）
+  sideControls: { position: 'absolute', right: space.xl, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  sideBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.xs,
     backgroundColor: colors.mediaChip,
-    flexDirection: 'row',
+    borderWidth: 1,
+    borderColor: colors.mediaChipBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 1,
   },
-  flipIcon: { color: colors.onMedia, fontSize: 18, fontWeight: '700' },
-  flipLabel: { color: colors.lime, fontSize: font.small, fontWeight: '800' },
-  topRightRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  sideLabel: { color: colors.lime, fontSize: 9, fontWeight: '800' },
+  // 人を写さない合図のチップ（上部中央）
+  noFaceChip: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.xs,
+    backgroundColor: colors.mediaChip,
+    borderWidth: 1,
+    borderColor: colors.mediaChipBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   guidePill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -340,6 +355,7 @@ const styles = StyleSheet.create({
   },
   frameHint: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', gap: space.sm },
+  shutterRow: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   shutterOuter: {
     width: 78,
     height: 78,
@@ -361,15 +377,6 @@ const styles = StyleSheet.create({
   shutterDisabled: { opacity: 0.35 },
   faceWarn: { backgroundColor: colors.warn, borderRadius: radius.xs, paddingHorizontal: 14, paddingVertical: 8 },
   faceWarnText: { color: '#FFFFFF', fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui },
-  demoBtn: {
-    backgroundColor: colors.mediaChip,
-    borderRadius: radius.xs,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.mediaChipBorder,
-  },
-  demoBtnText: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '700' },
 
   // 録音フェーズ
   recShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' },

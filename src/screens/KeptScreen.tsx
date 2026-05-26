@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
@@ -8,8 +8,9 @@ import { copy, reactionMeta } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { Nav } from '../navigation/nav';
-import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, TraceMark } from '../components/icons';
+import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
+import { OfficialCard } from '../components/OfficialCard';
 import { useStore } from '../store';
 import { keptPosts, userById } from '../selectors';
 import { timeAgo } from '../lib/time';
@@ -19,6 +20,7 @@ const NATIVE = Platform.OS !== 'web';
 
 export function KeptScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
+  const { width: winW } = useWindowDimensions();
   useTick(30000);
   const s = useStore();
   const kept = useMemo(() => keptPosts(s), [s.reactions, s.posts, s.currentUserId]);
@@ -103,11 +105,11 @@ export function KeptScreen({ nav }: { nav: Nav }) {
   ).current;
 
   if (kept.length === 0) {
+    const official = s.users.find((u) => u.isOfficial);
     return (
       <View style={styles.empty}>
         <Backdrop />
-        <TraceMark size={48} />
-        <Text style={styles.emptySub}>{copy.emptyKeptSub}</Text>
+        <OfficialCard official={official} message={copy.emptyKeptSub} width={Math.min(winW - 80, 300)} seed="official-kept" />
       </View>
     );
   }
@@ -213,5 +215,4 @@ const styles = StyleSheet.create({
     paddingBottom: space.sm,
   },
   empty: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: space.lg, gap: space.xs },
-  emptySub: { color: colors.textDim, fontSize: font.body, textAlign: 'center', marginTop: space.sm, lineHeight: font.body * 1.6 },
 });

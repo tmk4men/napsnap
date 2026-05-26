@@ -4,15 +4,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, rule, space, themeMode, toggleThemeMode } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
-import { Avatar, FadeIn, GhostButton, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
+import { Avatar, FadeIn, PrimaryButton, Remaining, ShootButton, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { MyPostsSwiper } from '../components/MyPostsSwiper';
 import { ChekiCard } from '../components/ChekiCard';
+import { OfficialCard } from '../components/OfficialCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { DocOverlay } from '../components/DocOverlay';
-import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon, SearchIcon, VerifiedBadge } from '../components/icons';
+import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon, VerifiedBadge } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -88,21 +89,23 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
       {/* マストヘッド（題字＋デートライン＋欄外の操作） */}
       <View style={[styles.masthead, { paddingTop: insets.top + space.sm }]}>
-        <View style={styles.titleRow}>
-          <Text style={styles.brand}>napsnap</Text>
-          <View style={styles.dateline}>
-            <Text style={styles.dateText}>{dateline}</Text>
+        {/* 題字＋日付はベタ塗りの帯（ライト＝黒地に白／ダーク＝白地に黒）。 */}
+        <View style={styles.titleBlock}>
+          <View style={styles.titleRow}>
+            <Text style={styles.brand}>napsnap</Text>
+            <View style={styles.dateline}>
+              <Text style={styles.dateText}>{dateline}</Text>
+            </View>
           </View>
         </View>
-        <View style={styles.ruleHeavy} />
+        {/* 題字の下線＝二重罫（号外のマストヘッド） */}
+        <View style={styles.ruleDoubleTop} />
+        <View style={styles.ruleDoubleGap} />
+        <View style={styles.ruleDoubleBot} />
         <View style={styles.utilityRow}>
           <View style={styles.glyphs}>
             <Pressable onPress={nav.openSearch} style={styles.glyphBtn} hitSlop={8}>
               <SearchIcon size={20} color={colors.text} />
-            </Pressable>
-            <View style={styles.glyphSep} />
-            <Pressable onPress={() => nav.openCamera()} style={styles.glyphBtn} hitSlop={8}>
-              <CameraIcon size={21} color={colors.text} />
             </Pressable>
             <View style={styles.glyphSep} />
             <Pressable onPress={openActivity} style={styles.glyphBtn} hitSlop={8}>
@@ -144,7 +147,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
         {showMine ? (
-          <MyPostsSwiper posts={myActive} me={me} official={s.users.find((u) => u.isOfficial)} onShoot={() => nav.openCamera()} />
+          <MyPostsSwiper posts={myActive} me={me} official={s.users.find((u) => u.isOfficial)} />
         ) : showCard && displayPost ? (
           <FadeIn key={displayPost.id} delay={130} dy={16} style={styles.heroWrap}>
             {cardW > 0 && (
@@ -201,10 +204,12 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <Text style={styles.sub}>自分タブから、見たい人をフォロー。</Text>
           </View>
         ) : (
-          <View style={styles.msg}>
-            <Text style={styles.big}>{copy.lockedEmpty}</Text>
-            <Text style={styles.sub}>誰かが出したら、通知に届く。</Text>
-          </View>
+          <OfficialCard
+            official={s.users.find((u) => u.isOfficial)}
+            message="日常を投稿してみよう"
+            width={Math.min(cardW, 320)}
+            seed="official-daily"
+          />
         )}
       </View>
 
@@ -214,10 +219,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           count > 0 ? (
             <PrimaryButton label={copy.see} onPress={nav.openFeed} />
           ) : (
-            <GhostButton label={copy.shoot} onPress={() => nav.openCamera()} />
+            <ShootButton block onPress={() => nav.openCamera()} />
           )
         ) : (
-          <ShootButton block label={copy.revealChip} onPress={() => nav.openCamera()} />
+          <ShootButton block onPress={() => nav.openCamera()} />
         )}
       </FadeIn>
 
@@ -261,11 +266,16 @@ const styles = StyleSheet.create({
 
   // マストヘッド
   masthead: { paddingHorizontal: space.lg },
-  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingBottom: 6 },
-  brand: { fontSize: 38, fontFamily: fonts.brand, color: colors.text, letterSpacing: -1, includeFontPadding: false },
+  // 題字＋日付の帯。地＝インク色（ライト黒/ダーク白）、文字＝紙色（ライト白/ダーク黒）。
+  titleBlock: { backgroundColor: colors.text, paddingHorizontal: space.md, paddingTop: 7, paddingBottom: 9 },
+  titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
+  brand: { fontSize: 38, fontFamily: fonts.brand, color: colors.bg, letterSpacing: -1, includeFontPadding: false },
   dateline: { alignItems: 'flex-end', paddingBottom: 4 },
-  dateText: { color: colors.textDim, fontSize: 11, fontFamily: fonts.handle, letterSpacing: 0.5 },
-  ruleHeavy: { height: rule.thick, backgroundColor: colors.text },
+  dateText: { color: colors.bg, fontSize: 11, fontFamily: fonts.handle, letterSpacing: 0.5, opacity: 0.85 },
+  // 二重罫＝太罫＋紙の隙間＋細罫
+  ruleDoubleTop: { height: rule.thick, backgroundColor: colors.text, marginTop: 4 },
+  ruleDoubleGap: { height: 2 },
+  ruleDoubleBot: { height: rule.hair, backgroundColor: colors.text },
   ruleThin: { height: rule.hair, backgroundColor: colors.hairline },
   utilityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingVertical: 7 },
   glyphs: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -277,14 +287,14 @@ const styles = StyleSheet.create({
     right: -7,
     minWidth: 15,
     height: 15,
-    backgroundColor: colors.lime,
+    backgroundColor: colors.warn, // 通知バッジは赤（白黒の中で唯一の差し色）
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
     borderWidth: rule.hair,
     borderColor: colors.bg,
   },
-  bellBadgeText: { color: colors.limeInk, fontSize: 9, fontWeight: '700', fontFamily: fonts.handle },
+  bellBadgeText: { color: '#FFFFFF', fontSize: 9, fontWeight: '700', fontFamily: fonts.handle },
 
   // 縮刷版（バックナンバー欄）
   backnumber: {

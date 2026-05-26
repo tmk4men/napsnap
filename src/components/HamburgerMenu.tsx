@@ -17,7 +17,7 @@ export function HamburgerMenu({ items, onClose }: { items: MenuItem[]; onClose: 
   return (
     <View style={styles.overlay}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-      <FadeIn style={[styles.panel, { top: insets.top + 60 }]} dy={-6} duration={150}>
+      <FadeIn style={[styles.panel, { top: insets.top + 104 }]} dy={-6} duration={150}>
         {items.map((it, i) => (
           <Pressable
             key={i}
@@ -40,18 +40,18 @@ const styles = StyleSheet.create({
   panel: {
     position: 'absolute',
     right: space.lg,
-    minWidth: 196,
+    minWidth: 150,
     // 背景と同色で“浮いて”見えないよう、地は一段沈めた面＋はっきりした罫で囲う。
     backgroundColor: colors.surfaceSunken,
     borderRadius: radius.xs,
-    borderWidth: rule.thin,
+    borderWidth: rule.hair,
     borderColor: colors.line,
     boxShadow: shadow.card,
-    paddingVertical: space.xxs,
+    paddingVertical: 2,
     overflow: 'hidden',
   },
-  item: { paddingHorizontal: space.md, paddingVertical: 14 },
+  item: { paddingHorizontal: space.sm, paddingVertical: 9 },
   itemBorder: { borderTopWidth: rule.hair, borderTopColor: colors.hairline },
   // 事務的な角ゴだと題字/見出し（明朝）から浮くので、メニューもアプリの identity＝明朝に寄せる。
-  itemText: { color: colors.text, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0.3 },
+  itemText: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0.3 },
 });

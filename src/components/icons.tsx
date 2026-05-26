@@ -116,26 +116,42 @@ export function CameraIcon({ size = 22, color = colors.text }: IconProps) {
   );
 }
 
-// --- タブ：ホーム（家） ---
-export function HouseIcon({ size = 24, color = colors.text }: IconProps) {
+// --- 人を写さない（顔禁止）。カメラ上部の合図。顔を検知したら color に赤を渡して警告する。 ---
+export function NoFaceIcon({ size = 22, color = colors.text }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={12} cy={8.2} r={3.3} stroke={color} strokeWidth={1.9} fill="none" />
       <Path
-        d="M3.5 11.2 12 4.3l8.5 6.9"
+        d="M5.8 19.4c0-3.5 2.9-5.5 6.2-5.5s6.2 2 6.2 5.5"
         stroke={color}
         strokeWidth={1.9}
         fill="none"
         strokeLinecap="round"
+      />
+      <Line x1={4.4} y1={3.7} x2={19.6} y2={20.3} stroke={color} strokeWidth={2.2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+// --- タブ：ホーム（家）。アクティブ時は他タブと同様にベタ塗り＋扉を地色で抜く。 ---
+export function HouseIcon({ size = 24, color = colors.text, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12 3.4 3 10.9V18.8a1.2 1.2 0 0 0 1.2 1.2H18.8a1.2 1.2 0 0 0 1.2-1.2V10.9z"
+        stroke={color}
+        strokeWidth={1.9}
+        fill={filled ? color : 'none'}
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
-        d="M5.6 10.2V19a1 1 0 0 0 1 1h10.8a1 1 0 0 0 1-1v-8.8"
-        stroke={color}
+        d="M9.8 20v-4.6a1 1 0 0 1 1-1h2.4a1 1 0 0 1 1 1V20"
+        stroke={filled ? colors.bg : color}
         strokeWidth={1.9}
         fill="none"
         strokeLinejoin="round"
       />
-      <Path d="M9.8 20v-4.6a1 1 0 0 1 1-1h2.4a1 1 0 0 1 1 1V20" stroke={color} strokeWidth={1.9} fill="none" strokeLinejoin="round" />
     </Svg>
   );
 }
