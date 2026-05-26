@@ -44,6 +44,9 @@ export interface Post {
   audioSeed?: string;
   createdAt: number;
   expiresAt: number; // createdAt + 24h
+  // 反応数／足あと数のサーバ側集計（DBトリガで維持）。表示用。reactions/views 全行を引かなくて済む。
+  reactionCount?: number;
+  viewCount?: number;
 }
 
 export interface ViewRecord {

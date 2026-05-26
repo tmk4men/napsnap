@@ -60,6 +60,8 @@ function rowToPost(r: any): Post {
     audioUrl: r.audio_url ?? undefined,
     createdAt: toMs(r.created_at),
     expiresAt: toMs(r.expires_at),
+    reactionCount: typeof r.reaction_count === 'number' ? r.reaction_count : 0,
+    viewCount: typeof r.view_count === 'number' ? r.view_count : 0,
   };
 }
 
@@ -221,10 +223,30 @@ export async function listMyPosts(): Promise<Post[]> {
 }
 
 // ---------- 反応 / 足跡 ----------
+// 反応の取得は「自分が押したもの ∪ 自分の投稿に来たもの」だけに絞る。
+// 「N人が反応」のカウント表示は posts.reaction_count（DBトリガで維持）から取るので、
+// 他人の投稿に対する他人の反応の行は引かなくて済む（メタ通信を大幅に削減）。
 export async function listReactions(): Promise<Reaction[]> {
-  const { data, error } = await db().from('reactions').select('*');
-  if (error) throw error;
-  return (data ?? []).map(rowToReaction);
+  const id = await myId();
+  if (!id) return [];
+  const myReactions = await db().from('reactions').select('*').eq('user_id', id);
+  if (myReactions.error) throw myReactions.error;
+
+  const myPosts = await db().from('posts').select('id').eq('user_id', id);
+  if (myPosts.error) throw myPosts.error;
+  const myPostIds = (myPosts.data ?? []).map((p: any) => p.id);
+
+  let onMyPosts: { data: any[] | null; error: any } = { data: [], error: null };
+  if (myPostIds.length) {
+    onMyPosts = await db().from('reactions').select('*').in('post_id', myPostIds);
+    if (onMyPosts.error) throw onMyPosts.error;
+  }
+
+  // id で重複排除（自分の投稿に自分が反応＝両方に出る、を1つに）。
+  const merged = new Map<string, Reaction>();
+  for (const r of (myReactions.data ?? []).map(rowToReaction)) merged.set(r.id, r);
+  for (const r of (onMyPosts.data ?? []).map(rowToReaction)) merged.set(r.id, r);
+  return [...merged.values()];
 }
 
 export async function react(postId: string, type: ReactionType) {
@@ -236,8 +258,17 @@ export async function react(postId: string, type: ReactionType) {
   if (error) throw error;
 }
 
+// 足あと（views）の取得は「自分の投稿に来たもの」だけ＝アクティビティ通知用。
+// 「N人が見た」のカウント表示は posts.view_count（DBトリガで維持）から取る。
+// 自分の閲覧履歴は client 側の楽観的記録だけで足りる（サーバ側 markViewed は ignoreDuplicates）。
 export async function listViews(): Promise<ViewRecord[]> {
-  const { data, error } = await db().from('views').select('*');
+  const id = await myId();
+  if (!id) return [];
+  const myPosts = await db().from('posts').select('id').eq('user_id', id);
+  if (myPosts.error) throw myPosts.error;
+  const myPostIds = (myPosts.data ?? []).map((p: any) => p.id);
+  if (myPostIds.length === 0) return [];
+  const { data, error } = await db().from('views').select('*').in('post_id', myPostIds);
   if (error) throw error;
   return (data ?? []).map(rowToView);
 }

@@ -56,8 +56,11 @@ export function myReaction(s: Pick<Store, 'currentUserId' | 'reactions'>, postId
   return s.reactions.find((r) => r.postId === postId && r.userId === s.currentUserId)?.type;
 }
 
-// 投稿のリアクション数。
-export function reactionCount(s: Pick<Store, 'reactions'>, postId: string): number {
+// 投稿のリアクション数。サーバが集計した post.reactionCount を最優先で使う（メタ通信削減のため
+// 他人の投稿への他人の反応は手元に持たない）。手元の reactions 行から数えるのはフォールバック。
+export function reactionCount(s: Pick<Store, 'reactions' | 'posts'>, postId: string): number {
+  const post = s.posts.find((p) => p.id === postId);
+  if (post && typeof post.reactionCount === 'number') return post.reactionCount;
   return s.reactions.filter((r) => r.postId === postId).length;
 }
 

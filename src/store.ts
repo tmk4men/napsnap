@@ -90,7 +90,7 @@ const initial: PersistedState = {
 // ライブのスナップショットをローカル state に反映。
 // パス（6h解錠）は「自分の有効な通常投稿」から導出する＝過去のローカル accessPass の残留で
 // 「今日はここまで＋謎の残り時間」が出るのを防ぐ。投稿が無ければパス無し＝ロック表示。
-function applySnapshot(set: (p: Partial<Store>) => void, snap: LiveSnapshot) {
+function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap: LiveSnapshot) {
   const myActive = snap.posts
     .filter((p) => p.userId === snap.currentUserId && !p.topicKey && isActive(p.expiresAt))
     .sort((a, b) => b.createdAt - a.createdAt);
@@ -98,6 +98,10 @@ function applySnapshot(set: (p: Partial<Store>) => void, snap: LiveSnapshot) {
   const accessPass: AccessPass | null = latest
     ? { openedAt: latest.createdAt, expiresAt: latest.createdAt + PASS_HOURS * HOUR }
     : null;
+  // 自分の閲覧記録（viewerId === me）はサーバから引かない（listViews は自分の投稿への足あとだけ取得）。
+  // セッション内の重複 upsert を避けるため、ローカルに溜まった自分のviewsをマージで残す。
+  const st = get();
+  const myLocalViews = st.views.filter((v) => v.viewerId === snap.currentUserId);
   set({
     onboarded: snap.onboarded,
     currentUserId: snap.currentUserId,
@@ -105,7 +109,7 @@ function applySnapshot(set: (p: Partial<Store>) => void, snap: LiveSnapshot) {
     following: snap.following,
     posts: snap.posts,
     reactions: snap.reactions,
-    views: snap.views,
+    views: [...snap.views, ...myLocalViews],
     accessPass,
   });
 }
@@ -154,7 +158,7 @@ export const useStore = create<Store>()(
               avatarImageUri,
               followingIds,
             });
-            if (snap) applySnapshot(set, snap);
+            if (snap) applySnapshot(set, get, snap);
             return;
           }
           const id = uid('u_');
@@ -302,7 +306,7 @@ export const useStore = create<Store>()(
           if (!hasSupabase) return;
           try {
             const snap = await liveBootstrap();
-            if (snap) applySnapshot(set, snap);
+            if (snap) applySnapshot(set, get, snap);
           } catch (e) {
             console.warn('liveHydrate failed', e);
           }
@@ -314,6 +318,8 @@ export const useStore = create<Store>()(
           if (views.some((v) => v.postId === postId && v.viewerId === currentUserId)) return;
           set((st) => ({
             views: [...st.views, { id: uid('v_'), postId, viewerId: currentUserId, viewedAt: now() }],
+            // 集計済みカウントを楽観的に+1（サーバ側はトリガで増える。次回 hydrate で正の値で上書き）。
+            posts: st.posts.map((p) => (p.id === postId ? { ...p, viewCount: (p.viewCount ?? 0) + 1 } : p)),
           }));
           if (hasSupabase) be.markViewed(postId).catch((e) => console.warn('markViewed failed', e));
         },
@@ -321,16 +327,23 @@ export const useStore = create<Store>()(
         reactToPost: (postId, type) => {
           const { currentUserId } = get();
           if (!currentUserId) return;
-          set((st) => ({
-            reactions: [
-              ...st.reactions.filter((r) => !(r.postId === postId && r.userId === currentUserId)),
-              { id: uid('r_'), postId, userId: currentUserId, type, createdAt: now() },
-            ],
-            feedStates: [
-              ...st.feedStates.filter((f) => f.postId !== postId),
-              { postId, status: 'reacted', updatedAt: now() },
-            ],
-          }));
+          set((st) => {
+            const hadReaction = st.reactions.some((r) => r.postId === postId && r.userId === currentUserId);
+            return {
+              reactions: [
+                ...st.reactions.filter((r) => !(r.postId === postId && r.userId === currentUserId)),
+                { id: uid('r_'), postId, userId: currentUserId, type, createdAt: now() },
+              ],
+              feedStates: [
+                ...st.feedStates.filter((f) => f.postId !== postId),
+                { postId, status: 'reacted', updatedAt: now() },
+              ],
+              // 反応が初めての時だけ集計カウントを+1（タイプ変更時はカウント据え置き）。
+              posts: hadReaction
+                ? st.posts
+                : st.posts.map((p) => (p.id === postId ? { ...p, reactionCount: (p.reactionCount ?? 0) + 1 } : p)),
+            };
+          });
           if (hasSupabase) be.react(postId, type).catch((e) => console.warn('react failed', e));
         },
 
@@ -338,12 +351,18 @@ export const useStore = create<Store>()(
         reactToTopic: (postId, type) => {
           const { currentUserId } = get();
           if (!currentUserId) return;
-          set((st) => ({
-            reactions: [
-              ...st.reactions.filter((r) => !(r.postId === postId && r.userId === currentUserId)),
-              { id: uid('r_'), postId, userId: currentUserId, type, createdAt: now() },
-            ],
-          }));
+          set((st) => {
+            const hadReaction = st.reactions.some((r) => r.postId === postId && r.userId === currentUserId);
+            return {
+              reactions: [
+                ...st.reactions.filter((r) => !(r.postId === postId && r.userId === currentUserId)),
+                { id: uid('r_'), postId, userId: currentUserId, type, createdAt: now() },
+              ],
+              posts: hadReaction
+                ? st.posts
+                : st.posts.map((p) => (p.id === postId ? { ...p, reactionCount: (p.reactionCount ?? 0) + 1 } : p)),
+            };
+          });
           if (hasSupabase) be.react(postId, type).catch((e) => console.warn('react failed', e));
         },
 

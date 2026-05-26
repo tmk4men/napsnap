@@ -31,10 +31,17 @@ create table if not exists public.posts (
   caption    jsonb,                -- { text, fontKey, color, x, y }
   audio_url  text,                 -- シャッター時の2.5秒
   created_at timestamptz not null default now(),
-  expires_at timestamptz not null  -- 通常=24h後 / お題=その日の終わり
+  expires_at timestamptz not null, -- 通常=24h後 / お題=その日の終わり
+  -- 反応数／足あと数の集計（DBトリガで維持）。reactions/views 行を全件引かずに済む。
+  reaction_count int not null default 0,
+  view_count     int not null default 0
 );
 create index if not exists posts_user_idx    on public.posts(user_id);
 create index if not exists posts_expires_idx on public.posts(expires_at);
+
+-- 既存DBへの追加分（再実行安全）：列が無ければ足す。
+alter table public.posts add column if not exists reaction_count int not null default 0;
+alter table public.posts add column if not exists view_count int not null default 0;
 
 -- ============ reactions（1人1投稿につき1つ）============
 create table if not exists public.reactions (
@@ -187,6 +194,46 @@ select cron.schedule(
   '*/15 * * * *',
   $$ select public.napsnap_prune_expired() $$
 );
+
+-- ============ 反応数・足あと数の集計（denormalized counts）============
+-- reactions/views を全件引かずに「N人が反応／見た」を出すため、posts に集計列を持つ。
+-- 反応：INSERT で +1、DELETE で -1（タイプ変更=UPDATEはカウント据え置き）。
+-- 足あと：INSERT で +1 のみ（消えない記録なので DELETE 想定なし）。
+-- 既存データのバックフィルもこの中で1回実行する（再実行は INSERT 0 件で素通り）。
+create or replace function public.bump_reaction_count()
+returns trigger language plpgsql as $rc$
+begin
+  if TG_OP = 'INSERT' then
+    update public.posts set reaction_count = reaction_count + 1 where id = NEW.post_id;
+  elsif TG_OP = 'DELETE' then
+    update public.posts set reaction_count = greatest(reaction_count - 1, 0) where id = OLD.post_id;
+  end if;
+  return null;
+end;
+$rc$;
+
+drop trigger if exists reactions_bump_count on public.reactions;
+create trigger reactions_bump_count
+  after insert or delete on public.reactions
+  for each row execute function public.bump_reaction_count();
+
+create or replace function public.bump_view_count()
+returns trigger language plpgsql as $vc$
+begin
+  update public.posts set view_count = view_count + 1 where id = NEW.post_id;
+  return null;
+end;
+$vc$;
+
+drop trigger if exists views_bump_count on public.views;
+create trigger views_bump_count
+  after insert on public.views
+  for each row execute function public.bump_view_count();
+
+-- 既存データのバックフィル（1回流せばOK・再実行しても結果同じ）。
+update public.posts p set
+  reaction_count = coalesce((select count(*) from public.reactions r where r.post_id = p.id), 0),
+  view_count     = coalesce((select count(*) from public.views v where v.post_id = p.id), 0);
 
 -- ============ 段階2: プッシュ通知の配線 ============
 -- 送信ロジックは Edge Function（supabase/functions/send-push）。
