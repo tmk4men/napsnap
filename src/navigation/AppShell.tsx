@@ -15,6 +15,7 @@ import { useStore } from '../store';
 import { currentUser, keptPosts } from '../selectors';
 import { FadeIn } from '../components/ui';
 import { hasSupabase } from '../config';
+import { registerPush, setupPushHandlers } from '../lib/push';
 
 type Overlay = null | 'camera' | 'preview' | 'feed' | 'search';
 
@@ -67,6 +68,16 @@ export function AppShell() {
       stop();
       sub.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 段階2：push（ネイティブのみ。webはno-op）。トークン登録＋通知の受信/タップで最新化。
+  // 90秒タイマーは push が届かない環境（web/未デプロイ）向けのフォールバックとして併存。
+  useEffect(() => {
+    if (!hasSupabase) return;
+    registerPush();
+    const teardown = setupPushHandlers(() => hydrate(true));
+    return teardown;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

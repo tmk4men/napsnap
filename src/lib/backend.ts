@@ -244,3 +244,14 @@ export async function markViewed(postId: string) {
     .upsert({ post_id: postId, viewer_id: id }, { onConflict: 'post_id,viewer_id', ignoreDuplicates: true });
   if (error) throw error;
 }
+
+// ---------- プッシュ通知トークン ----------
+// 端末の Expo push トークンを保存（段階2）。送信側は Edge Function が service role で読む。
+export async function upsertPushToken(token: string, platform: string) {
+  const id = await myId();
+  if (!id) return;
+  const { error } = await db()
+    .from('push_tokens')
+    .upsert({ user_id: id, token, platform }, { onConflict: 'user_id,token' });
+  if (error) throw error;
+}

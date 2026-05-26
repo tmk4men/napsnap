@@ -57,12 +57,24 @@ create table if not exists public.views (
 );
 create index if not exists views_post_idx on public.views(post_id);
 
+-- ============ push_tokens（段階2：プッシュ通知の宛先）============
+-- 端末ごとの Expo push トークン。送信側（Edge Function）は service role で他人ぶんも読む。
+create table if not exists public.push_tokens (
+  user_id    uuid not null references public.profiles(id) on delete cascade,
+  token      text not null,
+  platform   text,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, token)
+);
+create index if not exists push_tokens_user_idx on public.push_tokens(user_id);
+
 -- ============ RLS 有効化 ============
 alter table public.profiles  enable row level security;
 alter table public.follows   enable row level security;
 alter table public.posts     enable row level security;
 alter table public.reactions enable row level security;
 alter table public.views     enable row level security;
+alter table public.push_tokens enable row level security;
 
 -- profiles: 誰でも読める（検索/表示）。作成・更新は自分の行のみ。
 drop policy if exists profiles_read   on public.profiles;
@@ -114,6 +126,11 @@ create policy views_read   on public.views for select using (
 );
 drop policy if exists views_insert on public.views;
 create policy views_insert on public.views for insert with check (viewer_id = auth.uid());
+
+-- push_tokens: 本人だけ自分のトークンを読み書き（送信側の Edge Function は service role で跨ぐ）。
+drop policy if exists push_tokens_rw on public.push_tokens;
+create policy push_tokens_rw on public.push_tokens for all
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- ============ Storage（画像/音声を1つの公開バケット media に）============
 insert into storage.buckets (id, name, public) values ('media', 'media', true)
@@ -170,3 +187,26 @@ select cron.schedule(
   '*/15 * * * *',
   $$ select public.napsnap_prune_expired() $$
 );
+
+-- ============ 段階2: プッシュ通知の配線（手順メモ）============
+-- 送信ロジックは Edge Function（supabase/functions/send-push）。INSERT を起点に呼ぶ。
+--
+-- 1) 関数をデプロイ：  supabase functions deploy send-push
+--    （SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY は Edge Function に自動注入される）
+-- 2) Database Webhook を2つ作成（Dashboard → Database → Webhooks、または下のSQL）：
+--    - posts     の INSERT → POST  <project>.functions.supabase.co/send-push
+--    - reactions の INSERT → POST  同上
+--    Webhookの送るJSON（{ type, table, record, ... }）を関数がそのまま読む。
+--
+-- SQLで貼る場合の例（pg_net 拡張が必要。<...> は自分の値に置換）：
+--   create extension if not exists pg_net;
+--   create trigger napsnap_push_posts after insert on public.posts
+--     for each row execute function supabase_functions.http_request(
+--       'https://<project>.functions.supabase.co/send-push', 'POST',
+--       '{"Content-Type":"application/json","Authorization":"Bearer <anon-or-service-key>"}',
+--       '{}', '1000');
+--   create trigger napsnap_push_reactions after insert on public.reactions
+--     for each row execute function supabase_functions.http_request(
+--       'https://<project>.functions.supabase.co/send-push', 'POST',
+--       '{"Content-Type":"application/json","Authorization":"Bearer <anon-or-service-key>"}',
+--       '{}', '1000');

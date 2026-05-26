@@ -57,7 +57,8 @@
         {
           "photosPermission": "プロフィール画像を選ぶために写真ライブラリにアクセスします。"
         }
-      ]
+      ],
+      "expo-notifications"
     ],
     "experiments": {
       "baseUrl": "/napsnap"
