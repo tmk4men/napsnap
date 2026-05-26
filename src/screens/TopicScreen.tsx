@@ -131,7 +131,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
       >
         {posts.length === 0 ? (
           <View style={styles.empty}>
-            <OfficialCard official={official} message="最初の一枚を出してみよう" width={cardW} seed="official-topic-first" mosaic />
+            <OfficialCard official={official} message="最初の一枚を出してみよう" width={cardW} mosaic />
           </View>
         ) : (
           <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>

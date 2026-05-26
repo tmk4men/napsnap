@@ -204,12 +204,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <Text style={styles.sub}>自分タブから、見たい人をフォロー。</Text>
           </View>
         ) : (
-          <OfficialCard
-            official={s.users.find((u) => u.isOfficial)}
-            message="日常を投稿してみよう"
-            width={Math.min(cardW, 320)}
-            seed="official-daily"
-          />
+          <OfficialCard official={s.users.find((u) => u.isOfficial)} message="日常を投稿してみよう" width={Math.min(cardW, 320)} />
         )}
       </View>
 

@@ -27,6 +27,20 @@ export function demoCapture(): string {
   return lifeImage(seed);
 }
 
+// napsnap公式の「お手本」カード用の写真。毎回ランダムだと体験がブレるので、
+// 固定の数枚プールから1枚だけランダムで選ぶ（中身を入れ替えたいときはここを編集）。
+export const OFFICIAL_PHOTO_SEEDS = [
+  'official-still-1',
+  'official-still-2',
+  'official-still-3',
+  'official-still-4',
+  'official-still-5',
+] as const;
+
+export function officialPhotoSeed(): string {
+  return OFFICIAL_PHOTO_SEEDS[Math.floor(Math.random() * OFFICIAL_PHOTO_SEEDS.length)];
+}
+
 // プロフィール画像（正方形）。顔なしの世界観に合う「痕跡」をプリセットにする。
 export function avatarImage(seed: string | number): string {
   return `https://picsum.photos/seed/napsnap-av-${seed}/240/240`;

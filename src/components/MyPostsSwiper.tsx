@@ -76,7 +76,7 @@ export function MyPostsSwiper({
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
         <View style={styles.center}>
           {isPrompt ? (
-            <OfficialCard official={official} message="写真を上げてみよう" width={Math.min(cardW, 320)} seed="official-upload" />
+            <OfficialCard official={official} message="写真を上げてみよう" width={Math.min(cardW, 320)} />
           ) : (
             <>
               {cardW > 0 && current && (

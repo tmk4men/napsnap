@@ -109,7 +109,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
     return (
       <View style={styles.empty}>
         <Backdrop />
-        <OfficialCard official={official} message={copy.emptyKeptSub} width={Math.min(winW - 80, 300)} seed="official-kept" />
+        <OfficialCard official={official} message={copy.emptyKeptSub} width={Math.min(winW - 80, 300)} />
       </View>
     );
   }
