@@ -92,10 +92,12 @@ export function TopicScreen({ nav }: { nav: Nav }) {
     setSection(next);
     pagerRef.current?.scrollTo({ x: next === 'strangers' ? stageW : 0, animated: true });
   };
-  const onPagerScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  // Webでは momentum が無く onMomentumScrollEnd が発火しないので、onScroll で
+  // 現在位置を常時監視してタブ表示を同期する（変化時のみ setState）。
+  const onPagerScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     const w = stageW || 1;
-    const next: Section = Math.round(x / w) === 0 ? 'known' : 'strangers';
+    const next: Section = x > w / 2 ? 'strangers' : 'known';
     if (next !== section) setSection(next);
   };
 
@@ -131,7 +133,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onPagerScrollEnd}
+          onScroll={onPagerScroll}
           // 縦スワイプは子コンポーネント(PostSwipeFeed)が拾うので、ここは横だけに集中。
           scrollEventThrottle={16}
         >
@@ -167,7 +169,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
                 <View style={styles.empty}>
                   <OfficialCard
                     official={official}
-                    message="まだ知らん人は出してない"
+                    message="今日はまだ誰もいない"
                     width={cardW}
                     mosaic
                   />
