@@ -43,12 +43,20 @@ export function followedActivePosts(s: Snapshot): Post[] {
     .sort((a, b) => a.expiresAt - b.expiresAt);
 }
 
-// 「お題」：今日のお題への、期限内の投稿（自分＋みんな）を「残りが短い順」で。
-// モザイクなしで誰でも見られる。上下スワイプで何度でも見返せる。
+// 「お題」：今日のお題への、期限内の投稿。RLS で全員のお題投稿が降ってくるが、
+// クライアント側で「全く知らない人（自分でもフォローでもない人）」の表示は **最新20件まで**
+// に絞る（モデレーションと体験の両面で、いきなり大量に出るのを避ける）。
+// 自分＋フォローの投稿は無制限に表示。最終的に「残りが短い順」で並べる。
+const TOPIC_STRANGERS_LIMIT = 20;
 export function topicPosts(s: Snapshot, topicKey: string): Post[] {
-  return s.posts
-    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt))
-    .sort((a, b) => a.expiresAt - b.expiresAt);
+  const all = s.posts.filter((p) => p.topicKey === topicKey && isActive(p.expiresAt));
+  const knownIds = new Set<string>([s.currentUserId ?? '', ...s.following]);
+  const known = all.filter((p) => knownIds.has(p.userId));
+  const strangers = all
+    .filter((p) => !knownIds.has(p.userId))
+    .sort((a, b) => b.createdAt - a.createdAt) // 新着順から
+    .slice(0, TOPIC_STRANGERS_LIMIT);
+  return [...known, ...strangers].sort((a, b) => a.expiresAt - b.expiresAt);
 }
 
 // ある投稿への、自分のリアクション種類（お題で「自分が押したやつ」を示す用）。

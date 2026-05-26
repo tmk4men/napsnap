@@ -153,7 +153,6 @@ export function MeScreen({ nav }: { nav: Nav }) {
         {mine.length === 0 ? (
           <View style={styles.empty}>
             <TraceMark size={48} />
-            <Text style={styles.emptyTitle}>{copy.emptyMine}</Text>
             <View style={{ height: space.md }} />
             <ShootButton onPress={() => nav.openCamera()} />
           </View>
