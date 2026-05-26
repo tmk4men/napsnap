@@ -39,12 +39,34 @@ const OFFICIAL_PHOTO_SOURCES = [
   require('../../assets/official/1043.jpg'),
   require('../../assets/official/1067.jpg'),
 ];
-// 起動時に1回だけ URI 解決。以降は文字列URIとして扱うのでChekiCard等のAPIを変えずに済む。
-export const OFFICIAL_PHOTO_URIS: string[] = OFFICIAL_PHOTO_SOURCES.map(
-  (src) => RNImage.resolveAssetSource(src).uri
+
+// require() の戻り値からURIを取り出す（クロスプラットフォーム対応）。
+// - web (react-native-web)：オブジェクト {uri, width, ...} or 文字列が直接来る
+// - native：数値(asset id)＝Image.resolveAssetSource で展開
+function resolveUri(src: any): string | null {
+  if (!src) return null;
+  if (typeof src === 'string') return src;
+  if (typeof src === 'object' && typeof src.uri === 'string') return src.uri;
+  const fn: any = (RNImage as any)?.resolveAssetSource;
+  if (typeof fn === 'function') {
+    try {
+      return fn(src)?.uri ?? null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+export const OFFICIAL_PHOTO_URIS: string[] = OFFICIAL_PHOTO_SOURCES.map(resolveUri).filter(
+  (u): u is string => !!u
 );
 
 export function officialPhotoUri(): string {
+  if (OFFICIAL_PHOTO_URIS.length === 0) {
+    // 万一バンドルからのURI解決に失敗したら picsum へフォールバック。
+    return lifeImage('official-fallback');
+  }
   return OFFICIAL_PHOTO_URIS[Math.floor(Math.random() * OFFICIAL_PHOTO_URIS.length)];
 }
 
