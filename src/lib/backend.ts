@@ -3,7 +3,7 @@
 // supabase が null（鍵未設定）のときは使わない＝アプリは従来どおりローカルのモックで動く。
 import { supabase } from './supabase';
 import { MEDIA_BUCKET } from '../config';
-import { Post, PostCaption, Reaction, ReactionType, User, ViewRecord } from '../types';
+import { Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from '../types';
 import { uid } from './id';
 import { uploadToR2 } from './r2';
 
@@ -62,6 +62,7 @@ function rowToPost(r: any): Post {
     expiresAt: toMs(r.expires_at),
     reactionCount: typeof r.reaction_count === 'number' ? r.reaction_count : 0,
     viewCount: typeof r.view_count === 'number' ? r.view_count : 0,
+    topicVisibility: r.topic_visibility === 'followers' ? 'followers' : 'public',
   };
 }
 
@@ -189,6 +190,7 @@ export async function addPost(input: {
   audioUri?: string;
   caption?: PostCaption;
   topicKey?: string;
+  topicVisibility?: TopicVisibility;
   expiresAt: number; // store 側で算出（通常24h / お題=その日の終わり）
 }): Promise<Post> {
   const id = await myId();
@@ -204,6 +206,8 @@ export async function addPost(input: {
       caption: input.caption ?? null,
       audio_url: audioUrl,
       expires_at: new Date(input.expiresAt).toISOString(),
+      // お題投稿のみ反映。通常投稿は列既定（public）でも未使用なので影響なし。
+      topic_visibility: input.topicKey ? input.topicVisibility ?? 'public' : null,
     })
     .select('*')
     .single();

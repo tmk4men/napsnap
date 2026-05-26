@@ -13,6 +13,7 @@ import { ActivityOverlay } from '../components/ActivityOverlay';
 import { MemoryViewer } from '../components/MemoryViewer';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { DocOverlay } from '../components/DocOverlay';
+import { SettingsOverlay } from '../components/SettingsOverlay';
 import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon, VerifiedBadge } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
@@ -76,6 +77,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const [showMenu, setShowMenu] = useState(false);
   const [doc, setDoc] = useState<LegalDoc | null>(null);
   const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const openActivity = () => {
     setShowActivity(true);
     markActivitySeen();
@@ -242,6 +244,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             ...(Platform.OS === 'web'
               ? [{ label: themeMode === 'dark' ? 'ライトモードにする' : 'ダークモードにする', onPress: toggleThemeMode }]
               : []),
+            { label: 'セキュリティ', onPress: () => setShowSettings(true) },
             { label: 'プライバシーポリシー', onPress: () => setDoc(PRIVACY_POLICY) },
             { label: '利用規約', onPress: () => setDoc(TERMS_OF_SERVICE) },
             { label: 'デモを最初からやり直す', onPress: resetDemo, danger: true },
@@ -249,6 +252,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         />
       )}
       {doc && <DocOverlay doc={doc} onClose={() => setDoc(null)} />}
+      {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
     </View>
   );
 }

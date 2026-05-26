@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, User, ViewRecord } from './types';
+import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from './types';
 import { uid } from './lib/id';
 import { HOUR, isActive, nextMidnight, now } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
@@ -43,6 +43,7 @@ interface PersistedState {
   profileEditAt: number[]; // 名前/ID変更のタイムスタンプ（2週間に2回まで）
   topicSeenDay: number; // 「今日のお題」通知を見た日（dayIndex）。違えば未読として出す
   searchHistory: string[]; // さがすタブの検索履歴（@IDのみ・新しい順・最大4件）
+  topicVisibility: TopicVisibility; // 自分のお題投稿の公開範囲。'public'=全実在ユーザー / 'followers'=自分とフォロワーのみ。
 }
 
 interface Actions {
@@ -60,6 +61,7 @@ interface Actions {
   markTopicSeen: () => void;
   addSearchHistory: (handle: string) => void;
   removeSearchHistory: (handle: string) => void;
+  setTopicVisibility: (v: TopicVisibility) => void;
   refreshFollowPostsIfStale: () => void;
   refreshTopicPostsIfStale: () => void;
   refreshOfficialPostsIfStale: () => void;
@@ -85,6 +87,7 @@ const initial: PersistedState = {
   profileEditAt: [],
   topicSeenDay: -1,
   searchHistory: [],
+  topicVisibility: 'public',
 };
 
 // ライブのスナップショットをローカル state に反映。
@@ -269,7 +272,14 @@ export const useStore = create<Store>()(
           // ライブ：画像/音声を Supabase Storage に上げ、posts に挿入。
           if (hasSupabase) {
             try {
-              const post = await be.addPost({ imageUri: imageUrl, audioUri: audioUrl, caption, topicKey, expiresAt });
+              const post = await be.addPost({
+                imageUri: imageUrl,
+                audioUri: audioUrl,
+                caption,
+                topicKey,
+                topicVisibility: topicKey ? get().topicVisibility : undefined,
+                expiresAt,
+              });
               if (topicKey) {
                 set((st) => ({ posts: [...st.posts, post] }));
               } else {
@@ -391,6 +401,8 @@ export const useStore = create<Store>()(
           const h = handle.trim().replace(/^@/, '').toLowerCase();
           set((st) => ({ searchHistory: st.searchHistory.filter((x) => x !== h) }));
         },
+
+        setTopicVisibility: (v) => set({ topicVisibility: v }),
 
         // デモが古くなってフォロー中（モック仲間）の投稿が全部期限切れなら、新しい時刻で作り直す。
         // 公式・お題・自分の投稿は触らない（それぞれ別ロジックで管理）。
@@ -521,6 +533,7 @@ export const useStore = create<Store>()(
         profileEditAt: s.profileEditAt,
         topicSeenDay: s.topicSeenDay,
         searchHistory: s.searchHistory,
+        topicVisibility: s.topicVisibility,
       }),
       // 既存の保存データを消さずに移行する。新フィールドは初期値で補う（公式アカウントの
       // 後付けは復帰時の ensureOfficialFollowed で行う＝確実・冪等）。

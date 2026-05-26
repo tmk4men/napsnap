@@ -47,7 +47,12 @@ export interface Post {
   // 反応数／足あと数のサーバ側集計（DBトリガで維持）。表示用。reactions/views 全行を引かなくて済む。
   reactionCount?: number;
   viewCount?: number;
+  // お題投稿の公開範囲。'public'=全実在ユーザーに見える / 'followers'=自分とフォロワーだけ。
+  // 通常投稿（topicKey なし）には適用されない。
+  topicVisibility?: TopicVisibility;
 }
+
+export type TopicVisibility = 'public' | 'followers';
 
 export interface ViewRecord {
   id: string;
