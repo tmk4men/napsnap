@@ -32,23 +32,39 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
       console.warn('follow official failed', e);
     }
   }
-  const [users, active, mine, reactions, views] = await Promise.all([
-    be.listProfiles(),
+  const [active, mine, reactions, views, suggestions] = await Promise.all([
     be.listActivePosts(),
     be.listMyPosts(),
     be.listReactions(),
     be.listViews(),
+    be.suggestProfiles(30), // 発見用の候補（総数に依存しない少数）
   ]);
   // active(自分＋フォローの期限内) と mine(自分の全投稿＝思い出) を id でマージ。
   const map = new Map<string, Post>();
   for (const p of [...active, ...mine]) map.set(p.id, p);
+  const posts = [...map.values()];
+
+  // 全プロフィール取得はやめ、「実際に登場する人」だけ id 指定で引く。
+  const ids = new Set<string>([id]);
+  following.forEach((f) => ids.add(f));
+  if (OFFICIAL_USER_ID) ids.add(OFFICIAL_USER_ID);
+  posts.forEach((p) => ids.add(p.userId));
+  reactions.forEach((r) => ids.add(r.userId));
+  views.forEach((v) => ids.add(v.viewerId));
+  const needed = await be.listProfilesByIds([...ids]);
+
+  // 必要な人＋発見用候補をマージ（id で重複排除）。
+  const byId = new Map<string, User>();
+  for (const u of [...needed, ...suggestions]) byId.set(u.id, u);
+  const users = [...byId.values()];
+
   const me = users.find((u) => u.id === id);
   return {
     currentUserId: id,
     onboarded: !!me && me.displayName.trim().length > 0,
     users,
     following,
-    posts: [...map.values()],
+    posts,
     reactions,
     views,
   };

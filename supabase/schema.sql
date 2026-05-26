@@ -138,15 +138,35 @@ create policy media_delete on storage.objects for delete to authenticated
 -- 下を Supabase の SQL Editor で1回実行するとスケジュール登録される（15分おき）。
 create extension if not exists pg_cron;
 
+-- 掃除本体：①期限切れ投稿のメディア本体（画像/音声）を storage から削除 →
+-- ②投稿行を削除（views / reactions は on delete cascade で連動削除）。
+-- image_url/audio_url は公開URL。'/media/' 以降が storage.objects.name に一致する。
+-- storage.objects を消すため security definer（所有ロール権限）で実行する。
+create or replace function public.napsnap_prune_expired()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  delete from storage.objects o
+  using public.posts p
+  where p.expires_at < now()
+    and o.bucket_id = 'media'
+    and o.name in (
+      split_part(p.image_url, '/media/', 2),
+      split_part(coalesce(p.audio_url, ''), '/media/', 2)
+    );
+
+  delete from public.posts where expires_at < now();
+end;
+$$;
+
 -- 二重登録を避けてから登録（再実行しても安全に）。
 select cron.unschedule('napsnap-prune-expired')
   where exists (select 1 from cron.job where jobname = 'napsnap-prune-expired');
 select cron.schedule(
   'napsnap-prune-expired',
   '*/15 * * * *',
-  $$ delete from public.posts where expires_at < now() $$
+  $$ select public.napsnap_prune_expired() $$
 );
-
--- 補足：投稿のメディア本体（media バケットの画像/音声）は posts と FK で結ばれていないため
--- 上の削除では消えない。ストレージ代は安いので当面は許容。将来コストが見えたら、
--- 期限切れ posts の image_url/audio_url を辿って storage.objects も消す掃除を足す。

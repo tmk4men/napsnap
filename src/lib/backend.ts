@@ -98,8 +98,24 @@ export async function updateMyProfile(fields: { handle?: string; displayName?: s
   if (error) throw error;
 }
 
-export async function listProfiles(): Promise<User[]> {
-  const { data, error } = await db().from('profiles').select('*');
+// 必要な人のプロフィールだけ取得する（全件 select * を避ける＝ポーリングの主コスト対策）。
+// 自分・フォロー・公式・投稿/反応/足あとに出てくる人だけを id 指定で引く。
+export async function listProfilesByIds(ids: string[]): Promise<User[]> {
+  const uniq = [...new Set(ids)].filter(Boolean);
+  if (uniq.length === 0) return [];
+  const { data, error } = await db().from('profiles').select('*').in('id', uniq);
+  if (error) throw error;
+  return (data ?? []).map(rowToUser);
+}
+
+// 発見用（オンボのフォロー候補など）に、最近の非公式ユーザーを少数だけ。総数に依存させない。
+export async function suggestProfiles(limit = 30): Promise<User[]> {
+  const { data, error } = await db()
+    .from('profiles')
+    .select('*')
+    .eq('is_official', false)
+    .order('created_at', { ascending: false })
+    .limit(limit);
   if (error) throw error;
   return (data ?? []).map(rowToUser);
 }
