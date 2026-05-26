@@ -5,6 +5,7 @@ import { supabase } from './supabase';
 import { MEDIA_BUCKET } from '../config';
 import { Post, PostCaption, Reaction, ReactionType, User, ViewRecord } from '../types';
 import { uid } from './id';
+import { uploadToR2 } from './r2';
 
 function db() {
   if (!supabase) throw new Error('Supabase未設定（EXPO_PUBLIC_SUPABASE_URL / ANON_KEY）');
@@ -152,8 +153,13 @@ export async function unfollow(targetId: string) {
 }
 
 // ---------- メディアのアップロード（画像/音声）----------
-// uri は web=blob:/data:、native=file:。fetch で ArrayBuffer 化して上げる（両対応）。
+// 優先：R2（egress無料）→ ダメなら Supabase Storage にフォールバック。
+// R2 secrets が未設定の間は r2-upload Function が 501 を返し、ここから先で吸収される。
 export async function uploadMedia(uri: string, kind: 'photo' | 'audio'): Promise<string> {
+  const r2 = await uploadToR2(uri, kind);
+  if (r2) return r2;
+
+  // 従来通り Supabase Storage（フォールバック）。
   const id = await myId();
   if (!id) throw new Error('未サインイン');
   const res = await fetch(uri);
