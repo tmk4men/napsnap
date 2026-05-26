@@ -112,20 +112,10 @@ export function TopicScreen({ nav }: { nav: Nav }) {
         <TopicNote prompt={topic.prompt} />
       </View>
 
-      {/* タブ（知ってる人 / 知らん人） */}
+      {/* タブ（身内 / みんな）：中央揃え */}
       <View style={styles.tabs}>
-        <TabBtn
-          label="知ってる人"
-          count={known.length}
-          active={section === 'known'}
-          onPress={() => switchSection('known')}
-        />
-        <TabBtn
-          label="知らん人"
-          count={strangers.length}
-          active={section === 'strangers'}
-          onPress={() => switchSection('strangers')}
-        />
+        <TabBtn label="身内" count={known.length} active={section === 'known'} onPress={() => switchSection('known')} />
+        <TabBtn label="みんな" count={strangers.length} active={section === 'strangers'} onPress={() => switchSection('strangers')} />
       </View>
 
       {/* 横ページャ：左=知ってる人、右=知らん人 */}
@@ -236,8 +226,8 @@ function TabBtn({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   noteWrap: { paddingHorizontal: space.lg, paddingTop: space.xs, paddingBottom: space.sm },
-  // 2つのタブを横並びに（号外の節タイトル感：下線で表現）
-  tabs: { flexDirection: 'row', paddingHorizontal: space.lg, gap: space.md },
+  // 2つのタブを中央揃えに（号外の節タイトル感：下線で表現）
+  tabs: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: space.xl, paddingHorizontal: space.lg },
   tabBtn: { paddingVertical: space.xs, alignItems: 'center' },
   tabLabel: { color: colors.textFaint, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
   tabLabelActive: { color: colors.text },
