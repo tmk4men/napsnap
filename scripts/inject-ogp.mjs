@@ -31,7 +31,19 @@ if (html.includes('<!-- ogp:start -->')) {
 const FONTS_HREF =
   'https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Shippori+Mincho:wght@600;700;800&family=BIZ+UDPGothic:wght@400;700&family=DM+Mono:wght@400;500&family=Yomogi&family=Zen+Maru+Gothic:wght@500;700&display=swap';
 
+// ビルド毎に変わる識別子。GitHub Actions の SHA があればそれを、なければ時刻を使う。
+const BUILD_ID =
+  process.env.GITHUB_SHA?.slice(0, 12) ||
+  process.env.BUILD_ID ||
+  new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14);
+
 const tags = `  <!-- ogp:start -->
+    <!-- ブラウザに index.html を毎回再取得させる（max-age=600 のブラウザキャッシュ対策）。
+         JS本体はハッシュ付きで一意なので、index.html さえ新しければ新ビルドが読まれる。 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="napsnap-build" content="${BUILD_ID}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link id="napsnap-fonts" rel="stylesheet" href="${FONTS_HREF}" />
