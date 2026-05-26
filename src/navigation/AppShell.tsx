@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
 import { HomeScreen } from '../screens/HomeScreen';
 import { TopicScreen } from '../screens/TopicScreen';
@@ -30,17 +30,51 @@ export function AppShell() {
   const me = currentUser(s);
   const keptCount = useMemo(() => keptPosts(s).length, [s.reactions, s.posts, s.currentUserId]);
 
-  // ライブ：他の人の投稿/反応を定期的に取り込む（3人トライアル規模なら軽い）。
+  // 取り込みのきっかけ（15秒の常時ポーリングは廃止）。
+  // ・前面に戻った時は即取得 ・前面にいる間だけ90秒の緩い取り込み ・タブを開いた時（20秒間引き）
+  const lastHydrate = useRef(0);
+  const hydrate = (force = false) => {
+    if (!hasSupabase) return;
+    const now = Date.now();
+    if (!force && now - lastHydrate.current < 20000) return; // 連打を間引く
+    lastHydrate.current = now;
+    useStore.getState().liveHydrate();
+  };
+
   useEffect(() => {
     if (!hasSupabase) return;
-    const id = setInterval(() => useStore.getState().liveHydrate(), 15000);
-    return () => clearInterval(id);
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (!timer) timer = setInterval(() => hydrate(true), 90000);
+    };
+    const stop = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+    start();
+    // 前面復帰で即更新＆再開、背面では止める（無駄打ち防止）。
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') {
+        hydrate(true);
+        start();
+      } else {
+        stop();
+      }
+    });
+    return () => {
+      stop();
+      sub.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const nav: Nav = {
     setTab: (t) => {
       setOverlay(null);
       setTab(t);
+      hydrate(); // タブを開いたら最新化（20秒間引き）
     },
     openCamera: (topicKey) => {
       setRetakeUsed(false);
