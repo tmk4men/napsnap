@@ -86,6 +86,16 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   const [stageW, setStageW] = useState(0);
   const [stageH, setStageH] = useState(0);
   const pagerRef = useRef<ScrollView | null>(null);
+  // お題タブを開いたら必ず「フォロー」側（x:0）から始まる。
+  // Web の scroll restoration で「おすすめ」側へずれるのを防ぐ。
+  const didInitPager = useRef(false);
+  useEffect(() => {
+    if (stageW > 0 && !didInitPager.current) {
+      didInitPager.current = true;
+      pagerRef.current?.scrollTo({ x: 0, animated: false });
+      setSection('known');
+    }
+  }, [stageW]);
   // タブをタップでスクロール、横スワイプで自動切替。
   const switchSection = (next: Section) => {
     if (next === section) return;
