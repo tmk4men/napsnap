@@ -34,6 +34,7 @@ export function ChekiCard({
   onChangeText,
   placeholder = 'ひとこと（任意）',
   redactStrip = false,
+  captionLines = 1,
 }: {
   uri?: string;
   caption?: PostCaption;
@@ -46,10 +47,12 @@ export function ChekiCard({
   onChangeText?: (t: string) => void;
   placeholder?: string;
   redactStrip?: boolean; // ロック中：一言を伏せる
+  captionLines?: number; // 下余白の一言を何行まで許すか（公式お手本は2行）
 }) {
   const frame = Math.round(width * 0.035);
   const photoW = width - frame * 2;
   const photoH = Math.round(photoW * 1.12);
+  const multiline = captionLines > 1;
   const stripH = Math.round(width * 0.2);
   const rot = tilt ?? tiltFor(tiltSeed);
 
@@ -63,7 +66,7 @@ export function ChekiCard({
         <MediaImage uri={uri} blurRadius={blur ? 30 : 0} />
       </View>
       <View style={styles.cutRule} />
-      <View style={[styles.strip, { height: stripH, paddingHorizontal: 2 }]}>
+      <View style={[styles.strip, multiline ? { minHeight: stripH, paddingVertical: 6 } : { height: stripH }, { paddingHorizontal: 2 }]}>
         {editable ? (
           <TextInput
             value={text}
@@ -84,7 +87,14 @@ export function ChekiCard({
         ) : redactStrip ? (
           <View style={styles.redact} />
         ) : text ? (
-          <Text numberOfLines={1} style={[styles.caption, { fontFamily: f.family, fontWeight: f.weight, fontSize }]}>
+          <Text
+            numberOfLines={captionLines}
+            style={[
+              styles.caption,
+              { fontFamily: f.family, fontWeight: f.weight, fontSize },
+              multiline && { lineHeight: Math.round(fontSize * 1.35) },
+            ]}
+          >
             {text}
           </Text>
         ) : (

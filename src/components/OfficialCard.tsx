@@ -27,13 +27,20 @@ export function OfficialCard({
   if (width <= 0) return null;
   return (
     <View style={styles.wrap}>
-      <ChekiCard uri={lifeImage(seed)} width={width} blur={mosaic} tiltSeed={seed} />
+      {/* 一言は写真の下余白（チェキの白いキャプション欄）に。モザイク時も写真だけ伏せ、文字は読める。 */}
+      <ChekiCard
+        uri={lifeImage(seed)}
+        caption={{ text: message, fontKey: 'mincho', color: colors.text, x: 0.5, y: 0.85 }}
+        captionLines={2}
+        width={width}
+        blur={mosaic}
+        tiltSeed={seed}
+      />
       <View style={styles.meta}>
         <Avatar user={official} size={26} />
         <Text style={styles.name}>napsnap</Text>
         <VerifiedBadge size={15} />
       </View>
-      <Text style={styles.msg}>{message}</Text>
     </View>
   );
 }
@@ -42,13 +49,4 @@ const styles = StyleSheet.create({
   wrap: { alignItems: 'center', gap: space.sm },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   name: { color: colors.text, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
-  msg: {
-    color: colors.text,
-    fontSize: 21,
-    lineHeight: 30,
-    fontFamily: fonts.serif,
-    fontWeight: '800',
-    textAlign: 'center',
-    letterSpacing: -0.5,
-  },
 });
