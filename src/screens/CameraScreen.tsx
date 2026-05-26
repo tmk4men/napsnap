@@ -24,7 +24,9 @@ type Phase = 'live' | 'recording';
 
 const WEB = Platform.OS === 'web';
 
-// 2秒の環境音には十分な軽量設定（モノ・低ビットレート）。保存/配信を軽くする（#5）。
+// 音声はここ＝録音時点で圧縮する（画像と違い後段の圧縮工程は無い）。
+// モノ・22.05kHz・32kbps ＝ 1.8秒で約7KB。top-level の bitRate/sampleRate/channels は
+// ネイティブ(iOS/Android)・Web 共通に効くので、全プラットフォームで小さく保たれる。
 // プリセットを土台に共通フィールドだけ上書きし、端末ごとの enum 設定は壊さない。
 const REC_OPTIONS: any = {
   ...RecordingPresets.LOW_QUALITY,
