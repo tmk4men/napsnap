@@ -57,6 +57,22 @@ export function PreviewScreen({
       alive = false;
     };
   }, [uri]);
+
+  // 撮影直後の音を1回だけ自動再生。録ったその瞬間の音を投稿前に確認させる。
+  useEffect(() => {
+    if (!audioUri) return;
+    try {
+      player.loop = false;
+      player.seekTo(0);
+      player.play();
+    } catch {}
+    return () => {
+      try {
+        player.pause();
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioUri]);
   const checking = face === null;
   const hasFace = !!face?.ok && face.faces > 0; // 顔ありで確定 → ブロック
   const checkFailed = !!face && !face.ok; // 判定できなかった → 出せるが注意書き
@@ -107,7 +123,7 @@ export function PreviewScreen({
             tilt={0}
             editable
             onChangeText={(t) => setCaption((c) => ({ ...c, text: t }))}
-            placeholder=""
+            placeholder="ひとこと"
           />
         )}
       </View>
