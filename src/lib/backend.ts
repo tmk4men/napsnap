@@ -123,6 +123,15 @@ export async function suggestProfiles(limit = 30): Promise<User[]> {
   return (data ?? []).map(rowToUser);
 }
 
+// オンボードでの handle 重複チェック。RLS は profiles_read=true なので誰でも読める。
+export async function isHandleTaken(handle: string): Promise<boolean> {
+  const h = handle.trim().replace(/^@/, '');
+  if (!h) return false;
+  const { data, error } = await db().from('profiles').select('id').eq('handle', h).limit(1);
+  if (error) return false; // 失敗時は通す（保存時にDBの UNIQUE で最終的に弾かれる）
+  return (data?.length ?? 0) > 0;
+}
+
 export async function searchProfiles(query: string): Promise<User[]> {
   const q = query.trim().replace(/^@/, '');
   if (!q) return [];

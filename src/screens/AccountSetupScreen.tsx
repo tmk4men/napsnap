@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import * as be from '../lib/backend';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -35,6 +36,30 @@ export function AccountSetupScreen() {
   const [handle, setHandle] = useState('');
   const [avatarUri, setAvatarUri] = useState<string>('');
   const [cropUri, setCropUri] = useState<string | null>(null);
+  // IDの重複チェック（ライブのみ）。500ms デバウンスで使用済か問い合わせる。
+  const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'taken' | 'free'>('idle');
+
+  useEffect(() => {
+    if (!hasSupabase) {
+      setHandleStatus('idle');
+      return;
+    }
+    const trimmed = handle.trim();
+    if (!trimmed) {
+      setHandleStatus('idle');
+      return;
+    }
+    setHandleStatus('checking');
+    const t = setTimeout(async () => {
+      try {
+        const taken = await be.isHandleTaken(trimmed);
+        setHandleStatus(taken ? 'taken' : 'free');
+      } catch {
+        setHandleStatus('idle');
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [handle]);
 
   const sanitizeHandle = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16);
   const previewUser = {
@@ -56,7 +81,8 @@ export function AccountSetupScreen() {
 
   async function finish() {
     if (submitting) return;
-    if (!name.trim() || hasBanned(name) || hasBanned(handle)) return;
+    if (!name.trim() || !handle.trim() || hasBanned(name) || hasBanned(handle)) return;
+    if (handleStatus === 'taken' || handleStatus === 'checking') return;
     setSubmitting(true);
     try {
       await completeAccountSetup({
@@ -118,6 +144,20 @@ export function AccountSetupScreen() {
             maxLength={16}
           />
         </View>
+        {/* ID重複チェックの状態（ライブのみ・デバウンス）。 */}
+        {handle.trim().length > 0 && (
+          <Text
+            style={[
+              styles.handleHint,
+              handleStatus === 'taken' && { color: colors.warn },
+              handleStatus === 'free' && { color: colors.textDim },
+            ]}
+          >
+            {handleStatus === 'checking' && '確認中…'}
+            {handleStatus === 'taken' && 'この ID は使われてる'}
+            {handleStatus === 'free' && 'この ID 使える'}
+          </Text>
+        )}
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom + space.md, paddingTop: space.sm }}>
@@ -126,7 +166,15 @@ export function AccountSetupScreen() {
         )}
         <PrimaryButton
           label={submitting ? '作成中…' : copy.setupStart}
-          disabled={submitting || !name.trim() || hasBanned(name) || hasBanned(handle)}
+          disabled={
+            submitting ||
+            !name.trim() ||
+            !handle.trim() ||
+            hasBanned(name) ||
+            hasBanned(handle) ||
+            handleStatus === 'taken' ||
+            handleStatus === 'checking'
+          }
           onPress={finish}
         />
       </View>
@@ -190,4 +238,5 @@ const styles = StyleSheet.create({
   at: { color: colors.textDim, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.handle },
   handleInput: { flex: 1, color: colors.text, fontSize: 18, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.3, paddingVertical: 15, marginLeft: 4 },
   bannedNote: { color: colors.warn, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginBottom: space.xs },
+  handleHint: { color: colors.textFaint, fontSize: font.small, fontWeight: '500', fontFamily: fonts.ui, marginTop: space.xs },
 });

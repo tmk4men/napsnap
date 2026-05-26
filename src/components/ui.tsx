@@ -148,6 +148,25 @@ export function Pill({
 function AvatarInner({ user, size, border, blur }: { user?: User; size: number; border: object; blur?: boolean }) {
   // 角版（証明写真風）。顔なしSNS＝“登録写真の台帳”の質感。丸ではなく直角＋細罫で囲う。
   const wrap = { width: size, height: size, borderRadius: radius.xs };
+  // napsnap公式：ブランドフォントで「N」を反転表示。avatarImageUri より優先する（識別性のため）。
+  if (user?.isOfficial) {
+    return (
+      <View style={[styles.avatar, wrap, border, { backgroundColor: colors.text }]}>
+        <Text
+          style={{
+            color: colors.bg,
+            fontSize: Math.round(size * 0.62),
+            fontFamily: fonts.brand,
+            includeFontPadding: false,
+            lineHeight: Math.round(size * 0.78),
+            letterSpacing: -1,
+          }}
+        >
+          N
+        </Text>
+      </View>
+    );
+  }
   if (user?.avatarImageUri) {
     return (
       <Image

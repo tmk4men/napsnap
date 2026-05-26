@@ -1,10 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { Animated, PanResponder, Platform, StyleSheet, View } from 'react-native';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { colors, space } from '../theme';
 import { Avatar, Remaining } from './ui';
+import { ShareIcon } from './icons';
 import { ChekiCard } from './ChekiCard';
 import { OfficialCard } from './OfficialCard';
 import { Post, User } from '../types';
+import { shareCheki } from '../lib/share';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -86,6 +88,12 @@ export function MyPostsSwiper({
                 <View style={styles.metaRow}>
                   <Avatar user={me} size={26} />
                   <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
+                  {/* シェア：webのみ。チェキをPNGで書き出してSNSへ（外部流入経路の確保）。 */}
+                  {Platform.OS === 'web' && (
+                    <Pressable onPress={() => shareCheki(current)} hitSlop={10} style={{ marginLeft: 4 }}>
+                      <ShareIcon size={18} color={colors.textDim} />
+                    </Pressable>
+                  )}
                 </View>
               )}
             </>
