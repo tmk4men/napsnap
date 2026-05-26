@@ -188,25 +188,40 @@ select cron.schedule(
   $$ select public.napsnap_prune_expired() $$
 );
 
--- ============ 段階2: プッシュ通知の配線（手順メモ）============
--- 送信ロジックは Edge Function（supabase/functions/send-push）。INSERT を起点に呼ぶ。
+-- ============ 段階2: プッシュ通知の配線 ============
+-- 送信ロジックは Edge Function（supabase/functions/send-push）。
+-- 投稿(posts) / 反応(reactions) の INSERT を pg_net で叩いて起動する＝Dashboard の
+-- Webhook 機能と同じ仕組みを SQL で直書きしたもの（操作1回で完結・再現性あり）。
 --
--- 1) 関数をデプロイ：  supabase functions deploy send-push
---    （SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY は Edge Function に自動注入される）
--- 2) Database Webhook を2つ作成（Dashboard → Database → Webhooks、または下のSQL）：
---    - posts     の INSERT → POST  <project>.functions.supabase.co/send-push
---    - reactions の INSERT → POST  同上
---    Webhookの送るJSON（{ type, table, record, ... }）を関数がそのまま読む。
---
--- SQLで貼る場合の例（pg_net 拡張が必要。<...> は自分の値に置換）：
---   create extension if not exists pg_net;
---   create trigger napsnap_push_posts after insert on public.posts
---     for each row execute function supabase_functions.http_request(
---       'https://<project>.functions.supabase.co/send-push', 'POST',
---       '{"Content-Type":"application/json","Authorization":"Bearer <anon-or-service-key>"}',
---       '{}', '1000');
---   create trigger napsnap_push_reactions after insert on public.reactions
---     for each row execute function supabase_functions.http_request(
---       'https://<project>.functions.supabase.co/send-push', 'POST',
---       '{"Content-Type":"application/json","Authorization":"Bearer <anon-or-service-key>"}',
---       '{}', '1000');
+-- 事前準備:
+--   1) Edge Function をデプロイ:  supabase functions deploy send-push --project-ref <REF>
+--      （SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY は Edge Function に自動注入）
+--   2) 下の SQL の <PROJECT_REF> と <ANON_KEY> を置換して SQL Editor で実行
+--      ・<PROJECT_REF> ＝ Supabase の Project Ref（例: zpmjykujiycmyvolewys）
+--      ・<ANON_KEY>    ＝ Settings → API → anon public（クライアントJSに埋まる公開JWT）
+--        ※ 公開キー前提なので、function 本体に書き込んでも権限漏洩にはならない
+--          （RLS 範囲＝ふつうのクライアントが叩けるのと同じ）。
+create extension if not exists pg_net;
+
+create or replace function public.napsnap_notify_push()
+returns trigger language plpgsql security definer as $plpgsql$
+begin
+  perform net.http_post(
+    url := 'https://<PROJECT_REF>.supabase.co/functions/v1/send-push',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer <ANON_KEY>'
+    ),
+    body := jsonb_build_object('type','INSERT','table',TG_TABLE_NAME,'record',to_jsonb(NEW))
+  );
+  return NEW;
+end;
+$plpgsql$;
+
+drop trigger if exists napsnap_push_posts on public.posts;
+create trigger napsnap_push_posts after insert on public.posts
+  for each row execute function public.napsnap_notify_push();
+
+drop trigger if exists napsnap_push_reactions on public.reactions;
+create trigger napsnap_push_reactions after insert on public.reactions
+  for each row execute function public.napsnap_notify_push();
