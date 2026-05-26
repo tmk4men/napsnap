@@ -12,14 +12,16 @@ import { Topic, TOPIC_CAPTIONS } from './topics';
 // id は固定にして「公式は1つだけ」を保証する。
 export const OFFICIAL_ID = 'u_napsnap_official';
 
-export function makeOfficialUser(): User {
+// 公式アカウントは「クライアント側で必ず存在する」キャラクター扱い。
+// DB が空でもこのスタブを使うので、アイコン（N バッジ）が消えない。
+// avatarImageUri は持たない（Avatar コンポーネントが isOfficial を見て N を描画する）。
+export function makeOfficialUser(id: string = OFFICIAL_ID): User {
   return {
-    id: OFFICIAL_ID,
+    id,
     handle: 'napsnap',
     displayName: 'napsnap',
     avatarEmoji: '🌙',
     avatarColor: '#CFEA45',
-    avatarImageUri: avatarImage('napsnap-official'),
     createdAt: Date.now() - 365 * 24 * HOUR,
     isOfficial: true,
   };

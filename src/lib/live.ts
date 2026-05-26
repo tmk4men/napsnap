@@ -4,6 +4,7 @@
 import { hasSupabase, OFFICIAL_USER_ID } from '../config';
 import * as be from './backend';
 import { Post, Reaction, User, ViewRecord } from '../types';
+import { makeOfficialUser } from '../seed';
 
 export const LIVE = hasSupabase;
 
@@ -56,6 +57,10 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
   // 必要な人＋発見用候補をマージ（id で重複排除）。
   const byId = new Map<string, User>();
   for (const u of [...needed, ...suggestions]) byId.set(u.id, u);
+  // 公式アカウントはクライアントに必ず存在させる（DBに無くても N バッジが出るように）。
+  if (OFFICIAL_USER_ID && !byId.has(OFFICIAL_USER_ID)) {
+    byId.set(OFFICIAL_USER_ID, makeOfficialUser(OFFICIAL_USER_ID));
+  }
   const users = [...byId.values()];
 
   const me = users.find((u) => u.id === id);
