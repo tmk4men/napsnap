@@ -54,9 +54,10 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
   const candidates = pool.filter(
     (u) => u.id !== s.currentUserId && !s.following.includes(u.id) && !isBrandUser(u)
   );
+  // 検索クエリがあるときだけリストを出す（空のときは履歴だけ見せて、何も表示しない）。
   const list = query
     ? candidates.filter((u) => u.handle.toLowerCase().includes(query))
-    : candidates;
+    : [];
 
   const submit = () => {
     if (query) addSearchHistory(query);
