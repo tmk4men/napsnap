@@ -40,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Supabase CLI local cache（linked project info などプロジェクト固有メタ）
+supabase/.temp/
