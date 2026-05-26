@@ -1,24 +1,31 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
-import { Avatar, Remaining, useTick } from '../components/ui';
+import { useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
-import { ChekiCard } from '../components/ChekiCard';
 import { OfficialCard } from '../components/OfficialCard';
 import { TopicNote } from '../components/TopicNote';
 import { ReactionBar } from '../components/ReactionBar';
+import { PostSwipeFeed } from '../components/PostSwipeFeed';
 import { PlusIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { isBrandUser, myReaction, topicPosts, userById } from '../selectors';
+import { isBrandUser, myReaction, topicPostsKnown, topicPostsStrangers, userById } from '../selectors';
 import { todaysTopic } from '../topics';
-import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 
-const NATIVE = Platform.OS !== 'web';
+type Section = 'known' | 'strangers';
 
 export function TopicScreen({ nav }: { nav: Nav }) {
   const insets = useSafeAreaInsets();
@@ -27,22 +34,30 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   const reactToTopic = useStore((st) => st.reactToTopic);
   const markTopicSeen = useStore((st) => st.markTopicSeen);
 
-  // お題タブを開いたら「今日のお題」通知を既読にする。
   useEffect(() => {
     markTopicSeen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const topic = todaysTopic();
-  const posts = useMemo(() => topicPosts(s, topic.key), [s.posts, topic.key]);
+  // 知ってる人（自分＋フォロー）と知らん人を分けて取得＝お題タブを左右2ページで分離。
+  const known = useMemo(() => topicPostsKnown(s, topic.key), [s.posts, s.following, s.currentUserId, topic.key]);
+  const strangers = useMemo(
+    () => topicPostsStrangers(s, topic.key),
+    [s.posts, s.following, s.currentUserId, topic.key]
+  );
   const official = s.users.find(isBrandUser);
 
-  const [index, setIndex] = useState(0);
-  const safeIndex = Math.min(index, Math.max(0, posts.length - 1));
-  const current = posts[safeIndex];
+  const [section, setSection] = useState<Section>('known');
+  const [knownIdx, setKnownIdx] = useState(0);
+  const [strangersIdx, setStrangersIdx] = useState(0);
+
+  const safeKnownIdx = Math.min(knownIdx, Math.max(0, known.length - 1));
+  const safeStrangersIdx = Math.min(strangersIdx, Math.max(0, strangers.length - 1));
+  const current = section === 'known' ? known[safeKnownIdx] : strangers[safeStrangersIdx];
   const mine = current ? myReaction(s, current.id) : undefined;
 
-  // 現在の投稿の音を、表示時に1回だけ再生。タップで聞き直せる（オン/オフ切替は無し）。
+  // 現在の投稿の音を、表示時に1回だけ再生。タップで聞き直せる。
   const audioSrc = useMemo(() => resolvePostAudioSource(current), [current?.id]);
   const hasSound = postHasSound(current);
   const player = useAudioPlayer(audioSrc ?? null);
@@ -59,7 +74,6 @@ export function TopicScreen({ nav }: { nav: Nav }) {
       } catch {}
     };
   }, [audioSrc]);
-
   const replaySound = () => {
     if (!hasSound) return;
     try {
@@ -68,95 +82,114 @@ export function TopicScreen({ nav }: { nav: Nav }) {
     } catch {}
   };
 
-  // --- 上下スワイプ（何度でも見返せる）---
-  const ty = useRef(new Animated.Value(0)).current;
-  const sizeRef = useRef({ w: 0, h: 0 });
+  // 横ページャ（pagingEnabled）。stageW を測ってから子の幅に流し込む。
   const [stageW, setStageW] = useState(0);
   const [stageH, setStageH] = useState(0);
-  const idxRef = useRef(safeIndex);
-  idxRef.current = safeIndex;
-  const lenRef = useRef(posts.length);
-  lenRef.current = posts.length;
-
-  const go = (dir: number) => {
-    const len = lenRef.current;
-    if (len <= 1) {
-      Animated.spring(ty, { toValue: 0, useNativeDriver: NATIVE }).start();
-      return;
-    }
-    const i = idxRef.current;
-    const H = sizeRef.current.h || 560;
-    const target = (i + dir + len) % len; // 端を越えたら反対端へループ（最後→先頭 / 先頭→最後）
-    Animated.timing(ty, { toValue: dir > 0 ? -H : H, duration: 170, useNativeDriver: NATIVE }).start(() => {
-      setIndex(target);
-      idxRef.current = target;
-      ty.setValue(dir > 0 ? H : -H);
-      Animated.timing(ty, { toValue: 0, duration: 170, useNativeDriver: NATIVE }).start();
-    });
+  const pagerRef = useRef<ScrollView | null>(null);
+  // タブをタップでスクロール、横スワイプで自動切替。
+  const switchSection = (next: Section) => {
+    if (next === section) return;
+    setSection(next);
+    pagerRef.current?.scrollTo({ x: next === 'strangers' ? stageW : 0, animated: true });
+  };
+  const onPagerScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const w = stageW || 1;
+    const next: Section = Math.round(x / w) === 0 ? 'known' : 'strangers';
+    if (next !== section) setSection(next);
   };
 
-  const responder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 10 && Math.abs(g.dy) > Math.abs(g.dx),
-      onPanResponderMove: (_, g) => ty.setValue(g.dy * 0.5),
-      onPanResponderRelease: (_, g) => {
-        if (g.dy < -90) go(1);
-        else if (g.dy > 90) go(-1);
-        else Animated.spring(ty, { toValue: 0, useNativeDriver: NATIVE }).start();
-      },
-    })
-  ).current;
-
-  const author = current ? userById(s.users, current.userId) : undefined;
-  // 横幅と、縦に収まる高さの両方から決める。下にリアクションボタン用の余白を残す。
+  // カードサイズはステージから計算（横ページャの中でも同じ計算）。
   const cardW = Math.max(0, Math.min(stageW - 72, Math.floor((stageH - 150) / 1.31), 300));
+  const resolveAuthor = (userId: string) => userById(s.users, userId);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.sm }]}>
       <Backdrop />
-      {/* 今日のお題（出すボタンは右下の＋に集約） */}
+
+      {/* 今日の見出し */}
       <View style={styles.noteWrap}>
         <TopicNote prompt={topic.prompt} />
       </View>
 
-      {/* スワイプ領域 */}
-      <View
-        style={styles.stage}
-        onLayout={(e) => {
-          const { width, height } = e.nativeEvent.layout;
-          sizeRef.current = { w: width, h: height };
-          setStageW(width);
-          setStageH(height);
-        }}
-      >
-        {posts.length === 0 ? (
-          <View style={styles.empty}>
-            <OfficialCard official={official} message="最初の一枚を出してみよう" width={cardW} mosaic />
-          </View>
-        ) : (
-          <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
-            <Pressable style={styles.center} onPress={replaySound}>
-              {cardW > 0 && current && (
-                <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
-              )}
-              {author && (
-                <View style={styles.metaRow}>
-                  <Avatar user={author} size={24} />
-                  <Text style={styles.metaName}>{author.displayName}</Text>
-                  <Text style={styles.metaDot}>·</Text>
-                  <Text style={styles.metaAgo}>{timeAgo(current.createdAt)}</Text>
-                  <View style={{ marginLeft: 6 }}>
-                    <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
-                  </View>
-                </View>
-              )}
-            </Pressable>
-          </Animated.View>
-        )}
+      {/* タブ（知ってる人 / 知らん人） */}
+      <View style={styles.tabs}>
+        <TabBtn
+          label="知ってる人"
+          count={known.length}
+          active={section === 'known'}
+          onPress={() => switchSection('known')}
+        />
+        <TabBtn
+          label="知らん人"
+          count={strangers.length}
+          active={section === 'strangers'}
+          onPress={() => switchSection('strangers')}
+        />
       </View>
 
-      {/* リアクション（※残すには入らない）。バーは無し、ボタンだけ浮かせる。 */}
-      {posts.length > 0 && current && (
+      {/* 横ページャ：左=知ってる人、右=知らん人 */}
+      <View
+        style={styles.pagerWrap}
+        onLayout={(e) => {
+          setStageW(e.nativeEvent.layout.width);
+          setStageH(e.nativeEvent.layout.height);
+        }}
+      >
+        <ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={onPagerScrollEnd}
+          // 縦スワイプは子コンポーネント(PostSwipeFeed)が拾うので、ここは横だけに集中。
+          scrollEventThrottle={16}
+        >
+          <View style={{ width: stageW, height: stageH }}>
+            <PostSwipeFeed
+              posts={known}
+              index={safeKnownIdx}
+              onIndexChange={setKnownIdx}
+              cardW={cardW}
+              resolveAuthor={resolveAuthor}
+              onTapPost={replaySound}
+              empty={
+                <View style={styles.empty}>
+                  <OfficialCard
+                    official={official}
+                    message="最初の一枚を出してみよう"
+                    width={cardW}
+                    mosaic
+                  />
+                </View>
+              }
+            />
+          </View>
+          <View style={{ width: stageW, height: stageH }}>
+            <PostSwipeFeed
+              posts={strangers}
+              index={safeStrangersIdx}
+              onIndexChange={setStrangersIdx}
+              cardW={cardW}
+              resolveAuthor={resolveAuthor}
+              onTapPost={replaySound}
+              empty={
+                <View style={styles.empty}>
+                  <OfficialCard
+                    official={official}
+                    message="まだ知らん人は出してない"
+                    width={cardW}
+                    mosaic
+                  />
+                </View>
+              }
+            />
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* リアクション（現在表示中のセクションの現在の投稿に対して） */}
+      {current && (
         <View style={[styles.reactFloat, { bottom: insets.bottom + space.lg }]} pointerEvents="box-none">
           <ReactionBar key={current.id} selected={mine} onReact={(t) => reactToTopic(current.id, t)} />
         </View>
@@ -165,7 +198,11 @@ export function TopicScreen({ nav }: { nav: Nav }) {
       {/* このお題に出す＝右下のプラス */}
       <Pressable
         onPress={() => nav.openCamera(topic.key)}
-        style={({ pressed }) => [styles.fab, { bottom: insets.bottom + space.lg }, pressed && { transform: [{ scale: 0.94 }] }]}
+        style={({ pressed }) => [
+          styles.fab,
+          { bottom: insets.bottom + space.lg },
+          pressed && { transform: [{ scale: 0.94 }] },
+        ]}
         hitSlop={8}
       >
         <PlusIcon size={28} color={colors.limeInk} />
@@ -174,9 +211,40 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   );
 }
 
+function TabBtn({
+  label,
+  count,
+  active,
+  onPress,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={styles.tabBtn} hitSlop={4}>
+      <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
+        {label}
+        {count > 0 && <Text style={styles.tabCount}>　{count}</Text>}
+      </Text>
+      <View style={[styles.tabUnderline, active && styles.tabUnderlineActive]} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   noteWrap: { paddingHorizontal: space.lg, paddingTop: space.xs, paddingBottom: space.sm },
+  // 2つのタブを横並びに（号外の節タイトル感：下線で表現）
+  tabs: { flexDirection: 'row', paddingHorizontal: space.lg, gap: space.md },
+  tabBtn: { paddingVertical: space.xs, alignItems: 'center' },
+  tabLabel: { color: colors.textFaint, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
+  tabLabelActive: { color: colors.text },
+  tabCount: { color: colors.textFaint, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
+  tabUnderline: { width: '100%', height: rule.thin, backgroundColor: 'transparent', marginTop: 4 },
+  tabUnderlineActive: { backgroundColor: colors.text, height: rule.thick },
+  pagerWrap: { flex: 1, overflow: 'hidden' },
   fab: {
     position: 'absolute',
     right: space.lg,
@@ -190,12 +258,7 @@ const styles = StyleSheet.create({
     borderColor: colors.limeDust,
     boxShadow: '0 8px 20px rgba(0,0,0,0.20)',
   },
-  stage: { flex: 1, overflow: 'hidden' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingBottom: 96 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  metaName: { color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
-  metaDot: { color: colors.textFaint, fontSize: font.small },
-  metaAgo: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   reactFloat: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md, paddingHorizontal: space.lg },
 });
+

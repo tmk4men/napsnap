@@ -54,13 +54,25 @@ export function followedActivePosts(s: Snapshot): Post[] {
 }
 
 // 「お題」：今日のお題への、期限内の投稿（自分・フォロー・知らない人含め全部）。
-// クライアントでの表示キャップは廃止（フェッチは既に全件来てるので、表示を絞っても
-// インフラ費は1円も下がらず、ただスワイプ機会＝広告インプを捨てるだけだった）。
-// サーバが REST デフォルトで返す上限内（〜1000件）を、上下スワイプで全部見られる。
-// 並びは「残り時間が短い順」＝そろそろ消える投稿が上から。
+// 並びは「残り時間が短い順」。後方互換のため残す。
 export function topicPosts(s: Snapshot, topicKey: string): Post[] {
   return s.posts
     .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt))
+    .sort((a, b) => a.expiresAt - b.expiresAt);
+}
+
+// お題タブ用：知ってる人（自分＋フォロー）／知らん人 を別ページで見せる分割版。
+export function topicPostsKnown(s: Snapshot, topicKey: string): Post[] {
+  const knownIds = new Set<string>([s.currentUserId ?? '', ...s.following]);
+  return s.posts
+    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt) && knownIds.has(p.userId))
+    .sort((a, b) => a.expiresAt - b.expiresAt);
+}
+
+export function topicPostsStrangers(s: Snapshot, topicKey: string): Post[] {
+  const knownIds = new Set<string>([s.currentUserId ?? '', ...s.following]);
+  return s.posts
+    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt) && !knownIds.has(p.userId))
     .sort((a, b) => a.expiresAt - b.expiresAt);
 }
 

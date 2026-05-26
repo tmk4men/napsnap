@@ -8,7 +8,7 @@ import { copy, reactionMeta } from '../copy';
 import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { Nav } from '../navigation/nav';
-import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon } from '../components/icons';
+import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon, VerifiedBadge } from '../components/icons';
 import { ChekiCard } from '../components/ChekiCard';
 import { OfficialCard } from '../components/OfficialCard';
 import { useStore } from '../store';
@@ -154,6 +154,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
             <View style={styles.metaRow}>
               <Avatar user={author} size={26} />
               <Text style={styles.metaName}>{author?.displayName ?? '友達'}</Text>
+              {author?.isOfficial && <VerifiedBadge size={13} />}
               <Text style={styles.metaDot}>·</Text>
               <Text style={styles.metaAgo}>{timeAgo(current.post.createdAt)}</Text>
               <View style={{ marginLeft: 6 }}>
