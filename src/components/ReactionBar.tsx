@@ -5,8 +5,8 @@ import { REACTIONS } from '../copy';
 import { ReactionType } from '../types';
 import { ReactionIcon } from './icons';
 
-// フィード用：1つ選ぶと「残した」に入り次へ進む。アイコンのみ。
-// 押すと：ボタンがポップ＋同じアイコンがふわっと上に飛んで消える → 少し遅らせて次へ。
+// フィード用：押すとアイコンがポップ＋上に飛ぶアニメ。投稿はそのまま残るので、
+// 種類を押し替えることもできる（同じ種類の連打は upsert で冪等）。次へ進むのはスワイプ。
 export function ReactionBar({
   onReact,
   selected,
@@ -14,17 +14,10 @@ export function ReactionBar({
   onReact: (type: ReactionType) => void;
   selected?: ReactionType;
 }) {
-  const firedRef = useRef(false);
-  const handle = (type: ReactionType) => {
-    if (firedRef.current) return;
-    firedRef.current = true;
-    // アニメを見せてから次へ
-    setTimeout(() => onReact(type), 260);
-  };
   return (
     <View style={styles.row}>
       {REACTIONS.map((r) => (
-        <ReactionButton key={r.type} type={r.type} active={selected === r.type} onPress={() => handle(r.type)} />
+        <ReactionButton key={r.type} type={r.type} active={selected === r.type} onPress={() => onReact(r.type)} />
       ))}
     </View>
   );

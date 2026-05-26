@@ -356,10 +356,8 @@ export const useStore = create<Store>()(
                 ...st.reactions.filter((r) => !(r.postId === postId && r.userId === currentUserId)),
                 { id: uid('r_'), postId, userId: currentUserId, type, createdAt: now() },
               ],
-              feedStates: [
-                ...st.feedStates.filter((f) => f.postId !== postId),
-                { postId, status: 'reacted', updatedAt: now() },
-              ],
+              // 「リアクション＝次へ自動遷移」は廃止。feedStates は触らず、
+              // スワイプ(skipPost)で初めて次の投稿に進むようにする。
               // 反応が初めての時だけ集計カウントを+1（タイプ変更時はカウント据え置き）。
               posts: hadReaction
                 ? st.posts
