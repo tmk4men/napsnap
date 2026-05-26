@@ -12,7 +12,7 @@ import { ReactionIcon, SpeakerOffIcon, SpeakerOnIcon } from '../components/icons
 import { ChekiCard } from '../components/ChekiCard';
 import { OfficialCard } from '../components/OfficialCard';
 import { useStore } from '../store';
-import { keptPosts, userById } from '../selectors';
+import { isBrandUser, keptPosts, userById } from '../selectors';
 import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 
@@ -105,7 +105,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
   ).current;
 
   if (kept.length === 0) {
-    const official = s.users.find((u) => u.isOfficial);
+    const official = s.users.find(isBrandUser);
     return (
       <View style={styles.empty}>
         <Backdrop />

@@ -18,7 +18,7 @@ import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon, VerifiedBadge } from 
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { activityItems, currentUser, feedQueue, isPassOpen, memoryHighlights, topicUnseen, userById } from '../selectors';
+import { activityItems, currentUser, feedQueue, isBrandUser, isPassOpen, memoryHighlights, topicUnseen, userById } from '../selectors';
 import { isActive, timeAgo } from '../lib/time';
 import { todaysTopic } from '../topics';
 import { Post } from '../types';
@@ -149,7 +149,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
         {showMine ? (
-          <MyPostsSwiper posts={myActive} me={me} official={s.users.find((u) => u.isOfficial)} />
+          <MyPostsSwiper posts={myActive} me={me} official={s.users.find(isBrandUser)} />
         ) : showCard && displayPost ? (
           <FadeIn key={displayPost.id} delay={130} dy={16} style={styles.heroWrap}>
             {cardW > 0 && (
@@ -169,11 +169,11 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                 <>
                   {!heroIsMine && (
                     <Text style={styles.metaName}>
-                      {displayAuthor?.isOfficial ? 'napsnap' : `${displayAuthor?.displayName} たちの今`}
+                      {isBrandUser(displayAuthor) ? 'napsnap' : `${displayAuthor?.displayName} たちの今`}
                     </Text>
                   )}
                   {displayAuthor?.isOfficial && <VerifiedBadge size={15} />}
-                  {!displayAuthor?.isOfficial && (
+                  {!isBrandUser(displayAuthor) && (
                     <View style={{ marginLeft: 6 }}>
                       <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
                     </View>
@@ -185,7 +185,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
                     <Text style={styles.metaName}>{reactionsOf(displayPost.id)}人が反応</Text>
                   )}
                   {/* ロック中でも、この投稿があと何時間で消えるかを赤で出す（早く撮ろう） */}
-                  {!displayAuthor?.isOfficial && (
+                  {!isBrandUser(displayAuthor) && (
                     <View style={{ marginLeft: 6 }}>
                       <Remaining expiresAt={displayPost.expiresAt} color={colors.warn} size={12} />
                     </View>
@@ -201,9 +201,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             <Remaining expiresAt={s.accessPass!.expiresAt} color={colors.text} size={15} />
           </View>
         ) : s.following.length === 0 ? (
-          <OfficialCard official={s.users.find((u) => u.isOfficial)} message="ようこそ" width={Math.min(cardW, 320)} />
+          <OfficialCard official={s.users.find(isBrandUser)} message="ようこそ" width={Math.min(cardW, 320)} />
         ) : (
-          <OfficialCard official={s.users.find((u) => u.isOfficial)} message="日常を投稿してみよう" width={Math.min(cardW, 320)} />
+          <OfficialCard official={s.users.find(isBrandUser)} message="日常を投稿してみよう" width={Math.min(cardW, 320)} />
         )}
       </View>
 

@@ -4,6 +4,16 @@ import type { Store } from './store';
 import { HOUR, isActive } from './lib/time';
 import { REACTION_TTL_HOURS } from './copy';
 import { dayIndex } from './topics';
+import { OFFICIAL_USER_ID } from './config';
+import { OFFICIAL_ID } from './seed';
+
+// 「napsnap 公式（ブランド本人）」判定。他のユーザーが is_official=true を持っていても
+// （＝ただの認証マーク扱い）、ブランド扱い（N アバター・「napsnap」名前差し替え 等）は
+// このユーザーだけに限定する。
+export function isBrandUser(u?: User | null): boolean {
+  if (!u) return false;
+  return u.id === OFFICIAL_USER_ID || u.id === OFFICIAL_ID || u.handle === 'napsnap';
+}
 
 // 「今日のお題」の通知が未読か（今日ぶんをまだ見ていない）。
 export function topicUnseen(s: Pick<Store, 'topicSeenDay'>): boolean {

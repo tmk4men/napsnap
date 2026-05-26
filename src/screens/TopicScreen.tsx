@@ -13,7 +13,7 @@ import { ReactionBar } from '../components/ReactionBar';
 import { PlusIcon } from '../components/icons';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { myReaction, topicPosts, userById } from '../selectors';
+import { isBrandUser, myReaction, topicPosts, userById } from '../selectors';
 import { todaysTopic } from '../topics';
 import { timeAgo } from '../lib/time';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
@@ -35,7 +35,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
   const topic = todaysTopic();
   const posts = useMemo(() => topicPosts(s, topic.key), [s.posts, topic.key]);
-  const official = s.users.find((u) => u.isOfficial);
+  const official = s.users.find(isBrandUser);
 
   const [index, setIndex] = useState(0);
   const safeIndex = Math.min(index, Math.max(0, posts.length - 1));

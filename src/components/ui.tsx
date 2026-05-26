@@ -14,6 +14,7 @@ import { fonts } from '../lib/fonts';
 import { User } from '../types';
 import { CameraIcon, ClockIcon, UserIcon } from './icons';
 import { formatClock } from '../lib/time';
+import { isBrandUser } from '../selectors';
 
 // 主ボタン＝号外の「校了」印。朱のベタ角箱・光沢なし・直角。文字は紙色のゴシック。
 export function PrimaryButton({
@@ -148,8 +149,9 @@ export function Pill({
 function AvatarInner({ user, size, border, blur }: { user?: User; size: number; border: object; blur?: boolean }) {
   // 角版（証明写真風）。顔なしSNS＝“登録写真の台帳”の質感。丸ではなく直角＋細罫で囲う。
   const wrap = { width: size, height: size, borderRadius: radius.xs };
-  // napsnap公式：ブランドフォントで「N」を反転表示。avatarImageUri より優先する（識別性のため）。
-  if (user?.isOfficial) {
+  // napsnap公式（ブランド本人）：ブランドフォントで「N」を反転表示。他の認証アカウントは
+  // ここを通らず通常のアバターを使う。
+  if (isBrandUser(user)) {
     return (
       <View style={[styles.avatar, wrap, border, { backgroundColor: colors.text }]}>
         <Text
