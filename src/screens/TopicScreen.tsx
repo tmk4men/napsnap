@@ -87,14 +87,27 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   const [stageH, setStageH] = useState(0);
   const pagerRef = useRef<ScrollView | null>(null);
   // お題タブを開いたら必ず「フォロー」側（x:0）から始まる。
-  // Web の scroll restoration で「おすすめ」側へずれるのを防ぐ。
+  // Web の scroll restoration / 初回 onScroll に追い越されないよう、
+  // 初期化完了フラグが立つまで onPagerScroll の section 変更を抑制する。
   const didInitPager = useRef(false);
   useEffect(() => {
-    if (stageW > 0 && !didInitPager.current) {
-      didInitPager.current = true;
+    if (stageW <= 0) return;
+    // 即時 + 次フレーム + 短いディレイで3度 scrollTo を打つ。web ブラウザの scroll restoration や
+    // pagingEnabled レイアウト確定後の再配置に追い越されないため。
+    const snapToStart = () => {
       pagerRef.current?.scrollTo({ x: 0, animated: false });
       setSection('known');
-    }
+    };
+    snapToStart();
+    const raf = requestAnimationFrame(snapToStart);
+    const t = setTimeout(() => {
+      snapToStart();
+      didInitPager.current = true;
+    }, 80);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
   }, [stageW]);
   // タブをタップでスクロール、横スワイプで自動切替。
   const switchSection = (next: Section) => {
@@ -104,7 +117,9 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   };
   // Webでは momentum が無く onMomentumScrollEnd が発火しないので、onScroll で
   // 現在位置を常時監視してタブ表示を同期する（変化時のみ setState）。
+  // ただし初期化が終わるまではユーザー操作ではないので無視する＝「開いた瞬間おすすめ」を防ぐ。
   const onPagerScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!didInitPager.current) return;
     const x = e.nativeEvent.contentOffset.x;
     const w = stageW || 1;
     const next: Section = x > w / 2 ? 'strangers' : 'known';

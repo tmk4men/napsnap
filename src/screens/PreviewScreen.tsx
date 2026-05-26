@@ -42,6 +42,7 @@ export function PreviewScreen({
   const hasCaption = caption.text.trim().length > 0;
   const banned = hasBanned(caption.text); // 禁止ワードが入っていたら出せない
   const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
   const [stageW, setStageW] = useState(0);
   const cardW = Math.min(Math.max(0, stageW - 72), 300);
 
@@ -81,13 +82,21 @@ export function PreviewScreen({
   async function postIt() {
     if (!canPost) return;
     setPosting(true);
+    setPostError(null);
     try {
       player.pause();
     } catch {}
-    // 保存・配信を軽くするため、出す直前に画像を縮小＋再エンコード（失敗時は元のまま）
-    const finalUri = await compressForStore(uri);
-    await addPost(finalUri, audioUri, hasCaption ? caption : undefined, topicKey);
-    nav.onPosted();
+    try {
+      // 保存・配信を軽くするため、出す直前に画像を縮小＋再エンコード（失敗時は元のまま）
+      const finalUri = await compressForStore(uri);
+      await addPost(finalUri, audioUri, hasCaption ? caption : undefined, topicKey);
+      nav.onPosted();
+    } catch (e) {
+      // 失敗時は画面を閉じず、もう一度押せるようにする。原因が分かるよう短く表示。
+      const msg = e instanceof Error ? e.message : String(e);
+      setPostError(`送れなかった：${msg.slice(0, 80)}`);
+      setPosting(false);
+    }
   }
 
   function playClip() {
@@ -162,6 +171,7 @@ export function PreviewScreen({
           </Pressable>
         )}
         {posting && <Text style={styles.postingHint}>送ってる…</Text>}
+        {postError && <Text style={styles.postErrorText}>{postError}</Text>}
         {canRetake && !hasFace && (
           <GhostButton label="撮り直す（あと1回）" onPress={nav.retake} style={{ marginTop: space.xs }} />
         )}
@@ -236,4 +246,5 @@ const styles = StyleSheet.create({
   postBtnDisabled: { backgroundColor: colors.surfaceSunken, borderColor: colors.hairline },
   postBtnPressed: { transform: [{ translateY: 1 }], opacity: 0.92 },
   postingHint: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginTop: space.xs },
+  postErrorText: { color: colors.warn, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textAlign: 'center', marginTop: space.xs },
 });

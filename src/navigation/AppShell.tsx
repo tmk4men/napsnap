@@ -118,13 +118,16 @@ export function AppShell() {
       setDraftAudio(audioUri);
       setOverlay('preview');
     },
-    onPosted: () => {
+    onPosted: async () => {
       const wasTopic = !!draftTopic;
       setDraftUri(null);
       setDraftAudio(undefined);
       setDraftTopic(undefined);
       setRetakeUsed(false);
-      if (hasSupabase) useStore.getState().liveHydrate(); // 投稿後に最新を取り込む
+      // 投稿直後の hydrate を await して、画面遷移時点で snap.posts に
+      // 自分の投稿が確実に入った状態にする（applySnapshot による上書きで
+      // 「ホームに反映されない」を防ぐ）。
+      if (hasSupabase) await useStore.getState().liveHydrate();
       if (wasTopic) {
         // お題は独立：パスは開かない。お題タブへ戻る。
         setOverlay(null);

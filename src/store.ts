@@ -94,8 +94,42 @@ const initial: PersistedState = {
 // パス（6h解錠）は「自分の有効な通常投稿」から導出する＝過去のローカル accessPass の残留で
 // 「今日はここまで＋謎の残り時間」が出るのを防ぐ。投稿が無ければパス無し＝ロック表示。
 function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap: LiveSnapshot) {
-  const myActive = snap.posts
-    .filter((p) => p.userId === snap.currentUserId && !p.topicKey && isActive(p.expiresAt))
+  const st = get();
+  const me = snap.currentUserId;
+
+  // ローカルの楽観的更新（自分が直近で押したリアクション・直近に出した投稿）を保護してマージする。
+  // be.react() は fire-and-forget で、liveHydrate が同時に走ると snap で上書きされて
+  // 「押したのに消える」が起きる。逆に snap が新しければ snap を採用するため id/タイムスタンプで判定。
+  const PROTECT_MS = 5 * 60 * 1000;
+  const tNow = Date.now();
+
+  // ---- reactions: (postId,userId) ペアで自分の最近の楽観値を保護 ----
+  const snapReactionKey = new Set(
+    snap.reactions
+      .filter((r) => r.userId === me)
+      .map((r) => `${r.postId}_${r.userId}`)
+  );
+  const protectedMyReactions = st.reactions.filter(
+    (r) =>
+      r.userId === me &&
+      tNow - r.createdAt < PROTECT_MS &&
+      !snapReactionKey.has(`${r.postId}_${r.userId}`)
+  );
+  const reactions = [...snap.reactions, ...protectedMyReactions];
+
+  // ---- posts: 自分の直近 posts のうち snap に未到達の id を残す（DB レプリカ遅延対策） ----
+  const snapPostIds = new Set(snap.posts.map((p) => p.id));
+  const protectedMyPosts = st.posts.filter(
+    (p) =>
+      p.userId === me &&
+      tNow - p.createdAt < PROTECT_MS &&
+      !snapPostIds.has(p.id)
+  );
+  const posts = [...snap.posts, ...protectedMyPosts];
+
+  // パス（6h解錠）はマージ済み posts から導出。
+  const myActive = posts
+    .filter((p) => p.userId === me && !p.topicKey && isActive(p.expiresAt))
     .sort((a, b) => b.createdAt - a.createdAt);
   const latest = myActive[0];
   const accessPass: AccessPass | null = latest
@@ -103,15 +137,14 @@ function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap:
     : null;
   // 自分の閲覧記録（viewerId === me）はサーバから引かない（listViews は自分の投稿への足あとだけ取得）。
   // セッション内の重複 upsert を避けるため、ローカルに溜まった自分のviewsをマージで残す。
-  const st = get();
-  const myLocalViews = st.views.filter((v) => v.viewerId === snap.currentUserId);
+  const myLocalViews = st.views.filter((v) => v.viewerId === me);
   set({
     onboarded: snap.onboarded,
     currentUserId: snap.currentUserId,
     users: snap.users,
     following: snap.following,
-    posts: snap.posts,
-    reactions: snap.reactions,
+    posts,
+    reactions,
     views: [...snap.views, ...myLocalViews],
     accessPass,
   });
@@ -265,31 +298,27 @@ export const useStore = create<Store>()(
 
         addPost: async (imageUrl, audioUrl, caption, topicKey) => {
           const { currentUserId } = get();
-          if (!currentUserId) return '';
+          if (!currentUserId) throw new Error('未ログイン');
           const createdAt = now();
           // お題は日付がかわる0時で総入れ替え＝期限は今日の終わり。通常投稿は24時間。
           const expiresAt = topicKey ? nextMidnight(createdAt) : createdAt + POST_TTL_HOURS * HOUR;
           // ライブ：画像/音声を Supabase Storage に上げ、posts に挿入。
+          // 失敗時は呼び出し側で扱えるよう例外を投げる（サイレントに画面遷移しないため）。
           if (hasSupabase) {
-            try {
-              const post = await be.addPost({
-                imageUri: imageUrl,
-                audioUri: audioUrl,
-                caption,
-                topicKey,
-                topicVisibility: topicKey ? get().topicVisibility : undefined,
-                expiresAt,
-              });
-              if (topicKey) {
-                set((st) => ({ posts: [...st.posts, post] }));
-              } else {
-                set((st) => ({ posts: [...st.posts, post], accessPass: { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR } }));
-              }
-              return post.id;
-            } catch (e) {
-              console.warn('addPost failed', e);
-              return '';
+            const post = await be.addPost({
+              imageUri: imageUrl,
+              audioUri: audioUrl,
+              caption,
+              topicKey,
+              topicVisibility: topicKey ? get().topicVisibility : undefined,
+              expiresAt,
+            });
+            if (topicKey) {
+              set((st) => ({ posts: [...st.posts, post] }));
+            } else {
+              set((st) => ({ posts: [...st.posts, post], accessPass: { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR } }));
             }
+            return post.id;
           }
           const post: Post = {
             id: uid('p_'),
