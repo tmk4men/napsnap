@@ -5,7 +5,7 @@ import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
-import { CloseIcon, SearchIcon, TraceMark } from '../components/icons';
+import { CloseIcon, SearchIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { useStore } from '../store';
 import { hasSupabase } from '../config';
 import * as be from '../lib/backend';
@@ -132,7 +132,10 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
               <View key={p.id} style={styles.row}>
                 <Avatar user={p} size={44} />
                 <View style={{ flex: 1, marginLeft: space.md }}>
-                  <Text style={styles.name}>{p.displayName}</Text>
+                  <View style={styles.nameRow}>
+                    <Text style={styles.name}>{p.displayName}</Text>
+                    {p.isOfficial && <VerifiedBadge size={13} />}
+                  </View>
                   <Text style={styles.handle}>@{p.handle}</Text>
                 </View>
                 <Pressable
@@ -200,6 +203,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.hairline,
   },
   name: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.name },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   handle: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.handle, letterSpacing: 0.2 },
   followBtn: {
     borderRadius: radius.xs,

@@ -7,7 +7,7 @@ import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
-import { FootprintIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark } from '../components/icons';
+import { FootprintIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { shareInvite } from '../lib/share';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -91,7 +91,10 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
             </View>
           </Pressable>
           <View style={{ marginLeft: space.md, flex: 1 }}>
-            <Text style={styles.name}>{me?.displayName}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.name}>{me?.displayName}</Text>
+              {me?.isOfficial && <VerifiedBadge size={15} />}
+            </View>
             <View style={styles.handleRow}>
               <Text style={styles.handle}>@{me?.handle}</Text>
               <Pressable onPress={() => setEditProfile(true)} hitSlop={8} style={styles.editBtn}>
@@ -241,6 +244,7 @@ const styles = StyleSheet.create({
   shareNote: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   name: { color: colors.text, fontSize: font.title, fontWeight: '700', fontFamily: fonts.name },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 3 },
   handle: { color: colors.textDim, fontSize: font.body, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.2 },
   editBtn: {
