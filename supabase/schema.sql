@@ -152,47 +152,45 @@ drop policy if exists media_delete on storage.objects;
 create policy media_delete on storage.objects for delete to authenticated
   using (bucket_id = 'media' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- ============ 期限切れ投稿の自動掃除（DBを膨らませない肝）============
+-- ============ 期限切れ投稿の自動掃除（DBを膨らませない肝・R2対応版）============
 -- 方針：思い出（過去の自分の投稿）は端末ローカルにのみ保存する。
 -- よってサーバーは「期限切れの投稿は全部消す」でよい。
--- 投稿を消せば、足あと(views)・反応(reactions) は上の on delete cascade で一緒に消える
--- ＝ いちばん量が出る views が24h分しか残らず、DBが線形に膨らまない。
+-- 投稿を消せば、足あと(views)・反応(reactions) は cascade で連動削除。
+-- いちばん量が出る views が24h分しか残らず、DBが線形に膨らまない。
 --
--- pg_cron 拡張が必要（Supabase: Database → Extensions → pg_cron を ON）。
--- 下を Supabase の SQL Editor で1回実行するとスケジュール登録される（15分おき）。
+-- 仕組み：pg_cron が 15分おきに Edge Function `prune-expired` を HTTP で叩く。
+-- Edge Function 側で R2 / Supabase Storage のメディア本体を削除→ posts 行を delete。
+-- （SQL関数だと R2 にアクセスできないので Edge Function 経由が必須）
+--
+-- 事前準備：
+--   1) supabase functions deploy prune-expired
+--   2) この SQL を1回実行（拡張＋スケジュール登録）
 create extension if not exists pg_cron;
+create extension if not exists pg_net;
 
--- 掃除本体：①期限切れ投稿のメディア本体（画像/音声）を storage から削除 →
--- ②投稿行を削除（views / reactions は on delete cascade で連動削除）。
--- image_url/audio_url は公開URL。'/media/' 以降が storage.objects.name に一致する。
--- storage.objects を消すため security definer（所有ロール権限）で実行する。
-create or replace function public.napsnap_prune_expired()
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
+do $do$
 begin
-  delete from storage.objects o
-  using public.posts p
-  where p.expires_at < now()
-    and o.bucket_id = 'media'
-    and o.name in (
-      split_part(p.image_url, '/media/', 2),
-      split_part(coalesce(p.audio_url, ''), '/media/', 2)
-    );
+  if exists (select 1 from cron.job where jobname = 'napsnap-prune-expired') then
+    perform cron.unschedule('napsnap-prune-expired');
+  end if;
+end
+$do$;
 
-  delete from public.posts where expires_at < now();
-end;
-$$;
-
--- 二重登録を避けてから登録（再実行しても安全に）。
-select cron.unschedule('napsnap-prune-expired')
-  where exists (select 1 from cron.job where jobname = 'napsnap-prune-expired');
+-- <ANON_KEY> は Settings → API の anon public（公開鍵）を貼る。
+-- 同じ Supabase 内の Edge Function を叩くだけなのでこれで十分。
 select cron.schedule(
   'napsnap-prune-expired',
   '*/15 * * * *',
-  $$ select public.napsnap_prune_expired() $$
+  $cmd$
+  select net.http_post(
+    url := 'https://<PROJECT_REF>.supabase.co/functions/v1/prune-expired',
+    headers := jsonb_build_object(
+      'Content-Type','application/json',
+      'Authorization','Bearer <ANON_KEY>'
+    ),
+    body := '{}'::jsonb
+  )
+  $cmd$
 );
 
 -- ============ 反応数・足あと数の集計（denormalized counts）============
