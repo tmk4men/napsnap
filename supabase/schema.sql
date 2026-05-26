@@ -128,7 +128,25 @@ drop policy if exists media_delete on storage.objects;
 create policy media_delete on storage.objects for delete to authenticated
   using (bucket_id = 'media' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- ============ 任意: 期限切れ投稿の自動掃除（pg_cron が使えるプランで）============
--- 思い出（自分の通常投稿）は残したいので、ここでは「お題＝topic_key 付き」だけ掃除する例。
--- select cron.schedule('napsnap-prune-topics', '*/30 * * * *',
---   $$ delete from public.posts where topic_key is not null and expires_at < now() $$);
+-- ============ 期限切れ投稿の自動掃除（DBを膨らませない肝）============
+-- 方針：思い出（過去の自分の投稿）は端末ローカルにのみ保存する。
+-- よってサーバーは「期限切れの投稿は全部消す」でよい。
+-- 投稿を消せば、足あと(views)・反応(reactions) は上の on delete cascade で一緒に消える
+-- ＝ いちばん量が出る views が24h分しか残らず、DBが線形に膨らまない。
+--
+-- pg_cron 拡張が必要（Supabase: Database → Extensions → pg_cron を ON）。
+-- 下を Supabase の SQL Editor で1回実行するとスケジュール登録される（15分おき）。
+create extension if not exists pg_cron;
+
+-- 二重登録を避けてから登録（再実行しても安全に）。
+select cron.unschedule('napsnap-prune-expired')
+  where exists (select 1 from cron.job where jobname = 'napsnap-prune-expired');
+select cron.schedule(
+  'napsnap-prune-expired',
+  '*/15 * * * *',
+  $$ delete from public.posts where expires_at < now() $$
+);
+
+-- 補足：投稿のメディア本体（media バケットの画像/音声）は posts と FK で結ばれていないため
+-- 上の削除では消えない。ストレージ代は安いので当面は許容。将来コストが見えたら、
+-- 期限切れ posts の image_url/audio_url を辿って storage.objects も消す掃除を足す。
