@@ -63,7 +63,7 @@ export const copy = {
   emptyKeptSub: 'フィードでリアクションしたものが見返せる。',
 
   // お題（人物以外・毎日かわる共通のお題。モザイクなし・上下スワイプで何度でも）
-  topicKicker: '今日のお題',
+  topicKicker: '今日の見出し',
   topicJoin: 'このお題に出す',
   topicEmpty: 'まだ誰も出してない',
   topicEmptySub: '最初の1枚を、出してみる。',

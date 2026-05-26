@@ -8,7 +8,7 @@ import { captionFont, fonts } from '../lib/fonts';
 
 export function TopicNote({
   prompt,
-  kicker = '今日のお題',
+  kicker = '今日の見出し',
   style,
   children,
 }: {
