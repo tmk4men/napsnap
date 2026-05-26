@@ -206,8 +206,9 @@ export async function addPost(input: {
       caption: input.caption ?? null,
       audio_url: audioUrl,
       expires_at: new Date(input.expiresAt).toISOString(),
-      // お題投稿のみ反映。通常投稿は列既定（public）でも未使用なので影響なし。
-      topic_visibility: input.topicKey ? input.topicVisibility ?? 'public' : null,
+      // posts.topic_visibility は NOT NULL なので、通常投稿でも 'public' を入れる
+      // （通常投稿では未使用だが、制約違反を避ける）。お題投稿のみ実体的に意味を持つ。
+      topic_visibility: input.topicKey ? input.topicVisibility ?? 'public' : 'public',
     })
     .select('*')
     .single();
