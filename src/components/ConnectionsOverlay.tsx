@@ -86,7 +86,7 @@ export function ConnectionsOverlay({
                 <View style={{ flex: 1, marginLeft: space.md }}>
                   <View style={styles.nameRow}>
                     <Text style={styles.name}>{p.displayName}</Text>
-                    {p.isOfficial && <VerifiedBadge size={13} />}
+                    {p.isOfficial && <VerifiedBadge size={14} />}
                   </View>
                   <Text style={styles.handle}>@{p.handle}</Text>
                 </View>
