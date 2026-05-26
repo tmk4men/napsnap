@@ -112,10 +112,10 @@ export function TopicScreen({ nav }: { nav: Nav }) {
         <TopicNote prompt={topic.prompt} />
       </View>
 
-      {/* タブ（身内 / みんな）：中央揃え */}
+      {/* タブ（フォロー / おすすめ）：中央揃え */}
       <View style={styles.tabs}>
-        <TabBtn label="身内" count={known.length} active={section === 'known'} onPress={() => switchSection('known')} />
-        <TabBtn label="みんな" count={strangers.length} active={section === 'strangers'} onPress={() => switchSection('strangers')} />
+        <TabBtn label="フォロー" count={known.length} active={section === 'known'} onPress={() => switchSection('known')} />
+        <TabBtn label="おすすめ" count={strangers.length} active={section === 'strangers'} onPress={() => switchSection('strangers')} />
       </View>
 
       {/* 横ページャ：左=知ってる人、右=知らん人 */}
