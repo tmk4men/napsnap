@@ -180,8 +180,8 @@ export function TopicScreen({ nav }: { nav: Nav }) {
         </ScrollView>
       </View>
 
-      {/* リアクション（現在表示中のセクションの現在の投稿に対して） */}
-      {current && (
+      {/* リアクション（現在表示中の投稿に対して。自分の投稿には出さない） */}
+      {current && current.userId !== s.currentUserId && (
         <View style={[styles.reactFloat, { bottom: insets.bottom + space.lg }]} pointerEvents="box-none">
           <ReactionBar key={current.id} selected={mine} onReact={(t) => reactToTopic(current.id, t)} />
         </View>
