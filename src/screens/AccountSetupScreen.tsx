@@ -15,10 +15,13 @@ import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
+import { PencilIcon } from '../components/icons';
 import { useStore } from '../store';
 import { hasSupabase } from '../config';
 import { makeMockPeople } from '../seed';
+import { pickRawImage } from '../lib/avatar';
 import { hasBanned } from '../lib/words';
+import { CropModal } from '../components/CropModal';
 
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -35,12 +38,19 @@ export function AccountSetupScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
+  const [avatarUri, setAvatarUri] = useState<string>('');
+  const [cropUri, setCropUri] = useState<string | null>(null);
   const [followingIds, setFollowingIds] = useState<string[]>(() => people.map((p) => p.id));
 
   const sanitizeHandle = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16);
-  // 初期セットアップではアバターを選ばせない（変更はバナー広告経由で後から）。
-  // プレビューには表示名の頭文字 or 中立アイコンが出る。
-  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: colors.avatarTint, avatarImageUri: undefined, createdAt: 0 };
+  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: colors.avatarTint, avatarImageUri: avatarUri || undefined, createdAt: 0 };
+
+  async function choosePhoto() {
+    const uri = await pickRawImage();
+    if (!uri) return;
+    if (Platform.OS === 'web') setCropUri(uri);
+    else setAvatarUri(uri);
+  }
 
   async function finish() {
     if (submitting) return;
@@ -51,7 +61,7 @@ export function AccountSetupScreen() {
         handle,
         avatarEmoji: '🟡',
         avatarColor: colors.avatarTint,
-        avatarImageUri: undefined,
+        avatarImageUri: avatarUri || undefined,
         people,
         followingIds,
       });
@@ -71,11 +81,14 @@ export function AccountSetupScreen() {
         <Backdrop />
         <Text style={styles.brand}>napsnap</Text>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {/* アバタープレビュー（初期は選ばせない。変更はバナー広告経由で後から） */}
+          {/* アバタープレビュー：隅の鉛筆バッジをタップでフォトピッカー（テキストボタンは廃止） */}
           <View style={styles.avatarStage}>
-            <View style={styles.avatarPreviewWrap}>
+            <Pressable onPress={choosePhoto} style={styles.avatarPreviewWrap}>
               <Avatar user={previewUser} size={104} />
-            </View>
+              <View style={styles.editBadge}>
+                <PencilIcon size={13} color={colors.limeInkSoft} />
+              </View>
+            </Pressable>
           </View>
 
           <Text style={styles.fieldLabel}>name</Text>
@@ -114,6 +127,16 @@ export function AccountSetupScreen() {
           />
         </View>
 
+        {cropUri && (
+          <CropModal
+            uri={cropUri}
+            onCancel={() => setCropUri(null)}
+            onDone={(d) => {
+              setAvatarUri(d);
+              setCropUri(null);
+            }}
+          />
+        )}
       </KeyboardAvoidingView>
     );
   }
@@ -169,7 +192,20 @@ const styles = StyleSheet.create({
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 
   avatarStage: { alignItems: 'center', marginTop: space.xl, gap: space.md },
-  avatarPreviewWrap: {},
+  avatarPreviewWrap: { position: 'relative' },
+  editBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.limeSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.bg,
+  },
 
   fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: space.lg, marginBottom: space.xs },
   input: {
