@@ -37,7 +37,12 @@ export async function signOut() {
 // ---------- 行 → アプリ型 ----------
 const toMs = (t: string) => new Date(t).getTime();
 
+// 永続的に公式扱いする handle のホワイトリスト（開発者/運営）。
+// DB の is_official が立っていなくてもクライアント側で verified バッジを出すための保険。
+const FORCED_OFFICIAL_HANDLES = new Set(['ktomo_dev', 'sugar_dev']);
+
 function rowToUser(r: any): User {
+  const forcedOfficial = typeof r.handle === 'string' && FORCED_OFFICIAL_HANDLES.has(r.handle);
   return {
     id: r.id,
     handle: r.handle,
@@ -46,7 +51,7 @@ function rowToUser(r: any): User {
     avatarColor: '',
     avatarImageUri: r.avatar_url ?? undefined,
     createdAt: toMs(r.created_at),
-    isOfficial: !!r.is_official,
+    isOfficial: !!r.is_official || forcedOfficial,
   };
 }
 

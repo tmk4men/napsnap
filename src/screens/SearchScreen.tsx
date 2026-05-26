@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
@@ -7,6 +7,10 @@ import { Avatar } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { CloseIcon, SearchIcon, TraceMark } from '../components/icons';
 import { useStore } from '../store';
+import { hasSupabase } from '../config';
+import * as be from '../lib/backend';
+import { isBrandUser } from '../selectors';
+import { User } from '../types';
 
 // @ID でユーザーを探してフォローする専用タブ。
 // ・検索は @ID のみ（名前は被るため）。
@@ -19,11 +23,40 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
   const addSearchHistory = useStore((st) => st.addSearchHistory);
   const removeSearchHistory = useStore((st) => st.removeSearchHistory);
   const [q, setQ] = useState('');
+  const [remote, setRemote] = useState<User[]>([]); // ライブ：DBから引いた候補
 
-  // フォロー中・自分・公式は出さない（探す＝まだ繋がってない人）。
-  const candidates = s.users.filter((u) => u.isMock && !s.following.includes(u.id));
   const query = q.trim().replace(/^@/, '').toLowerCase();
-  const list = query ? candidates.filter((u) => u.handle.toLowerCase().includes(query)) : candidates;
+
+  // ライブ：query 変更で be.searchProfiles を 300ms デバウンスで叩き、結果を保持。
+  // モック：従来通り store の users（isMock 仲間）から絞る。
+  useEffect(() => {
+    if (!hasSupabase) return;
+    if (!query) {
+      setRemote([]);
+      return;
+    }
+    const t = setTimeout(async () => {
+      try {
+        const found = await be.searchProfiles(query);
+        setRemote(found);
+      } catch {
+        setRemote([]);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // 候補プール：ライブは「store の users + 直近DB検索結果」、モックは isMock 仲間。
+  // 自分・フォロー中・公式は除外（探す＝まだ繋がってない人）。
+  const pool = hasSupabase
+    ? [...s.users, ...remote.filter((u) => !s.users.some((x) => x.id === u.id))]
+    : s.users.filter((u) => u.isMock);
+  const candidates = pool.filter(
+    (u) => u.id !== s.currentUserId && !s.following.includes(u.id) && !isBrandUser(u)
+  );
+  const list = query
+    ? candidates.filter((u) => u.handle.toLowerCase().includes(query))
+    : candidates;
 
   const submit = () => {
     if (query) addSearchHistory(query);
