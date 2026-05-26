@@ -15,13 +15,10 @@ import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
 import { Avatar, GhostButton, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
-import { ImageIcon, PencilIcon } from '../components/icons';
 import { useStore } from '../store';
 import { hasSupabase } from '../config';
 import { makeMockPeople } from '../seed';
-import { pickRawImage } from '../lib/avatar';
 import { hasBanned } from '../lib/words';
-import { CropModal } from '../components/CropModal';
 
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
@@ -38,19 +35,12 @@ export function AccountSetupScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
-  const [avatarUri, setAvatarUri] = useState<string>('');
-  const [cropUri, setCropUri] = useState<string | null>(null);
   const [followingIds, setFollowingIds] = useState<string[]>(() => people.map((p) => p.id));
 
   const sanitizeHandle = (t: string) => t.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 16);
-  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: colors.avatarTint, avatarImageUri: avatarUri || undefined, createdAt: 0 };
-
-  async function choosePhoto() {
-    const uri = await pickRawImage();
-    if (!uri) return;
-    if (Platform.OS === 'web') setCropUri(uri);
-    else setAvatarUri(uri);
-  }
+  // 初期セットアップではアバターを選ばせない（変更はバナー広告経由で後から）。
+  // プレビューには表示名の頭文字 or 中立アイコンが出る。
+  const previewUser = { id: 'preview', handle, displayName: name, avatarEmoji: '🟡', avatarColor: colors.avatarTint, avatarImageUri: undefined, createdAt: 0 };
 
   async function finish() {
     if (submitting) return;
@@ -61,7 +51,7 @@ export function AccountSetupScreen() {
         handle,
         avatarEmoji: '🟡',
         avatarColor: colors.avatarTint,
-        avatarImageUri: avatarUri || undefined,
+        avatarImageUri: undefined,
         people,
         followingIds,
       });
@@ -81,18 +71,11 @@ export function AccountSetupScreen() {
         <Backdrop />
         <Text style={styles.brand}>napsnap</Text>
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {/* 大きいアバタープレビュー＋写真を選ぶ */}
+          {/* アバタープレビュー（初期は選ばせない。変更はバナー広告経由で後から） */}
           <View style={styles.avatarStage}>
-            <Pressable onPress={choosePhoto} style={styles.avatarPreviewWrap}>
+            <View style={styles.avatarPreviewWrap}>
               <Avatar user={previewUser} size={104} />
-              <View style={styles.editBadge}>
-                <PencilIcon size={13} color={colors.limeInkSoft} />
-              </View>
-            </Pressable>
-            <Pressable onPress={choosePhoto} style={({ pressed }) => [styles.choose, pressed && styles.chosePressed]}>
-              <ImageIcon size={16} color={colors.text} />
-              <Text style={styles.chooseText}>{avatarUri ? '写真を変える' : '写真を選ぶ'}</Text>
-            </Pressable>
+            </View>
           </View>
 
           <Text style={styles.fieldLabel}>name</Text>
@@ -131,16 +114,6 @@ export function AccountSetupScreen() {
           />
         </View>
 
-        {cropUri && (
-          <CropModal
-            uri={cropUri}
-            onCancel={() => setCropUri(null)}
-            onDone={(d) => {
-              setAvatarUri(d);
-              setCropUri(null);
-            }}
-          />
-        )}
       </KeyboardAvoidingView>
     );
   }
@@ -196,33 +169,7 @@ const styles = StyleSheet.create({
   sub: { color: colors.textDim, fontSize: font.body, marginTop: space.sm, lineHeight: font.body * 1.5 },
 
   avatarStage: { alignItems: 'center', marginTop: space.xl, gap: space.md },
-  avatarPreviewWrap: { position: 'relative' },
-  editBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: colors.limeSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: colors.bg,
-  },
-  choose: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'transparent',
-    borderRadius: radius.xs,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.text,
-  },
-  chosePressed: { backgroundColor: colors.surfaceSunken },
-  chooseText: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
+  avatarPreviewWrap: {},
 
   fieldLabel: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: space.lg, marginBottom: space.xs },
   input: {
