@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, rule, space, themeMode, toggleThemeMode } from '../theme';
@@ -44,9 +44,23 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const markViewed = useStore((st) => st.markViewed);
   const reactToPost = useStore((st) => st.reactToPost);
 
+  // ホームの「他人の投稿」は、見たぶんを次回以降は出さない。
+  // ただし「残した」タブ（=リアクションした投稿）は別ロジック（reactions）なので壊れない。
+  // 表示中にビュー記録で消えるとUXが崩れるので、HomeScreen マウント時のビュー集合を
+  // ref で固定し、このセッション中はそれだけで除外する。タブを離れて戻ると再マウント＝再スナップショット。
+  const seenSnapshot = useRef<Set<string> | null>(null);
+  if (seenSnapshot.current === null) {
+    seenSnapshot.current = new Set(
+      s.views.filter((v) => v.viewerId === s.currentUserId).map((v) => v.postId)
+    );
+  }
+
   // ホームに並べる投稿＝フォロー中の他人投稿（古い順）＋自分の投稿（古い順）の連結。
   // 別ページ（FeedScreen）に飛ばさず、ここでまとめて縦スワイプで全部見れるように。
-  const others = useMemo(() => followedActivePosts(s), [s.posts, s.following, s.currentUserId]);
+  const others = useMemo(
+    () => followedActivePosts(s).filter((p) => !seenSnapshot.current!.has(p.id)),
+    [s.posts, s.following, s.currentUserId]
+  );
   const myActive = useMemo(
     () =>
       s.posts
