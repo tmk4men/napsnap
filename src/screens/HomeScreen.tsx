@@ -95,7 +95,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         {/* 題字＋日付はベタ塗りの帯（ライト＝黒地に白／ダーク＝白地に黒）。 */}
         <View style={styles.titleBlock}>
           <View style={styles.titleRow}>
-            <Text style={styles.brand}>napsnap</Text>
+            <Text style={styles.brand}>
+              nap<Text style={styles.brandAccent}>s</Text>nap
+            </Text>
             <View style={styles.dateline}>
               <Text style={styles.dateText}>{dateline}</Text>
             </View>
@@ -324,6 +326,8 @@ const styles = StyleSheet.create({
   titleBlock: { backgroundColor: colors.text, paddingHorizontal: space.md, paddingTop: 7, paddingBottom: 9 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   brand: { fontSize: 38, fontFamily: fonts.brand, color: colors.bg, letterSpacing: -1, includeFontPadding: false },
+  // 「napsnap」の真ん中の s だけ薄い黄緑でワンポイント。白黒ベースの紙面に小さなアクセント。
+  brandAccent: { color: '#B8E27A' },
   dateline: { alignItems: 'flex-end', paddingBottom: 4 },
   dateText: { color: colors.bg, fontSize: 11, fontFamily: fonts.handle, letterSpacing: 0.5, opacity: 0.85 },
   // 二重罫＝太罫＋紙の隙間＋細罫
