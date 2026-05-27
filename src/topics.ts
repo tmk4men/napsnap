@@ -19,14 +19,8 @@ export const TOPICS: Topic[] = [
   { key: 'ashimoto', prompt: '足もと', seed: 'feet' },
   { key: 'oyatsu', prompt: 'おやつ', seed: 'snack' },
   { key: 'mado', prompt: '窓の外', seed: 'window' },
-  { key: 'reizoko', prompt: '冷蔵庫', seed: 'fridge' },
-  { key: 'gohobi', prompt: 'ごほうび', seed: 'reward' },
   { key: 'temoto', prompt: 'いまの手もと', seed: 'hand' },
-  { key: 'shoumona', prompt: 'しょうもないやつ', seed: 'silly' },
-  { key: 'iro', prompt: 'いまの気分を色で', seed: 'color' },
   { key: 'yashoku', prompt: '深夜のおとも', seed: 'midnight' },
-  { key: 'omotomo', prompt: '作業のおとも', seed: 'work' },
-  { key: 'konbini', prompt: 'コンビニ戦利品', seed: 'conv' },
 ];
 
 // お題に出した投稿に添える、短い手書きの一言（チェキ下余白用）。デモのシード用。
