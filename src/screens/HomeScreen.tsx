@@ -54,7 +54,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const activity = useMemo(() => activityItems(s), [s.posts, s.views, s.reactions, s.following, s.currentUserId, s.notifyPrefs]);
   const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length + (topicNew ? 1 : 0);
 
-  const count = queue.length;
   const followedLatest = queue[0]; // 残りが短い順の先頭
   // ヒーロー：自分／フォロー中の中で「残りが短い」投稿を出す
   const heroPost = [myActive[0], followedLatest].filter((p): p is Post => !!p).sort((a, b) => a.expiresAt - b.expiresAt)[0];
@@ -214,7 +213,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       {/* 下部CTA：自分が出した後・他人の投稿あり ＝ 上スワイプで見る（ボタンは廃止）。
           それ以外（未投稿 / 全部見終わった）＝ 撮るボタン。 */}
       <FadeIn delay={220} dy={12} style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
-        {open && count > 0 ? (
+        {open && queue.length > 0 ? (
           <SwipeUpToFeed onTrigger={nav.openFeed} />
         ) : (
           <ShootButton block onPress={() => nav.openCamera()} />

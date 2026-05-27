@@ -64,7 +64,6 @@ export const copy = {
   topicJoin: 'このお題に出す',
   topicEmpty: 'まだ誰も出してない',
   topicEmptySub: '最初の1枚を、出してみる。',
-  topicSwipeHint: '↑↓ めくる',
 
   // 自分
   emptyMine: 'まだ出してない',
