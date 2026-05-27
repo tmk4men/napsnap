@@ -122,6 +122,9 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
           <Text style={styles.avatarLockNote}>プロフ画像はあと{avatarLockHours}時間は変えられない</Text>
         )}
 
+        {/* カレンダー（過去の自分の投稿を日別に。タップで MemoryViewer 起動） */}
+        <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
+
         {/* 投稿（24h以内） */}
         <Text style={styles.sectionLabel}>投稿</Text>
         {mine.length === 0 ? (
@@ -166,10 +169,6 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
             ))}
           </ScrollView>
         )}
-
-        {/* カレンダー（過去の自分の投稿を日別に。タップで MemoryViewer 起動） */}
-        <View style={{ height: space.lg }} />
-        <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
 
         <View style={{ height: space.xl }} />
       </ScrollView>
@@ -243,7 +242,7 @@ const styles = StyleSheet.create({
   },
   shareNote: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
   avatarLockNote: { color: colors.textFaint, fontSize: font.small, fontFamily: fonts.ui, marginTop: -space.sm, marginBottom: space.md },
-  name: { color: colors.text, fontSize: font.title, fontWeight: '700', fontFamily: fonts.name },
+  name: { color: colors.text, fontSize: 22, fontWeight: '700', fontFamily: fonts.name },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   handleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: 3 },
   handle: { color: colors.textDim, fontSize: font.body, fontWeight: '500', fontFamily: fonts.handle, letterSpacing: 0.2 },
