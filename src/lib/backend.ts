@@ -158,15 +158,32 @@ export async function listFollowing(): Promise<string[]> {
 
 // 自分をフォローしている人（アクティビティ通知に「○○ がフォローした」を出すため）。
 // follows_read RLS は `follower_id = auth.uid() or following_id = auth.uid()` で自分の関わりを読める。
+// 通知に必要なのは「新しいフォロー」だけなので、created_at の降順で 50 件に絞る。
+// フォロワー数が増えてもサーバから引く量を一定に保つ。
 export async function listFollowers(): Promise<{ followerId: string; followedAt: number }[]> {
   const id = await myId();
   if (!id) return [];
   const { data, error } = await db()
     .from('follows')
     .select('follower_id, created_at')
-    .eq('following_id', id);
+    .eq('following_id', id)
+    .order('created_at', { ascending: false })
+    .limit(50);
   if (error) throw error;
   return (data ?? []).map((r: any) => ({ followerId: r.follower_id, followedAt: toMs(r.created_at) }));
+}
+
+// 自分のフォロワー総数（プロフィール表示用）。list 側は 50 件に絞っているので
+// 件数はインデックス COUNT で別途取る。head: true で実データは持って来ない＝軽い。
+export async function countFollowers(): Promise<number> {
+  const id = await myId();
+  if (!id) return 0;
+  const { count, error } = await db()
+    .from('follows')
+    .select('*', { count: 'exact', head: true })
+    .eq('following_id', id);
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export async function follow(targetId: string) {

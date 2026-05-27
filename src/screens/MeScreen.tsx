@@ -107,7 +107,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
                 <Text style={styles.connLabel}>フォロー</Text>
               </Pressable>
               <Pressable onPress={() => setConn('followers')} style={styles.connStat} hitSlop={6}>
-                <Text style={styles.connNum}>{followers.length}</Text>
+                <Text style={styles.connNum}>{Math.max(s.followersTotal ?? 0, followers.length)}</Text>
                 <Text style={styles.connLabel}>フォロワー</Text>
               </Pressable>
             </View>

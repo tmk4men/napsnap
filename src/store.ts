@@ -33,7 +33,8 @@ interface PersistedState {
   currentUserId: string | null;
   users: User[];
   following: string[];
-  followers: { followerId: string; followedAt: number }[]; // 自分をフォローしている人＋時刻（通知用）
+  followers: { followerId: string; followedAt: number }[]; // 自分をフォローしている人＋時刻（直近50人・通知用）
+  followersTotal: number; // フォロワー総数（プロフィール数字用）
   posts: Post[];
   views: ViewRecord[];
   reactions: Reaction[];
@@ -81,6 +82,7 @@ const initial: PersistedState = {
   users: [],
   following: [],
   followers: [],
+  followersTotal: 0,
   posts: [],
   views: [],
   reactions: [],
@@ -120,6 +122,7 @@ function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap:
     users: snap.users,
     following: snap.following,
     followers: snap.followers,
+    followersTotal: snap.followersTotal,
     posts: snap.posts,
     reactions: snap.reactions,
     views: [...snap.views, ...myLocalViews],
@@ -546,6 +549,7 @@ export const useStore = create<Store>()(
         users: s.users,
         following: s.following,
         followers: s.followers,
+        followersTotal: s.followersTotal,
         posts: s.posts,
         views: s.views,
         reactions: s.reactions,

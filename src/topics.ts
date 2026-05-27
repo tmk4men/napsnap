@@ -19,7 +19,6 @@ export const TOPICS: Topic[] = [
   { key: 'ashimoto', prompt: '足もと', seed: 'feet' },
   { key: 'oyatsu', prompt: 'おやつ', seed: 'snack' },
   { key: 'mado', prompt: '窓の外', seed: 'window' },
-  { key: 'temoto', prompt: '手もと', seed: 'hand' },
   { key: 'yashoku', prompt: '深夜のおとも', seed: 'midnight' },
 ];
 
