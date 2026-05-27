@@ -5,9 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { ChekiCard } from './ChekiCard';
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SpeakerOnIcon } from './icons';
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SaveDeviceIcon, SpeakerOnIcon } from './icons';
 import { Post } from '../types';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
+import { saveChekiToDevice } from '../lib/share';
 
 function fmtDate(ts: number): string {
   const d = new Date(ts);
@@ -19,6 +20,8 @@ function fmtDate(ts: number): string {
 export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const [i, setI] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
   const idx = Math.min(i, posts.length - 1);
   const post = posts[idx];
 
@@ -36,6 +39,17 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
     } catch {}
   };
 
+  const saveToDevice = async () => {
+    if (saving || !post) return;
+    setSaving(true);
+    const ok = await saveChekiToDevice(post);
+    setSaving(false);
+    if (ok) {
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 1400);
+    }
+  };
+
   if (!post) return null;
 
   return (
@@ -49,14 +63,28 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
             {idx + 1} / {posts.length}
           </Text>
         )}
-        {hasSound ? (
-          <Pressable onPress={playSound} style={styles.iconBtn} hitSlop={8}>
-            <SpeakerOnIcon size={18} color={colors.text} />
+        <View style={styles.topRight}>
+          {hasSound && (
+            <Pressable onPress={playSound} style={styles.iconBtn} hitSlop={8}>
+              <SpeakerOnIcon size={18} color={colors.text} />
+            </Pressable>
+          )}
+          <Pressable
+            onPress={saveToDevice}
+            disabled={saving}
+            style={[styles.iconBtn, saving && { opacity: 0.5 }]}
+            hitSlop={8}
+            accessibilityLabel="端末に保存"
+          >
+            <SaveDeviceIcon size={18} color={colors.text} />
           </Pressable>
-        ) : (
-          <View style={{ width: 36 }} />
-        )}
+        </View>
       </View>
+      {savedFlash && (
+        <View pointerEvents="none" style={styles.toast}>
+          <Text style={styles.toastText}>保存しました</Text>
+        </View>
+      )}
 
       <View style={styles.stage} onLayout={(e) => setStageW(e.nativeEvent.layout.width)}>
         <Pressable style={styles.center} onPress={playSound}>
@@ -104,6 +132,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   counter: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
+  topRight: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  toast: {
+    position: 'absolute',
+    top: '50%',
+    alignSelf: 'center',
+    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
+    borderColor: colors.hairline,
+    paddingHorizontal: space.md,
+    paddingVertical: 10,
+  },
+  toastText: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
   stage: { flex: 1, paddingHorizontal: space.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   bottom: { paddingHorizontal: space.lg, alignItems: 'center', gap: space.sm },

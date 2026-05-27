@@ -215,7 +215,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           それ以外（未投稿 / 全部見終わった）＝ 撮るボタン。 */}
       <FadeIn delay={220} dy={12} style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
         {open && count > 0 ? (
-          <SwipeUpToFeed count={count} onTrigger={nav.openFeed} />
+          <SwipeUpToFeed onTrigger={nav.openFeed} />
         ) : (
           <ShootButton block onPress={() => nav.openCamera()} />
         )}
@@ -260,7 +260,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
 // 「上スワイプで他人の投稿を見る」ヒント。タップでは反応せず、上方向にスワイプしたときだけ
 // 発火する（ユーザーから「見るボタンは撤廃。スワイプだけで見れるように」の要望）。
-function SwipeUpToFeed({ count, onTrigger }: { count: number; onTrigger: () => void }) {
+function SwipeUpToFeed({ onTrigger }: { onTrigger: () => void }) {
   const dy = useRef(new Animated.Value(0)).current;
   const triggeredRef = useRef(false);
   const responder = useRef(
@@ -299,7 +299,6 @@ function SwipeUpToFeed({ count, onTrigger }: { count: number; onTrigger: () => v
       style={[styles.swipeHint, { transform: [{ translateY: Animated.add(dy, bobY) }] }]}
     >
       <ChevronUpIcon size={22} color={colors.textDim} />
-      <Text style={styles.swipeHintText}>↑ 上にスワイプで他の人の投稿（{count}）</Text>
     </Animated.View>
   );
 }
@@ -309,15 +308,7 @@ const styles = StyleSheet.create({
   swipeHint: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
     paddingVertical: space.sm,
-  },
-  swipeHintText: {
-    color: colors.textDim,
-    fontSize: font.small,
-    fontWeight: '700',
-    fontFamily: fonts.ui,
-    letterSpacing: 0.2,
   },
 
   // マストヘッド

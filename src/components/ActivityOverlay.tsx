@@ -13,7 +13,7 @@ import { NotifySettingsOverlay } from './NotifySettingsOverlay';
 function lineFor(item: ActivityItem): string {
   const name = item.user?.displayName ?? '友達';
   if (item.kind === 'follow') return `${name} にフォローされた`;
-  if (item.user?.isOfficial) return `${name} が投稿した`;
+  if (item.kind === 'post') return `${name} が投稿した`;
   if (item.kind === 'react') return `${name} が反応した`;
   if (item.kind === 'view') return `${name} が見た`;
   return `${name} が痕跡を残した`;

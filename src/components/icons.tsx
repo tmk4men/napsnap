@@ -444,6 +444,17 @@ export function ChevronDownIcon({ size = 18, color = colors.text }: IconProps) {
   );
 }
 
+// --- 端末に保存（チェキの写真をローカル保存）---
+export function SaveDeviceIcon({ size = 20, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M12 3v12" stroke={color} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M7 10l5 5 5-5" stroke={color} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <Path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke={color} strokeWidth={2.2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 // --- 上向き矢印（「上スワイプで見る」のヒント） ---
 export function ChevronUpIcon({ size = 18, color = colors.text }: IconProps) {
   return (

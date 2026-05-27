@@ -55,6 +55,27 @@ export async function shareInvite(handle: string): Promise<ShareResult> {
 // 自分の投稿のシェア用＝SNSへの外部流入経路。napsnapロゴをフッタに焼き込む。
 // Web 限定（ネイティブは将来 react-native-view-shot 等で対応）。
 
+// チェキを端末に保存（ダウンロード）。共有シートを経由せず、純粋に保存だけ。
+// Web 限定（ネイティブはまだチェキ合成に対応していない＝falseを返す）。
+export async function saveChekiToDevice(post: Post): Promise<boolean> {
+  if (Platform.OS !== 'web') return false;
+  const blob = await composeChekiPng(post);
+  if (!blob) return false;
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = (globalThis as any).document.createElement('a');
+    a.href = url;
+    a.download = `napsnap-${post.id.slice(0, 8)}.png`;
+    (globalThis as any).document.body.appendChild(a);
+    a.click();
+    (globalThis as any).document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function shareCheki(post: Post): Promise<ShareResult> {
   if (Platform.OS !== 'web') return 'none'; // ネイティブは未対応
   const blob = await composeChekiPng(post);
