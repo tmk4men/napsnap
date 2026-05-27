@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   brand: { fontSize: 38, fontFamily: fonts.brand, color: colors.bg, letterSpacing: -1, includeFontPadding: false },
   // 「napsnap」の真ん中の s だけ薄い黄緑でワンポイント。白黒ベースの紙面に小さなアクセント。
-  brandAccent: { color: '#B8E27A' },
+  brandAccent: { color: '#D6E66B' },
   dateline: { alignItems: 'flex-end', paddingBottom: 4 },
   dateText: { color: colors.bg, fontSize: 11, fontFamily: fonts.handle, letterSpacing: 0.5, opacity: 0.85 },
   // 二重罫＝太罫＋紙の隙間＋細罫
