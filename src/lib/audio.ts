@@ -1,8 +1,13 @@
 import { Platform } from 'react-native';
 import { Post } from '../types';
 
-// シャッター押下直後に録音する秒数（待ちの体感を短く＝1.8秒）。ゲージのアニメ/停止タイマーも連動。
-export const RECORD_SECONDS = 1.8;
+// シャッター押下「後」に録音し続ける秒数。プレビュー開いた瞬間からローリング録音しているので、
+// 押した瞬間（T）の 1 秒前から +1.5 秒後までを切り出す＝合計 2.5 秒の音が乗る（Live Photo 風）。
+// ここの値は「後ろ側」の窓だけ。前側 1 秒は audioTrim 呼び出し側で固定。
+export const POST_SHUTTER_SECONDS = 1.5;
+// アクティビティの「録音中」ゲージ等が参照する旧名。撮影中UIの長さ＝後ろの窓と同じにする。
+export const RECORD_SECONDS = POST_SHUTTER_SECONDS;
+export const PRE_SHUTTER_SECONDS = 1.0;
 
 // --- デモ用の環境音生成 ---------------------------------------------------
 // バックエンドが無いため、モック友達の投稿には合成した環境音（やわらかいノイズ）を

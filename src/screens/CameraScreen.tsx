@@ -17,7 +17,8 @@ import { Waveform } from '../components/Waveform';
 import { detectFacesInVideo, preloadDetector, preloadVideoDetector } from '../lib/faceCheck';
 import { Nav } from '../navigation/nav';
 import { demoCapture } from '../lib/images';
-import { RECORD_SECONDS } from '../lib/audio';
+import { POST_SHUTTER_SECONDS, PRE_SHUTTER_SECONDS, RECORD_SECONDS } from '../lib/audio';
+import { trimAudio } from '../lib/audioTrim';
 import { topicByKey } from '../topics';
 
 type Phase = 'live' | 'recording';
@@ -52,6 +53,10 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
   const [faceLive, setFaceLive] = useState(false); // ライブ映像に顔が写っている＝シャッター無効
   const progress = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // ローリング録音の開始時刻（epoch ms）。プレビュー起動と同時に走らせ、シャッター時刻 T を基準に
+  // [T - 1s, T + 1.5s] でトリムするのに使う。録音が始まる前は null。
+  const recStartedAtRef = useRef<number | null>(null);
+  const rollingTriedRef = useRef(false);
 
   useEffect(() => {
     // 顔検知モデルを先読みしてプレビューの待ちを減らす（静止画用＋ライブ用）
@@ -106,54 +111,59 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
       try {
         if (recorder.isRecording) recorder.stop();
       } catch {}
+      // 退出時にオーディオセッションをリセット。次回カメラ起動が録音モードのまま動かない問題対策。
+      setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => {});
     };
   }, []);
 
   const granted = !!permission?.granted;
 
-  async function startCapture(photoUri: string) {
-    if (phase !== 'live') return;
-    setFrozenUri(photoUri);
-    setPhase('recording');
-
-    // 待ちの体感をなくす：固定画面に切り替えた瞬間にゲージと締切タイマーを走らせ、
-    // 録音の準備（権限／audioMode／prepare）は裏で進める。準備が間に合った分だけ音が乗る。
-    setWithSound(true);
-    progress.setValue(0);
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: RECORD_SECONDS * 1000,
-      useNativeDriver: false,
-    }).start();
-
-    const rec = { active: false };
+  // カメラ＆マイクの両方が許可された瞬間からローリング録音を開始する。
+  // Live Photo 風に「シャッター前の音」を残すため、撮影開始のトリガを待たない。
+  useEffect(() => {
+    if (!granted || !micGranted) return;
+    if (rollingTriedRef.current) return;
+    rollingTriedRef.current = true;
+    let alive = true;
     (async () => {
-      let micOk = micGranted;
-      if (!micOk) {
-        try {
-          const r = await requestRecordingPermissionsAsync();
-          micOk = r.granted;
-          setMicGranted(r.granted);
-        } catch {}
-      }
-      if (!micOk) {
-        setWithSound(false);
-        return;
-      }
       try {
         await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
         await recorder.prepareToRecordAsync();
+        if (!alive) return;
         recorder.record();
-        rec.active = true;
-      } catch {
-        rec.active = false;
-        setWithSound(false);
+        recStartedAtRef.current = Date.now();
+      } catch (e) {
+        console.warn('rolling rec start failed', e);
+        if (alive) setWithSound(false);
       }
     })();
+    return () => {
+      alive = false;
+    };
+  }, [granted, micGranted]);
+
+  async function startCapture(photoUri: string) {
+    if (phase !== 'live') return;
+    const T = Date.now();
+    setFrozenUri(photoUri);
+    setPhase('recording');
+
+    // 録音は既にプレビュー開始時から走っている前提。マイクが拒否されている／開始失敗のときは withSound=false。
+    const hasMic = micGranted && recStartedAtRef.current !== null;
+    setWithSound(hasMic);
+    progress.setValue(0);
+    if (hasMic) {
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: POST_SHUTTER_SECONDS * 1000,
+        useNativeDriver: false,
+      }).start();
+    }
 
     timeoutRef.current = setTimeout(async () => {
       let audioUri: string | undefined;
-      if (rec.active) {
+      const recStart = recStartedAtRef.current;
+      if (hasMic && recStart !== null && recorder.isRecording) {
         try {
           await recorder.stop();
           audioUri = recorder.uri ?? undefined;
@@ -162,8 +172,20 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
       try {
         await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
       } catch {}
+      // 切り出し範囲：録音先頭(0)を超えない範囲で [T-1s, T+1.5s]。
+      // カメラ開いて即シャッターのときは pre-roll が短くなる＝取れた分だけ採用。
+      if (audioUri && recStart !== null) {
+        const startSec = Math.max(0, (T - recStart) / 1000 - PRE_SHUTTER_SECONDS);
+        const endSec = (T - recStart) / 1000 + POST_SHUTTER_SECONDS;
+        try {
+          const trimmed = await trimAudio(audioUri, startSec, endSec);
+          audioUri = trimmed.uri;
+        } catch (e) {
+          console.warn('audio trim failed, using full clip', e);
+        }
+      }
       nav.onCaptured(photoUri, audioUri);
-    }, RECORD_SECONDS * 1000);
+    }, POST_SHUTTER_SECONDS * 1000);
   }
 
   async function shoot() {
