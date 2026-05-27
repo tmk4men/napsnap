@@ -181,7 +181,7 @@ export function PreviewScreen({
             <PostArrowIcon size={28} color={canPost ? colors.limeInk : colors.textFaint} />
           </Pressable>
         )}
-        {posting && <Text style={styles.postingHint}>送ってる…</Text>}
+        {posting && <Text style={styles.postingHint}>送信中…</Text>}
         {postError && <Text style={styles.postErrorText}>{postError}</Text>}
         {canRetake && !hasFace && (
           <GhostButton label="撮り直す（あと1回）" onPress={nav.retake} style={{ marginTop: space.xs }} />

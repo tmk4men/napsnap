@@ -210,14 +210,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         )}
       </View>
 
-      {/* 下部CTA：自分が出した後・他人の投稿あり ＝ 上スワイプで見る（ボタンは廃止）。
-          それ以外（未投稿 / 全部見終わった）＝ 撮るボタン。 */}
+      {/* 下部CTA：撮るボタンは常に出す。他人の投稿があるときは上に矢印（上スワイプで見る）を重ねる。 */}
       <FadeIn delay={220} dy={12} style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
-        {open && queue.length > 0 ? (
-          <SwipeUpToFeed onTrigger={nav.openFeed} />
-        ) : (
-          <ShootButton block onPress={() => nav.openCamera()} />
-        )}
+        {open && queue.length > 0 && <SwipeUpToFeed onTrigger={nav.openFeed} />}
+        <ShootButton block onPress={() => nav.openCamera()} />
       </FadeIn>
 
       {showActivity && (
