@@ -262,8 +262,6 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
         <View style={{ width: 36 }} />
       </View>
 
-      <View pointerEvents="none" style={styles.frame} />
-
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.lg }]}>
         {faceLive && (
           <View style={styles.faceWarn}>
@@ -364,20 +362,6 @@ const styles = StyleSheet.create({
   },
   guideDot: { width: 6, height: 6, borderRadius: 0, backgroundColor: colors.lime },
   guideText: { color: colors.onMedia, fontSize: font.small, fontWeight: '800' },
-  frame: {
-    position: 'absolute',
-    top: '24%',
-    bottom: '24%',
-    left: '10%',
-    right: '10%',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.25)',
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingBottom: space.md,
-  },
-  frameHint: { color: colors.onMediaDim, fontSize: font.small, fontWeight: '600' },
   bottom: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', gap: space.sm },
   shutterRow: { width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   shutterOuter: {
