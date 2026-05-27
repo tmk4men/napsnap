@@ -18,7 +18,6 @@ export const TOPICS: Topic[] = [
   { key: 'desk', prompt: '机の上', seed: 'desk' },
   { key: 'ashimoto', prompt: '足もと', seed: 'feet' },
   { key: 'oyatsu', prompt: 'おやつ', seed: 'snack' },
-  { key: 'mado', prompt: '窓の外', seed: 'window' },
 ];
 
 // お題に出した投稿に添える、短い手書きの一言（チェキ下余白用）。デモのシード用。
