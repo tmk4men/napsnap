@@ -34,6 +34,15 @@ function loadLib(): Promise<any> {
   return libPromise;
 }
 
+// BlazeFace は丸い物体（カップ・皿・果物・電灯…）に対して 0.5 でも高スコアを返しがち。
+// 静止画(投稿前ブロック)は強めに（0.78）、ライブ(シャッター無効化)はやや控えめ（0.72）。
+// 数値は検証で詰める：低すぎると誤検出、高すぎると小さい横顔を見逃す。
+const FACE_CONF_IMAGE = 0.78;
+const FACE_CONF_VIDEO = 0.72;
+// 小さい誤検出（カップの蓋・遠くのライト等）を除く＝フレーム短辺に対する顔の最小比率。
+// 自撮り距離の顔は短辺 15% 以上を占めるのが普通。
+const MIN_FACE_RATIO = 0.13;
+
 async function getDetector(): Promise<any> {
   if (detectorPromise) return detectorPromise;
   detectorPromise = (async () => {
@@ -42,7 +51,7 @@ async function getDetector(): Promise<any> {
     return FaceDetector.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: MODEL },
       runningMode: 'IMAGE',
-      minDetectionConfidence: 0.5,
+      minDetectionConfidence: FACE_CONF_IMAGE,
     });
   })();
   return detectorPromise;
@@ -57,10 +66,28 @@ async function getVideoDetector(): Promise<any> {
     return FaceDetector.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: MODEL },
       runningMode: 'VIDEO',
-      minDetectionConfidence: 0.5,
+      minDetectionConfidence: FACE_CONF_VIDEO,
     });
   })();
   return videoDetectorPromise;
+}
+
+// 検出結果から「顔として扱う」ものだけを残す：信頼度＋短辺比率でフィルタ。
+function countValidFaces(detections: any[], frameW: number, frameH: number, minConf: number): number {
+  if (!detections?.length) return 0;
+  const minSide = Math.min(frameW, frameH) * MIN_FACE_RATIO;
+  let n = 0;
+  for (const d of detections) {
+    const score = d?.categories?.[0]?.score ?? 0;
+    const bbox = d?.boundingBox;
+    if (!bbox) continue;
+    if (score < minConf) continue;
+    const w = bbox.width ?? 0;
+    const h = bbox.height ?? 0;
+    if (Math.min(w, h) < minSide) continue;
+    n++;
+  }
+  return n;
 }
 
 // カメラ起動時に動画検知器を先読み（Webのみ）。
@@ -70,13 +97,14 @@ export function preloadVideoDetector() {
 }
 
 // ライブの <video> 要素から顔の数を返す（撮影前のシャッター制御用）。検知不能時は 0。
+// 信頼度＋最小サイズで誤検出（丸い物体）を除外する。
 export async function detectFacesInVideo(video: any, tsMs: number): Promise<number> {
   if (!WEB || !video) return 0;
   try {
     if (video.readyState < 2 || !video.videoWidth) return 0; // まだ描画前
     const d = await getVideoDetector();
     const res = d.detectForVideo(video, tsMs);
-    return res?.detections?.length ?? 0;
+    return countValidFaces(res?.detections ?? [], video.videoWidth, video.videoHeight, FACE_CONF_VIDEO);
   } catch {
     return 0;
   }
@@ -112,7 +140,9 @@ export async function detectFaces(uri: string): Promise<FaceResult> {
     const detector = await getDetector();
     const img = await loadImage(uri);
     const res = detector.detect(img);
-    return { ok: true, faces: res?.detections?.length ?? 0 };
+    const w = img.naturalWidth ?? img.width ?? 0;
+    const h = img.naturalHeight ?? img.height ?? 0;
+    return { ok: true, faces: countValidFaces(res?.detections ?? [], w, h, FACE_CONF_IMAGE) };
   } catch {
     return { ok: false, faces: 0 };
   }
