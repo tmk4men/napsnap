@@ -21,6 +21,7 @@ export function NotifySettingsOverlay({ onClose }: { onClose: () => void }) {
     { kind: 'react', label: 'リアクション', sub: '自分の投稿に反応がついたとき' },
     { kind: 'post', label: '投稿', sub: 'フォローしている人が投稿したとき' },
     { kind: 'view', label: '閲覧', sub: '自分の投稿が見られたとき' },
+    { kind: 'topic', label: 'お題', sub: 'お題が更新されたとき' },
   ];
 
   return (

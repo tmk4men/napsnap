@@ -39,7 +39,9 @@ export function ActivityOverlay({
   const insets = useSafeAreaInsets();
   const following = useStore((s) => s.following);
   const toggleFollow = useStore((s) => s.toggleFollow);
+  const notifyTopic = useStore((s) => s.notifyPrefs.topic);
   const [showNotifySettings, setShowNotifySettings] = useState(false);
+  const showTopic = !!topicPrompt && notifyTopic;
   return (
     <FadeIn style={styles.container} dy={16} duration={220}>
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
@@ -59,7 +61,7 @@ export function ActivityOverlay({
       </View>
 
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: insets.bottom + space.xl }} showsVerticalScrollIndicator={false}>
-        {!!topicPrompt && (
+        {showTopic && (
           <Pressable onPress={onOpenTopic} style={({ pressed }) => [styles.topicNotice, pressed && { opacity: 0.92 }]}>
             <View style={styles.topicIcon}>
               <NoteIcon size={20} color={colors.limeInk} filled />

@@ -92,7 +92,7 @@ const initial: PersistedState = {
   topicSeenDay: -1,
   searchHistory: [],
   topicVisibility: 'public',
-  notifyPrefs: { follow: true, react: true, post: true, view: true },
+  notifyPrefs: { follow: true, react: true, post: true, view: true, topic: true },
 };
 
 // ライブのスナップショットをローカル state に反映。
@@ -561,7 +561,15 @@ export const useStore = create<Store>()(
       }),
       // 既存の保存データを消さずに移行する。新フィールドは初期値で補う（公式アカウントの
       // 後付けは復帰時の ensureOfficialFollowed で行う＝確実・冪等）。
-      migrate: (persisted): PersistedState => ({ ...initial, ...(persisted as object) } as PersistedState),
+      // notifyPrefs は新キーが増えても既存ユーザーが「未設定＝オフ」にならないよう浅マージで補う。
+      migrate: (persisted): PersistedState => {
+        const p = (persisted ?? {}) as Partial<PersistedState>;
+        return {
+          ...initial,
+          ...p,
+          notifyPrefs: { ...initial.notifyPrefs, ...(p.notifyPrefs ?? {}) },
+        };
+      },
     }
   )
 );

@@ -34,7 +34,8 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const open = isPassOpen(s);
   const me = currentUser(s);
   const topic = todaysTopic();
-  const topicNew = topicUnseen(s); // 今日のお題をまだ見ていない＝通知あり
+  // 今日のお題をまだ見ていない＝通知あり。ただし通知設定でお題がオフなら出さない。
+  const topicNew = topicUnseen(s) && s.notifyPrefs.topic;
 
   // 題字横の日付（号外のデートライン）。
   const now = new Date();

@@ -55,8 +55,8 @@ export interface Post {
 export type TopicVisibility = 'public' | 'followers';
 
 // 通知の種類（アクティビティ一覧に出すかどうかをユーザーが個別にオンオフできる）。
-// follow=フォローされた / react=自分の投稿に反応 / post=他人の新規投稿 / view=自分の投稿が見られた
-export type NotifyKind = 'follow' | 'react' | 'post' | 'view';
+// follow=フォローされた / react=自分の投稿に反応 / post=他人の新規投稿 / view=自分の投稿が見られた / topic=お題が更新された
+export type NotifyKind = 'follow' | 'react' | 'post' | 'view' | 'topic';
 export type NotifyPrefs = Record<NotifyKind, boolean>;
 
 export interface ViewRecord {
