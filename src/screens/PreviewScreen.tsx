@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { copy } from '../copy';
 import { GhostButton, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
-import { CloseIcon, PostArrowIcon, SpeakerOnIcon } from '../components/icons';
+import { CloseIcon, PostArrowIcon } from '../components/icons';
 import { fonts } from '../lib/fonts';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -35,7 +35,6 @@ export function PreviewScreen({
   const insets = useSafeAreaInsets();
   const addPost = useStore((s) => s.addPost);
   const player = useAudioPlayer(audioUri ?? null);
-  const status = useAudioPlayerStatus(player);
   const topic = topicByKey(topicKey);
 
   const [caption, setCaption] = useState<PostCaption>(DEFAULT_CAPTION);
@@ -110,14 +109,6 @@ export function PreviewScreen({
     }
   }
 
-  function playClip() {
-    if (!audioUri) return;
-    try {
-      player.seekTo(0);
-      player.play();
-    } catch {}
-  }
-
   return (
     <View style={styles.container}>
       <Backdrop />
@@ -127,9 +118,7 @@ export function PreviewScreen({
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
         <Text style={styles.heading}>{topic ? `お題：${topic.prompt}` : copy.previewTitle}</Text>
-        <Pressable onPress={playClip} disabled={!audioUri} style={[styles.soundChip, status.playing && styles.soundChipOn]}>
-          <SpeakerOnIcon size={15} color={status.playing ? colors.limeInk : colors.text} />
-        </Pressable>
+        <View style={styles.topSpacer} />
       </View>
 
       {/* チェキ（下余白の白に手書き文字を入れられる） */}
@@ -210,17 +199,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heading: { color: colors.text, fontSize: font.lead, fontWeight: '800', fontFamily: fonts.serif, letterSpacing: -0.5 },
-  soundChip: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.xs,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: rule.hair,
-    borderColor: colors.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  soundChipOn: { backgroundColor: colors.lime, borderColor: colors.limeDust },
+  // 左の閉じるボタンと釣り合いを取るための見えないダミー
+  topSpacer: { width: 36, height: 36 },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.lg },
   sheet: {
     backgroundColor: colors.bg,

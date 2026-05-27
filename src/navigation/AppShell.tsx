@@ -133,7 +133,9 @@ export function AppShell() {
         setOverlay(null);
         setTab('topic');
       } else {
-        setOverlay('feed'); // 投稿でパスがひらく → そのままフィードへ
+        // ホームに戻す。ホームの縦スワイプで他人＋自分の投稿が全部見れる（FeedScreen には飛ばさない）。
+        setOverlay(null);
+        setTab('home');
       }
     },
   };

@@ -1,31 +1,50 @@
-import React, { useRef, useState } from 'react';
-import { Animated, PanResponder, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { colors, space } from '../theme';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useAudioPlayer } from 'expo-audio';
+import { colors, font, space } from '../theme';
+import { fonts } from '../lib/fonts';
 import { Avatar, Remaining } from './ui';
-import { ShareIcon } from './icons';
+import { ShareIcon, VerifiedBadge } from './icons';
 import { ChekiCard } from './ChekiCard';
 import { OfficialCard } from './OfficialCard';
-import { Post, User } from '../types';
+import { ReactionBar } from './ReactionBar';
+import { Post, ReactionType, User } from '../types';
 import { shareCheki } from '../lib/share';
+import { postHasSound, resolvePostAudioSource } from '../lib/audio';
+import { isBrandUser } from '../selectors';
+import { timeAgo } from '../lib/time';
 
 const NATIVE = Platform.OS !== 'web';
 
-// 他の人を見終わったあと、ホームに残る「自分の投稿（24時間以内）」を上下スワイプで全部見る。
-// 自分の投稿の“次”に、napsnap公式の「写真を上げてみよう」投稿を1枚はさむ（投稿を促す導線）。
+// ホーム中央の縦スワイプ・スワイパー。自分の投稿と、フォロー中の人の投稿を混ぜて
+// 古い順に表示する。最後のスライドに公式の「写真を上げてみよう」カードを置き、
+// 端を越えたら反対端へループする（別ページに飛ばさず、ここで全部見れるように）。
 export function MyPostsSwiper({
   posts,
   me,
   official,
+  users,
+  passOpen,
+  onReact,
+  onMarkViewed,
+  myReactionOf,
 }: {
   posts: Post[];
   me?: User;
   official?: User;
+  users: User[];
+  passOpen: boolean;
+  onReact: (postId: string, type: ReactionType) => void;
+  onMarkViewed: (postId: string) => void;
+  myReactionOf: (postId: string) => ReactionType | undefined;
 }) {
   const total = posts.length + 1; // 末尾に公式の促しカード
   const [index, setIndex] = useState(0);
   const safeIndex = Math.min(index, total - 1);
   const isPrompt = safeIndex >= posts.length; // 最後のスライド＝公式カード
   const current = posts[safeIndex];
+  const currentIsMine = !!current && !!me && current.userId === me.id;
+  const author = !current ? undefined : currentIsMine ? me : users.find((u) => u.id === current.userId);
 
   const ty = useRef(new Animated.Value(0)).current;
   const sizeRef = useRef({ w: 0, h: 0 });
@@ -34,6 +53,43 @@ export function MyPostsSwiper({
   idxRef.current = safeIndex;
   const lenRef = useRef(total);
   lenRef.current = total;
+
+  // 表示中の他人投稿には自動で音声を流す（手動の音声ボタンは置かない）
+  const audioSrc = useMemo(() => (!isPrompt && !currentIsMine ? resolvePostAudioSource(current) : null), [current?.id, currentIsMine, isPrompt]);
+  const hasSound = !isPrompt && !currentIsMine && postHasSound(current) && passOpen;
+  const player = useAudioPlayer(audioSrc ?? null);
+
+  useEffect(() => {
+    if (!audioSrc || !passOpen) return;
+    try {
+      player.loop = false;
+      player.muted = false;
+      player.seekTo(0);
+      player.play();
+    } catch {}
+    return () => {
+      try {
+        player.pause();
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioSrc, passOpen]);
+
+  // 表示中の他人投稿に「見た」を記録（1スライド1回）
+  useEffect(() => {
+    if (!current || isPrompt || currentIsMine) return;
+    if (!passOpen) return;
+    onMarkViewed(current.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.id, currentIsMine, isPrompt, passOpen]);
+
+  const replaySound = () => {
+    if (!hasSound) return;
+    try {
+      player.seekTo(0);
+      player.play();
+    } catch {}
+  };
 
   const go = (dir: number) => {
     const len = lenRef.current;
@@ -64,7 +120,10 @@ export function MyPostsSwiper({
     })
   ).current;
 
-  const cardW = Math.max(0, Math.min(stage.w - 16, Math.floor((stage.h - 110) / 1.31), 380));
+  // 下部のリアクションバーの分だけカード高さを少し詰める（他人投稿だけ）
+  const showReactions = !!current && !isPrompt && !currentIsMine && passOpen;
+  const bottomReserve = showReactions ? 84 : 110;
+  const cardW = Math.max(0, Math.min(stage.w - 16, Math.floor((stage.h - bottomReserve) / 1.31), 380));
 
   return (
     <View
@@ -82,18 +141,36 @@ export function MyPostsSwiper({
           ) : (
             <>
               {cardW > 0 && current && (
-                <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
+                <Pressable onPress={replaySound} disabled={!hasSound}>
+                  <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
+                </Pressable>
               )}
               {current && (
                 <View style={styles.metaRow}>
-                  <Avatar user={me} size={26} />
-                  <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
-                  {/* シェア：webのみ。チェキをPNGで書き出してSNSへ（外部流入経路の確保）。 */}
-                  {Platform.OS === 'web' && (
+                  <Avatar user={author} size={26} />
+                  {!currentIsMine && (
+                    <>
+                      <Text style={styles.metaName}>{isBrandUser(author) ? 'napsnap' : author?.displayName ?? '友達'}</Text>
+                      {author?.isOfficial && <VerifiedBadge size={14} />}
+                      <Text style={styles.metaDot}>·</Text>
+                      <Text style={styles.metaAgo}>{timeAgo(current.createdAt)}</Text>
+                    </>
+                  )}
+                  {!isBrandUser(author) && (
+                    <View style={{ marginLeft: 6 }}>
+                      <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
+                    </View>
+                  )}
+                  {currentIsMine && Platform.OS === 'web' && (
                     <Pressable onPress={() => shareCheki(current)} hitSlop={10} style={{ marginLeft: 4 }}>
                       <ShareIcon size={18} color={colors.textDim} />
                     </Pressable>
                   )}
+                </View>
+              )}
+              {showReactions && current && (
+                <View style={styles.reactWrap}>
+                  <ReactionBar onReact={(t) => onReact(current.id, t)} selected={myReactionOf(current.id)} />
                 </View>
               )}
             </>
@@ -108,4 +185,8 @@ const styles = StyleSheet.create({
   stage: { flex: 1, alignSelf: 'stretch', overflow: 'hidden' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  metaName: { color: colors.text, fontSize: font.lead, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
+  metaDot: { color: colors.textFaint, fontSize: font.small },
+  metaAgo: { color: colors.textDim, fontSize: font.small, fontFamily: fonts.handle },
+  reactWrap: { marginTop: space.xs },
 });
