@@ -15,11 +15,11 @@ export const TOPICS: Topic[] = [
   { key: 'gohan', prompt: 'ごはん', seed: 'meal' },
   { key: 'sora', prompt: '空', seed: 'sky' },
   { key: 'nomimono', prompt: '飲みもの', seed: 'drink' },
-  { key: 'desk', prompt: '机の上にあるもの', seed: 'desk' },
+  { key: 'desk', prompt: '机の上', seed: 'desk' },
   { key: 'ashimoto', prompt: '足もと', seed: 'feet' },
   { key: 'oyatsu', prompt: 'おやつ', seed: 'snack' },
   { key: 'mado', prompt: '窓の外', seed: 'window' },
-  { key: 'temoto', prompt: 'いまの手もと', seed: 'hand' },
+  { key: 'temoto', prompt: '手もと', seed: 'hand' },
   { key: 'yashoku', prompt: '深夜のおとも', seed: 'midnight' },
 ];
 
