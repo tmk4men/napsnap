@@ -110,9 +110,19 @@ export function TopicScreen({ nav }: { nav: Nav }) {
     };
   }, [stageW]);
   // タブをタップでスクロール、横スワイプで自動切替。
+  // プログラマブルスクロール中（タップ起因の animated scroll）は onScroll を信用しない＝
+  // 旧位置→新位置の途中で「旧」と判定されて下線が一瞬戻るのを防ぐ。
+  const programmaticRef = useRef(false);
+  const programmaticTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const switchSection = (next: Section) => {
     if (next === section) return;
     setSection(next);
+    programmaticRef.current = true;
+    if (programmaticTimer.current) clearTimeout(programmaticTimer.current);
+    // animated scroll の所要時間 + 余裕。これを過ぎたらユーザー操作の onScroll を再受付。
+    programmaticTimer.current = setTimeout(() => {
+      programmaticRef.current = false;
+    }, 420);
     pagerRef.current?.scrollTo({ x: next === 'strangers' ? stageW : 0, animated: true });
   };
   // Webでは momentum が無く onMomentumScrollEnd が発火しないので、onScroll で
@@ -120,6 +130,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
   // ただし初期化が終わるまではユーザー操作ではないので無視する＝「開いた瞬間おすすめ」を防ぐ。
   const onPagerScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (!didInitPager.current) return;
+    if (programmaticRef.current) return;
     const x = e.nativeEvent.contentOffset.x;
     const w = stageW || 1;
     const next: Section = x > w / 2 ? 'strangers' : 'known';
