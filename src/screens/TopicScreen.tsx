@@ -141,8 +141,8 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
       {/* タブ（フォロー / おすすめ）：中央揃え */}
       <View style={styles.tabs}>
-        <TabBtn label="フォロー" count={known.length} active={section === 'known'} onPress={() => switchSection('known')} />
-        <TabBtn label="おすすめ" count={strangers.length} active={section === 'strangers'} onPress={() => switchSection('strangers')} />
+        <TabBtn label="フォロー" active={section === 'known'} onPress={() => switchSection('known')} />
+        <TabBtn label="おすすめ" active={section === 'strangers'} onPress={() => switchSection('strangers')} />
       </View>
 
       {/* 横ページャ：左=知ってる人、右=知らん人 */}
@@ -230,21 +230,16 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
 function TabBtn({
   label,
-  count,
   active,
   onPress,
 }: {
   label: string;
-  count: number;
   active: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable onPress={onPress} style={styles.tabBtn} hitSlop={4}>
-      <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>
-        {label}
-        {count > 0 && <Text style={styles.tabCount}>　{count}</Text>}
-      </Text>
+      <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{label}</Text>
       <View style={[styles.tabUnderline, active && styles.tabUnderlineActive]} />
     </Pressable>
   );
@@ -258,7 +253,6 @@ const styles = StyleSheet.create({
   tabBtn: { paddingVertical: space.xs, alignItems: 'center' },
   tabLabel: { color: colors.textFaint, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
   tabLabelActive: { color: colors.text },
-  tabCount: { color: colors.textFaint, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   tabUnderline: { width: '100%', height: rule.thin, backgroundColor: 'transparent', marginTop: 4 },
   tabUnderlineActive: { backgroundColor: colors.text, height: rule.thick },
   pagerWrap: { flex: 1, overflow: 'hidden' },

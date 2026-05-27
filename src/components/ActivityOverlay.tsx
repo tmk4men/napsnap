@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
-import { Avatar, FadeIn, PrimaryButton } from './ui';
-import { CloseIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
+import { Avatar, FadeIn } from './ui';
+import { CameraIcon, CloseIcon, GearIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
 import { timeAgo } from '../lib/time';
 import { ActivityItem } from '../selectors';
 import { useStore } from '../store';
+import { NotifySettingsOverlay } from './NotifySettingsOverlay';
 
 function lineFor(item: ActivityItem): string {
   const name = item.user?.displayName ?? '友達';
@@ -38,13 +39,23 @@ export function ActivityOverlay({
   const insets = useSafeAreaInsets();
   const following = useStore((s) => s.following);
   const toggleFollow = useStore((s) => s.toggleFollow);
+  const [showNotifySettings, setShowNotifySettings] = useState(false);
   return (
     <FadeIn style={styles.container} dy={16} duration={220}>
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
         <Text style={styles.title}>アクティビティ</Text>
-        <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
-          <CloseIcon size={18} color={colors.text} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => setShowNotifySettings(true)}
+            style={styles.headerIconBtn}
+            hitSlop={12}
+          >
+            <GearIcon size={20} color={colors.text} />
+          </Pressable>
+          <Pressable onPress={onClose} style={styles.headerIconBtn} hitSlop={12}>
+            <CloseIcon size={18} color={colors.text} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: space.lg, paddingBottom: insets.bottom + space.xl }} showsVerticalScrollIndicator={false}>
@@ -68,7 +79,13 @@ export function ActivityOverlay({
               <Text style={styles.turnTitle}>あなたの番</Text>
               <Text style={styles.turnSub}>1枚出すと、みんなの今が見える。</Text>
             </View>
-            <PrimaryButton label="撮る" onPress={onShoot} style={{ paddingVertical: 12, paddingHorizontal: 20 }} />
+            <Pressable
+              onPress={onShoot}
+              style={({ pressed }) => [styles.shootIconBtn, pressed && { opacity: 0.9, transform: [{ translateY: 1 }] }]}
+              hitSlop={8}
+            >
+              <CameraIcon size={22} color={colors.limeInk} />
+            </Pressable>
           </View>
         )}
 
@@ -102,7 +119,7 @@ export function ActivityOverlay({
                     hitSlop={6}
                   >
                     <Text style={[styles.followText, followingBack && styles.followingText]}>
-                      {followingBack ? 'フォロー中' : 'フォローし返す'}
+                      {followingBack ? 'フォロー中' : 'フォローバック'}
                     </Text>
                   </Pressable>
                 ) : it.postImage ? (
@@ -113,6 +130,8 @@ export function ActivityOverlay({
           })
         )}
       </ScrollView>
+
+      {showNotifySettings && <NotifySettingsOverlay onClose={() => setShowNotifySettings(false)} />}
     </FadeIn>
   );
 }
@@ -128,8 +147,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.line,
   },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  headerIconBtn: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   title: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display, letterSpacing: -0.5 },
-  close: { width: 36, height: 36, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceSunken },
   turn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -143,6 +163,16 @@ const styles = StyleSheet.create({
   },
   turnTitle: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.display, letterSpacing: -0.5 },
   turnSub: { color: colors.textDim, fontSize: font.small, marginTop: 2, fontFamily: fonts.ui },
+  shootIconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.xs,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
+  },
   empty: { alignItems: 'center', justifyContent: 'center', gap: space.sm, paddingVertical: space.xxl },
   emptyText: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
   topicNotice: {

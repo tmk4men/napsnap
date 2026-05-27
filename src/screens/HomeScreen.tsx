@@ -50,7 +50,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     [s.posts, s.currentUserId]
   );
   const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
-  const activity = useMemo(() => activityItems(s), [s.posts, s.views, s.reactions, s.following, s.currentUserId]);
+  const activity = useMemo(() => activityItems(s), [s.posts, s.views, s.reactions, s.following, s.currentUserId, s.notifyPrefs]);
   const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length + (topicNew ? 1 : 0);
 
   const count = queue.length;

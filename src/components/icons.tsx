@@ -329,6 +329,22 @@ export function PostArrowIcon({ size = 24, color = colors.text }: IconProps) {
   );
 }
 
+// --- 歯車（設定） ---
+export function GearIcon({ size = 20, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M19.5 12c0-.55-.05-1.09-.14-1.6l2-1.55-2-3.46-2.36.86c-.83-.66-1.79-1.16-2.84-1.46L13.7 2h-3.4l-.46 2.79c-1.05.3-2.01.8-2.84 1.46L4.64 5.39l-2 3.46 2 1.55c-.09.51-.14 1.05-.14 1.6s.05 1.09.14 1.6l-2 1.55 2 3.46 2.36-.86c.83.66 1.79 1.16 2.84 1.46L10.3 22h3.4l.46-2.79c1.05-.3 2.01-.8 2.84-1.46l2.36.86 2-3.46-2-1.55c.09-.51.14-1.05.14-1.6z"
+        stroke={color}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinejoin="round"
+      />
+      <Circle cx={12} cy={12} r={3} stroke={color} strokeWidth={1.8} fill="none" />
+    </Svg>
+  );
+}
+
 // --- ハンバーガーメニュー ---
 export function MenuIcon({ size = 22, color = colors.text }: IconProps) {
   return (

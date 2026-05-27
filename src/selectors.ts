@@ -22,7 +22,7 @@ export function topicUnseen(s: Pick<Store, 'topicSeenDay'>): boolean {
 
 type Snapshot = Pick<
   Store,
-  'currentUserId' | 'following' | 'followers' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass'
+  'currentUserId' | 'following' | 'followers' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass' | 'notifyPrefs'
 >;
 
 export function isPassOpen(s: Pick<Store, 'accessPass'>): boolean {
@@ -174,28 +174,37 @@ export interface ActivityItem {
 export function activityItems(s: Snapshot): ActivityItem[] {
   const me = s.currentUserId;
   if (!me) return [];
+  const prefs = s.notifyPrefs ?? { follow: true, react: true, post: true, view: true };
   const myPostIds = new Set(s.posts.filter((p) => p.userId === me).map((p) => p.id));
   const imageOf = (postId: string) => s.posts.find((p) => p.id === postId)?.imageUrl;
   const out: ActivityItem[] = [];
   const reactedPair = new Set<string>();
 
-  for (const r of s.reactions) {
-    if (r.userId !== me && myPostIds.has(r.postId)) {
-      reactedPair.add(`${r.userId}_${r.postId}`);
-      out.push({ id: 'r_' + r.id, kind: 'react', user: userById(s.users, r.userId), at: r.createdAt, postImage: imageOf(r.postId) });
+  if (prefs.react) {
+    for (const r of s.reactions) {
+      if (r.userId !== me && myPostIds.has(r.postId)) {
+        reactedPair.add(`${r.userId}_${r.postId}`);
+        out.push({ id: 'r_' + r.id, kind: 'react', user: userById(s.users, r.userId), at: r.createdAt, postImage: imageOf(r.postId) });
+      }
     }
   }
-  for (const v of s.views) {
-    if (v.viewerId !== me && myPostIds.has(v.postId) && !reactedPair.has(`${v.viewerId}_${v.postId}`)) {
-      out.push({ id: 'v_' + v.id, kind: 'view', user: userById(s.users, v.viewerId), at: v.viewedAt, postImage: imageOf(v.postId) });
+  if (prefs.view) {
+    for (const v of s.views) {
+      if (v.viewerId !== me && myPostIds.has(v.postId) && !reactedPair.has(`${v.viewerId}_${v.postId}`)) {
+        out.push({ id: 'v_' + v.id, kind: 'view', user: userById(s.users, v.viewerId), at: v.viewedAt, postImage: imageOf(v.postId) });
+      }
     }
   }
-  for (const p of followedActivePosts(s)) {
-    out.push({ id: 'p_' + p.id, kind: 'post', user: userById(s.users, p.userId), at: p.createdAt, postImage: p.imageUrl });
+  if (prefs.post) {
+    for (const p of followedActivePosts(s)) {
+      out.push({ id: 'p_' + p.id, kind: 'post', user: userById(s.users, p.userId), at: p.createdAt, postImage: p.imageUrl });
+    }
   }
   // 自分をフォローしてくれた人。
-  for (const f of s.followers) {
-    out.push({ id: 'f_' + f.followerId, kind: 'follow', user: userById(s.users, f.followerId), at: f.followedAt });
+  if (prefs.follow) {
+    for (const f of s.followers) {
+      out.push({ id: 'f_' + f.followerId, kind: 'follow', user: userById(s.users, f.followerId), at: f.followedAt });
+    }
   }
   return out.sort((a, b) => b.at - a.at).slice(0, 40);
 }

@@ -42,7 +42,7 @@ export function SettingsOverlay({ onClose }: { onClose: () => void }) {
             onPress={() => setTopicVisibility('public')}
           />
           <RadioRow
-            label="フォロー＋自分のみ"
+            label="フォロワーのみ"
             sub="自分とフォロワーだけに見える"
             on={topicVisibility === 'followers'}
             onPress={() => setTopicVisibility('followers')}

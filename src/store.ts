@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { AccessPass, FeedState, Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from './types';
+import { AccessPass, FeedState, NotifyKind, NotifyPrefs, Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from './types';
 import { uid } from './lib/id';
 import { HOUR, isActive, nextMidnight, now } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
@@ -45,6 +45,7 @@ interface PersistedState {
   topicSeenDay: number; // 「今日のお題」通知を見た日（dayIndex）。違えば未読として出す
   searchHistory: string[]; // さがすタブの検索履歴（@IDのみ・新しい順・最大4件）
   topicVisibility: TopicVisibility; // 自分のお題投稿の公開範囲。'public'=全実在ユーザー / 'followers'=自分とフォロワーのみ。
+  notifyPrefs: NotifyPrefs; // アクティビティ通知の種類ごとのオンオフ。
 }
 
 interface Actions {
@@ -63,6 +64,7 @@ interface Actions {
   addSearchHistory: (handle: string) => void;
   removeSearchHistory: (handle: string) => void;
   setTopicVisibility: (v: TopicVisibility) => void;
+  setNotifyPref: (kind: NotifyKind, on: boolean) => void;
   refreshFollowPostsIfStale: () => void;
   refreshTopicPostsIfStale: () => void;
   refreshOfficialPostsIfStale: () => void;
@@ -90,6 +92,7 @@ const initial: PersistedState = {
   topicSeenDay: -1,
   searchHistory: [],
   topicVisibility: 'public',
+  notifyPrefs: { follow: true, react: true, post: true, view: true },
 };
 
 // ライブのスナップショットをローカル state に反映。
@@ -420,6 +423,9 @@ export const useStore = create<Store>()(
 
         setTopicVisibility: (v) => set({ topicVisibility: v }),
 
+        setNotifyPref: (kind, on) =>
+          set((st) => ({ notifyPrefs: { ...st.notifyPrefs, [kind]: on } })),
+
         // デモが古くなってフォロー中（モック仲間）の投稿が全部期限切れなら、新しい時刻で作り直す。
         // 公式・お題・自分の投稿は触らない（それぞれ別ロジックで管理）。
         refreshFollowPostsIfStale: () => {
@@ -551,6 +557,7 @@ export const useStore = create<Store>()(
         topicSeenDay: s.topicSeenDay,
         searchHistory: s.searchHistory,
         topicVisibility: s.topicVisibility,
+        notifyPrefs: s.notifyPrefs,
       }),
       // 既存の保存データを消さずに移行する。新フィールドは初期値で補う（公式アカウントの
       // 後付けは復帰時の ensureOfficialFollowed で行う＝確実・冪等）。
