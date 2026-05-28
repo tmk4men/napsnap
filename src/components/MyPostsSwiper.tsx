@@ -7,6 +7,7 @@ import { Avatar, Remaining } from './ui';
 import { ShareIcon, VerifiedBadge } from './icons';
 import { ChekiCard } from './ChekiCard';
 import { IssueCard } from './IssueCard';
+import { AdSlide } from './AdSlide';
 import { OfficialCard } from './OfficialCard';
 import { ReactionBar } from './ReactionBar';
 import { Post, ReactionType, User } from '../types';
@@ -46,8 +47,9 @@ export function MyPostsSwiper({
   const safeIndex = Math.min(index, total - 1);
   const isPrompt = safeIndex >= posts.length; // 最後のスライド＝公式カード
   const current = posts[safeIndex];
-  const currentIsMine = !!current && !!me && current.userId === me.id;
-  const author = !current ? undefined : currentIsMine ? me : users.find((u) => u.id === current.userId);
+  const isAd = current?.kind === 'ad'; // 縦スワイプに差し込んだ広告スライド
+  const currentIsMine = !!current && !isAd && !!me && current.userId === me.id;
+  const author = !current || isAd ? undefined : currentIsMine ? me : users.find((u) => u.id === current.userId);
 
   const ty = useRef(new Animated.Value(0)).current;
   const sizeRef = useRef({ w: 0, h: 0 });
@@ -57,9 +59,9 @@ export function MyPostsSwiper({
   const lenRef = useRef(total);
   lenRef.current = total;
 
-  // 表示中の他人投稿には自動で音声を流す（手動の音声ボタンは置かない）
-  const audioSrc = useMemo(() => (!isPrompt && !currentIsMine ? resolvePostAudioSource(current) : null), [current?.id, currentIsMine, isPrompt]);
-  const hasSound = !isPrompt && !currentIsMine && postHasSound(current) && passOpen;
+  // 表示中の他人投稿には自動で音声を流す（手動の音声ボタンは置かない）。広告スライドは対象外。
+  const audioSrc = useMemo(() => (!isPrompt && !currentIsMine && !isAd ? resolvePostAudioSource(current) : null), [current?.id, currentIsMine, isPrompt, isAd]);
+  const hasSound = !isPrompt && !currentIsMine && !isAd && postHasSound(current) && passOpen;
   const player = useAudioPlayer(audioSrc ?? null);
 
   useEffect(() => {
@@ -78,13 +80,13 @@ export function MyPostsSwiper({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioSrc, passOpen]);
 
-  // 表示中の他人投稿に「見た」を記録（1スライド1回）
+  // 表示中の他人投稿に「見た」を記録（1スライド1回）。広告スライドは記録しない。
   useEffect(() => {
-    if (!current || isPrompt || currentIsMine) return;
+    if (!current || isPrompt || currentIsMine || isAd) return;
     if (!passOpen) return;
     onMarkViewed(current.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current?.id, currentIsMine, isPrompt, passOpen]);
+  }, [current?.id, currentIsMine, isPrompt, isAd, passOpen]);
 
   const replaySound = () => {
     if (!hasSound) return;
@@ -123,8 +125,8 @@ export function MyPostsSwiper({
     })
   ).current;
 
-  // 下部のリアクションバーの分だけカード高さを少し詰める（他人投稿だけ）
-  const showReactions = !!current && !isPrompt && !currentIsMine && passOpen;
+  // 下部のリアクションバーの分だけカード高さを少し詰める（他人投稿だけ）。広告は対象外。
+  const showReactions = !!current && !isPrompt && !currentIsMine && !isAd && passOpen;
   const bottomReserve = showReactions ? 84 : 110;
   const cardW = Math.max(0, Math.min(stage.w - 16, Math.floor((stage.h - bottomReserve) / 1.31), 380));
 
@@ -141,6 +143,8 @@ export function MyPostsSwiper({
         <View style={styles.center}>
           {isPrompt ? (
             <OfficialCard official={official} message="写真を上げてみよう" width={Math.min(cardW, 320)} />
+          ) : isAd ? (
+            <AdSlide width={cardW} />
           ) : (
             <>
               {cardW > 0 && current && (current.kind === 'issue' && current.issue ? (

@@ -70,7 +70,27 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         .sort((a, b) => b.createdAt - a.createdAt),
     [s.posts, s.currentUserId]
   );
-  const feedPosts = useMemo(() => [...others, ...myActive], [others, myActive]);
+  // 縦スワイプに広告を差し込む：他人＋自分の投稿を並べ、4枚ごとに広告スライド（kind='ad'）を挿入。
+  const feedPosts = useMemo(() => {
+    const base = [...others, ...myActive];
+    const AD_EVERY = 4;
+    if (base.length < AD_EVERY) return base; // 投稿が少ないうちは広告を挟まない
+    const out: Post[] = [];
+    base.forEach((p, i) => {
+      out.push(p);
+      if ((i + 1) % AD_EVERY === 0 && i < base.length - 1) {
+        out.push({
+          id: `ad_${i}`,
+          userId: '',
+          imageUrl: '',
+          kind: 'ad',
+          createdAt: 0,
+          expiresAt: Number.MAX_SAFE_INTEGER,
+        });
+      }
+    });
+    return out;
+  }, [others, myActive]);
   const followedLatest = others[0];
 
   const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);

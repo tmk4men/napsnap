@@ -52,7 +52,8 @@ export interface Post {
   topicVisibility?: TopicVisibility;
   // 「号外」：1週間ぶんの自分の投稿を綴じてフォロワーのホームに流す（24h で消える）。
   // kind='issue' のとき issue が必ず入る。imageUrl は1枚目（表紙）と同じURLを入れて既存表示と互換にする。
-  kind?: 'photo' | 'issue';
+  // kind='ad' はクライアントが縦スワイプに差し込む広告スライドの目印（サーバーには存在しない合成投稿）。
+  kind?: 'photo' | 'issue' | 'ad';
   issue?: {
     label: string; // 例: "5月 第3号"
     images: string[]; // 綴じた週の投稿の画像URL配列（時系列）
