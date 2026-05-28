@@ -34,6 +34,70 @@ export async function signOut() {
   if (supabase) await supabase.auth.signOut();
 }
 
+// ---------- 外部アカウント連携（匿名→恒久アカウントへ昇格）----------
+// 入口は匿名のまま。設定/メニューから任意で Apple / Google を「あとから紐付け」できる。
+// Supabase の Manual Linking（linkIdentity）を使う。Apple/Google は組み込みプロバイダ。
+// ※ Supabase ダッシュボードで該当プロバイダを有効化し、リダイレクトURLを登録しておく必要がある。
+export type LinkProvider = 'apple' | 'google';
+
+// いまのアカウントが匿名か、どのプロバイダに紐付いてるか。
+export async function authStatus(): Promise<{ isAnonymous: boolean; providers: string[] }> {
+  const { data } = await db().auth.getUser();
+  const user = data.user as any;
+  if (!user) return { isAnonymous: true, providers: [] };
+  const providers: string[] = (user.identities ?? [])
+    .map((i: any) => i.provider)
+    .filter((p: string) => p && p !== 'anonymous');
+  const isAnonymous = user.is_anonymous ?? providers.length === 0;
+  return { isAnonymous, providers };
+}
+
+// リダイレクト先。ネイティブはアプリスキーム（app.json の scheme=napsnap）、Web は現在のオリジン。
+function authRedirectUri(): string {
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.origin;
+  }
+  return 'napsnap://auth-callback';
+}
+
+// 匿名アカウントに provider を紐付ける。成功で true。
+// 失敗（未設定・ユーザーキャンセル等）でも例外を投げずに false を返す。
+export async function linkProvider(provider: LinkProvider): Promise<boolean> {
+  const s = db();
+  const redirectTo = authRedirectUri();
+  const { data, error } = await s.auth.linkIdentity({
+    provider,
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+  if (error || !data?.url) {
+    console.warn('[auth] linkIdentity init failed', error);
+    return false;
+  }
+  // 動的 import：ネイティブだけ expo-web-browser を使い、Web は通常のリダイレクトに任せる。
+  try {
+    const WebBrowser = require('expo-web-browser');
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== 'success' || !result.url) return false;
+    // リダイレクトURLのフラグメントから access/refresh token を取り出して session を確定。
+    const url: string = result.url;
+    const frag = url.includes('#') ? url.split('#')[1] : url.split('?')[1] ?? '';
+    const params = new URLSearchParams(frag);
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    if (access_token && refresh_token) {
+      const { error: setErr } = await s.auth.setSession({ access_token, refresh_token });
+      if (setErr) {
+        console.warn('[auth] setSession failed', setErr);
+        return false;
+      }
+    }
+    return true;
+  } catch (e) {
+    console.warn('[auth] openAuthSession failed', e);
+    return false;
+  }
+}
+
 // ---------- 行 → アプリ型 ----------
 const toMs = (t: string) => new Date(t).getTime();
 

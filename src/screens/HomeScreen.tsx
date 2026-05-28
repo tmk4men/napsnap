@@ -13,6 +13,7 @@ import { MemoryViewer } from '../components/MemoryViewer';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { DocOverlay } from '../components/DocOverlay';
 import { SettingsOverlay } from '../components/SettingsOverlay';
+import { AccountLinkOverlay } from '../components/AccountLinkOverlay';
 import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
@@ -87,6 +88,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const [doc, setDoc] = useState<LegalDoc | null>(null);
   const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLink, setShowLink] = useState(false);
   const openActivity = () => {
     setShowActivity(true);
     markActivitySeen();
@@ -238,6 +240,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             ...(Platform.OS === 'web'
               ? [{ label: themeMode === 'dark' ? 'ライトモードにする' : 'ダークモードにする', onPress: toggleThemeMode }]
               : []),
+            { label: 'アカウント連携', onPress: () => setShowLink(true) },
             { label: 'セキュリティ', onPress: () => setShowSettings(true) },
             { label: 'プライバシーポリシー', onPress: () => setDoc(PRIVACY_POLICY) },
             { label: '利用規約', onPress: () => setDoc(TERMS_OF_SERVICE) },
@@ -247,6 +250,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
       )}
       {doc && <DocOverlay doc={doc} onClose={() => setDoc(null)} />}
       {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
+      {showLink && <AccountLinkOverlay onClose={() => setShowLink(false)} />}
     </View>
   );
 }
