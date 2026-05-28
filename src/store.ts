@@ -12,6 +12,7 @@ import { dayIndex, todaysTopic } from './topics';
 import { hasSupabase } from './config';
 import * as be from './lib/backend';
 import { liveBootstrap, liveCompleteSetup, LiveSnapshot } from './lib/live';
+import { clearMemoryImages, persistMemoryImage } from './lib/memoryImage';
 
 const SEARCH_HISTORY_MAX = 4;
 
@@ -121,6 +122,20 @@ function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap:
   // 自分の閲覧記録（viewerId === me）はサーバから引かない（listViews は自分の投稿への足あとだけ取得）。
   // セッション内の重複 upsert を避けるため、ローカルに溜まった自分のviewsをマージで残す。
   const myLocalViews = st.views.filter((v) => v.viewerId === me);
+
+  // 思い出（自分の通常投稿）は端末ローカルにだけ残す方針。サーバーは24hで投稿も写真も消すので、
+  // snapshot で丸ごと上書きすると過去の自分の投稿＝カレンダーの朱印が消えてしまう。
+  // そこで (1) サーバーにまだ在る自分の投稿には、ローカルで持っている memoryUri を引き継ぎ、
+  //      (2) サーバーから消えた自分の通常投稿は、ローカルのものをそのまま残す。
+  const isMyMemory = (p: Post) => p.userId === me && !p.topicKey && p.kind !== 'issue';
+  const localMemoryUri = new Map(st.posts.filter((p) => p.memoryUri).map((p) => [p.id, p.memoryUri!]));
+  const serverIds = new Set(snap.posts.map((p) => p.id));
+  const mergedServer = snap.posts.map((p) => {
+    const mem = localMemoryUri.get(p.id);
+    return mem ? { ...p, memoryUri: mem } : p;
+  });
+  const keptMemories = st.posts.filter((p) => isMyMemory(p) && !serverIds.has(p.id));
+
   set({
     onboarded: snap.onboarded,
     currentUserId: snap.currentUserId,
@@ -128,7 +143,7 @@ function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap:
     following: snap.following,
     followers: snap.followers,
     followersTotal: snap.followersTotal,
-    posts: snap.posts,
+    posts: [...mergedServer, ...keptMemories],
     reactions: snap.reactions,
     views: [...snap.views, ...myLocalViews],
     accessPass,
@@ -301,15 +316,20 @@ export const useStore = create<Store>()(
             if (topicKey) {
               set((st) => ({ posts: [...st.posts, post] }));
             } else {
-              set((st) => ({ posts: [...st.posts, post], accessPass: { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR } }));
+              // 通常投稿＝思い出。写真を端末ローカルへ複製して保持（サーバーが24hで消しても残る）。
+              const stored: Post = { ...post, memoryUri: await persistMemoryImage(imageUrl) };
+              set((st) => ({ posts: [...st.posts, stored], accessPass: { openedAt: createdAt, expiresAt: createdAt + PASS_HOURS * HOUR } }));
             }
             return post.id;
           }
+          // 通常投稿＝思い出。写真を端末ローカルへ複製して保持（お題は思い出にしないので複製しない）。
+          const memoryUri = topicKey ? undefined : await persistMemoryImage(imageUrl);
           const post: Post = {
             id: uid('p_'),
             userId: currentUserId,
             topicKey,
             imageUrl,
+            memoryUri,
             caption,
             audioUrl,
             createdAt,
@@ -593,6 +613,7 @@ export const useStore = create<Store>()(
 
         resetDemo: () => {
           if (hasSupabase) be.signOut().catch(() => {}); // ライブ：サインアウト＝次回は新しい匿名ユーザー
+          clearMemoryImages().catch(() => {}); // 端末ローカルの思い出写真も掃除
           set({ ...initial });
         },
 
@@ -615,6 +636,7 @@ export const useStore = create<Store>()(
             // 削除に失敗してもローカルは初期化しない（再試行できるように）。
             if (!ok) return false;
           }
+          clearMemoryImages().catch(() => {}); // 端末ローカルの思い出写真も掃除
           set({ ...initial });
           return ok;
         },

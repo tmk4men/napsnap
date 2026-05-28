@@ -37,6 +37,10 @@ export interface Post {
   groupId?: string; // 旧グループ概念の名残（フォローモデルでは未使用）
   topicKey?: string; // 「お題」への投稿ならそのお題キー（topics.ts）。ホーム/残すには出さない別世界。
   imageUrl: string;
+  // 「思い出」用に端末へ複製した写真のローカルURI（自分の通常投稿のみ）。
+  // サーバーには送らない／載せない。サーバーが24hで元メディアを消しても残るよう、
+  // 投稿時にローカルへコピーして保持する。表示時は memoryUri を優先する。
+  memoryUri?: string;
   caption?: PostCaption;
   // シャッター押下直後に録音した2.5秒の音声。自分の投稿は録音URI。
   audioUrl?: string;

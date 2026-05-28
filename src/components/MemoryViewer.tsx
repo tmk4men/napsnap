@@ -92,7 +92,7 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
 
       <View style={styles.stage} onLayout={(e) => setStageW(e.nativeEvent.layout.width)}>
         <Pressable style={styles.center} onPress={playSound}>
-          {cardW > 0 && <ChekiCard uri={post.imageUrl} caption={post.caption} width={cardW} date={post.createdAt} tiltSeed={post.id} />}
+          {cardW > 0 && <ChekiCard uri={post.memoryUri ?? post.imageUrl} caption={post.caption} width={cardW} date={post.createdAt} tiltSeed={post.id} />}
         </Pressable>
       </View>
 

@@ -138,7 +138,7 @@ async function composeChekiPng(post: Post): Promise<Blob | null> {
 
   // 写真
   try {
-    const img = await loadImageForCanvas(post.imageUrl);
+    const img = await loadImageForCanvas(post.memoryUri ?? post.imageUrl);
     ctx.drawImage(img, FRAME, FRAME, photoW, photoH);
   } catch {
     // 失敗時はダーク埋め（最悪でも書き出しは止めない）
