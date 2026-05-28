@@ -108,7 +108,8 @@ function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap:
   const st = get();
   const me = snap.currentUserId;
   const myActive = snap.posts
-    .filter((p) => p.userId === me && !p.topicKey && isActive(p.expiresAt))
+    // 号外は元投稿を綴じた特殊投稿で、6h パスを開ける根拠にはしない（写真投稿だけ）
+    .filter((p) => p.userId === me && !p.topicKey && p.kind !== 'issue' && isActive(p.expiresAt))
     .sort((a, b) => b.createdAt - a.createdAt);
   const latest = myActive[0];
   const accessPass: AccessPass | null = latest
