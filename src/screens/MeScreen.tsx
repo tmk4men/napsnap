@@ -21,6 +21,7 @@ import { currentUser, myArchive, myPosts, nextProfileEditDays, profileEditsLeft 
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
 import { issueLabel, startOfWeek } from '../lib/time';
+import { showRewardedAd } from '../lib/ads';
 import { Post } from '../types';
 
 const ME_ITEM_W = 210;
@@ -90,8 +91,15 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const avatarLocked = s.avatarChangedAt > 0 && avatarLockMs > 0;
   const avatarLockHours = Math.ceil(avatarLockMs / (60 * 60 * 1000));
 
+  const [adLoading, setAdLoading] = useState(false);
   async function changePhoto() {
-    if (avatarLocked) return;
+    if (avatarLocked || adLoading) return;
+    // アバター変更ゲート：Rewarded 広告を1回視聴したら変更可能（[[napsnap-avatar-ad-gate]]）。
+    // Web デモは即時に通す（ads.web.ts が true を返す）。
+    setAdLoading(true);
+    const ok = await showRewardedAd();
+    setAdLoading(false);
+    if (!ok) return;
     const uri = await pickRawImage();
     if (!uri) return;
     if (Platform.OS === 'web') setCropUri(uri);
@@ -111,10 +119,10 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
       >
         {/* プロフィール */}
         <View style={styles.profile}>
-          <Pressable onPress={changePhoto} style={styles.avatarWrap}>
+          <Pressable onPress={changePhoto} style={styles.avatarWrap} disabled={adLoading}>
             <Avatar user={me} size={64} />
-            <View style={[styles.editBadge, avatarLocked && styles.editBadgeLocked]}>
-              <PencilIcon size={12} color={avatarLocked ? colors.textFaint : colors.limeInkSoft} />
+            <View style={[styles.editBadge, (avatarLocked || adLoading) && styles.editBadgeLocked]}>
+              <PencilIcon size={12} color={avatarLocked || adLoading ? colors.textFaint : colors.limeInkSoft} />
             </View>
           </Pressable>
           <View style={{ marginLeft: space.md, flex: 1 }}>
