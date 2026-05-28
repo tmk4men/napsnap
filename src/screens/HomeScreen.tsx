@@ -14,6 +14,7 @@ import { HamburgerMenu } from '../components/HamburgerMenu';
 import { DocOverlay } from '../components/DocOverlay';
 import { SettingsOverlay } from '../components/SettingsOverlay';
 import { AccountLinkOverlay } from '../components/AccountLinkOverlay';
+import { DeleteAccountOverlay } from '../components/DeleteAccountOverlay';
 import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
@@ -89,6 +90,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const [viewingMemory, setViewingMemory] = useState<Post[] | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showLink, setShowLink] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const openActivity = () => {
     setShowActivity(true);
     markActivitySeen();
@@ -245,12 +247,14 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             { label: 'プライバシーポリシー', onPress: () => setDoc(PRIVACY_POLICY) },
             { label: '利用規約', onPress: () => setDoc(TERMS_OF_SERVICE) },
             { label: 'デモを最初からやり直す', onPress: resetDemo, danger: true },
+            { label: 'アカウントを削除', onPress: () => setShowDelete(true), danger: true },
           ]}
         />
       )}
       {doc && <DocOverlay doc={doc} onClose={() => setDoc(null)} />}
       {showSettings && <SettingsOverlay onClose={() => setShowSettings(false)} />}
       {showLink && <AccountLinkOverlay onClose={() => setShowLink(false)} />}
+      {showDelete && <DeleteAccountOverlay onClose={() => setShowDelete(false)} />}
     </View>
   );
 }

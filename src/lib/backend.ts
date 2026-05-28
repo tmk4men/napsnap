@@ -2,7 +2,7 @@
 // store.ts の各操作に1:1で対応する関数を用意し、鍵が来たら store から呼び替えるだけにする。
 // supabase が null（鍵未設定）のときは使わない＝アプリは従来どおりローカルのモックで動く。
 import { supabase } from './supabase';
-import { MEDIA_BUCKET } from '../config';
+import { MEDIA_BUCKET, SUPABASE_URL } from '../config';
 import { Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from '../types';
 import { uid } from './id';
 import { uploadToR2 } from './r2';
@@ -32,6 +32,31 @@ export async function myId(): Promise<string | null> {
 
 export async function signOut() {
   if (supabase) await supabase.auth.signOut();
+}
+
+// アカウント完全削除。Edge Function delete-account を自分の token で叩き、
+// 本人のデータ＋auth ユーザーをサーバーから消す。成功で true。
+export async function deleteAccount(): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const sess = await supabase.auth.getSession();
+    const token = sess.data.session?.access_token;
+    if (!token) return false;
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/delete-account`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      console.warn('[auth] deleteAccount failed', res.status, await res.text().catch(() => ''));
+      return false;
+    }
+    // サーバー側で消えたので、ローカルセッションもサインアウト。
+    await supabase.auth.signOut().catch(() => {});
+    return true;
+  } catch (e) {
+    console.warn('[auth] deleteAccount error', e);
+    return false;
+  }
 }
 
 // ---------- 外部アカウント連携（匿名→恒久アカウントへ昇格）----------

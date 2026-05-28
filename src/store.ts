@@ -73,6 +73,7 @@ interface Actions {
   ensureOfficialFollowed: () => void;
   pruneExpired: () => void;
   resetDemo: () => void;
+  deleteAccount: () => Promise<boolean>;
 }
 
 export type Store = PersistedState & Actions;
@@ -589,6 +590,19 @@ export const useStore = create<Store>()(
         resetDemo: () => {
           if (hasSupabase) be.signOut().catch(() => {}); // ライブ：サインアウト＝次回は新しい匿名ユーザー
           set({ ...initial });
+        },
+
+        // アカウント削除（退会）。ライブはサーバーの本人データ＋auth ユーザーを消してからローカルを初期化。
+        // モックはローカル初期化のみ。戻り値＝サーバー削除まで成功したか（モックは常に true）。
+        deleteAccount: async () => {
+          let ok = true;
+          if (hasSupabase) {
+            ok = await be.deleteAccount();
+            // 削除に失敗してもローカルは初期化しない（再試行できるように）。
+            if (!ok) return false;
+          }
+          set({ ...initial });
+          return ok;
         },
       };
     },
