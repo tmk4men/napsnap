@@ -3,6 +3,7 @@ import { Post, Reaction, ReactionType, User, ViewRecord } from './types';
 import type { Store } from './store';
 import { HOUR, isActive } from './lib/time';
 import { REACTION_TTL_HOURS } from './copy';
+import { tr } from './i18n';
 import { dayIndex } from './topics';
 import { OFFICIAL_USER_ID } from './config';
 import { OFFICIAL_ID } from './seed';
@@ -240,9 +241,9 @@ export function memoryHighlights(s: Pick<Store, 'currentUserId' | 'posts'>): Hig
   const today = dayStart(Date.now());
   const DAY = 24 * HOUR;
   const defs = [
-    { label: '1年前の今日', days: 365, tol: 3 },
-    { label: '1ヶ月前', days: 30, tol: 2 },
-    { label: '1週間前', days: 7, tol: 1 },
+    { label: tr('1年前の今日', 'A year ago today'), days: 365, tol: 3 },
+    { label: tr('1ヶ月前', 'A month ago'), days: 30, tol: 2 },
+    { label: tr('1週間前', 'A week ago'), days: 7, tol: 1 },
   ];
   const out: Highlight[] = [];
   const used = new Set<string>();

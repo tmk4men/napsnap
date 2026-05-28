@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AccessPass, FeedState, NotifyKind, NotifyPrefs, Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from './types';
 import { uid } from './lib/id';
 import { HOUR, isActive, issueLabel, nextMidnight, now, startOfWeek } from './lib/time';
+import { tr } from './i18n';
 import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
 import { makeFollowPosts, makeMyMemories, makeOfficialPosts, makeOfficialUser, makeSeedReactions, makeTopicPosts, OFFICIAL_ID } from './seed';
 import { dayIndex, todaysTopic } from './topics';
@@ -173,7 +174,7 @@ export const useStore = create<Store>()(
           // ライブ：プロフィール作成＋フォローを Supabase に書き、スナップショットで反映。
           if (hasSupabase) {
             const snap = await liveCompleteSetup({
-              displayName: displayName.trim() || 'なまえ',
+              displayName: displayName.trim() || tr('なまえ', 'Name'),
               handle: handle.trim().replace(/^@/, '') || 'me',
               avatarImageUri,
               followingIds,
@@ -185,7 +186,7 @@ export const useStore = create<Store>()(
           const me: User = {
             id,
             handle: handle.trim().replace(/^@/, '') || 'me',
-            displayName: displayName.trim() || 'なまえ',
+            displayName: displayName.trim() || tr('なまえ', 'Name'),
             avatarEmoji,
             avatarColor,
             avatarImageUri,

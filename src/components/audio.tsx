@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { colors, font, radius } from '../theme';
 import { SpeakerOffIcon, SpeakerOnIcon } from './icons';
+import { tr } from '../i18n';
 
 // タップで1つずつ再生する共有プレイヤー（自分タブ用）。単一プレイヤーを使い回す。
 export function useClipPlayer() {
@@ -49,7 +50,7 @@ export function SoundBadge({
         <SpeakerOffIcon size={14} color={colors.textDim} />
       )}
       <Text style={[styles.text, playing && { color: colors.limeInk }, !hasSound && { color: colors.textDim }]}>
-        {!hasSound ? '音なし' : playing ? '再生中' : label}
+        {!hasSound ? tr('音なし', 'No sound') : playing ? tr('再生中', 'Playing') : label}
       </Text>
     </Pressable>
   );

@@ -7,6 +7,7 @@ import { avatarImage, lifeImage, TRACE_SEEDS } from './lib/images';
 import { HOUR, nextMidnight } from './lib/time';
 import { POST_TTL_HOURS } from './copy';
 import { Topic, TOPIC_CAPTIONS } from './topics';
+import { tr } from './i18n';
 
 // napsnap 公式アカウント。最初からフォローされ、初期フィードを供給する（本番でも空にしない）。
 // id は固定にして「公式は1つだけ」を保証する。
@@ -32,9 +33,9 @@ export function makeOfficialUser(id: string = OFFICIAL_ID): User {
 export function makeOfficialPosts(officialId: string): Post[] {
   const t = Date.now();
   const plan: { minutesAgo: number; seed: string; cap?: Post['caption'] }[] = [
-    { minutesAgo: 40, seed: 'official-welcome', cap: { text: 'ようこそ', fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.85 } },
-    { minutesAgo: 230, seed: 'official-trace', cap: { text: '素のままで', fontKey: 'hand', color: '#1A1A14', x: 0.5, y: 0.85 } },
-    { minutesAgo: 520, seed: 'official-night', cap: { text: 'おやすみ', fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.85 } },
+    { minutesAgo: 40, seed: 'official-welcome', cap: { text: tr('ようこそ', 'Welcome'), fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.85 } },
+    { minutesAgo: 230, seed: 'official-trace', cap: { text: tr('素のままで', 'As you are'), fontKey: 'hand', color: '#1A1A14', x: 0.5, y: 0.85 } },
+    { minutesAgo: 520, seed: 'official-night', cap: { text: tr('おやすみ', 'Good night'), fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.85 } },
   ];
   return plan.map((p) => {
     const createdAt = t - p.minutesAgo * 60 * 1000;
@@ -52,10 +53,10 @@ export function makeOfficialPosts(officialId: string): Post[] {
 
 export function makeMockPeople(): User[] {
   const base = [
-    { handle: 'miho', displayName: 'みほ', avatarEmoji: '🌿', avatarColor: '#C7E6A6', avatarSeed: 'miho-plant' },
-    { handle: 'taku', displayName: 'たくや', avatarEmoji: '🛋️', avatarColor: '#AFD0E2', avatarSeed: 'taku-sofa' },
-    { handle: 'ken', displayName: 'けん', avatarEmoji: '☕️', avatarColor: '#E6C7A6', avatarSeed: 'ken-coffee' },
-    { handle: 'saki', displayName: 'さき', avatarEmoji: '🌙', avatarColor: '#CFBCE6', avatarSeed: 'saki-night' },
+    { handle: 'miho', displayName: tr('みほ', 'Miho'), avatarEmoji: '🌿', avatarColor: '#C7E6A6', avatarSeed: 'miho-plant' },
+    { handle: 'taku', displayName: tr('たくや', 'Taku'), avatarEmoji: '🛋️', avatarColor: '#AFD0E2', avatarSeed: 'taku-sofa' },
+    { handle: 'ken', displayName: tr('けん', 'Ken'), avatarEmoji: '☕️', avatarColor: '#E6C7A6', avatarSeed: 'ken-coffee' },
+    { handle: 'saki', displayName: tr('さき', 'Saki'), avatarEmoji: '🌙', avatarColor: '#CFBCE6', avatarSeed: 'saki-night' },
   ];
   const t = Date.now();
   return base.map((b, i) => ({
@@ -75,13 +76,13 @@ export function makeFollowPosts(people: User[]): Post[] {
   const t = Date.now();
   const posts: Post[] = [];
   const plan: { personIndex: number; minutesAgo: number; seed: string; cap?: Post['caption'] }[] = [
-    { personIndex: 0, minutesAgo: 18, seed: TRACE_SEEDS[0], cap: { text: '休憩なう', fontKey: 'maru', color: '#FFFDF7', x: 0.5, y: 0.82 } },
+    { personIndex: 0, minutesAgo: 18, seed: TRACE_SEEDS[0], cap: { text: tr('休憩なう', 'On a break'), fontKey: 'maru', color: '#FFFDF7', x: 0.5, y: 0.82 } },
     { personIndex: 1, minutesAgo: 52, seed: TRACE_SEEDS[2] },
-    { personIndex: 2, minutesAgo: 95, seed: TRACE_SEEDS[4], cap: { text: 'コーヒー', fontKey: 'hand', color: '#E4FF54', x: 0.32, y: 0.22 } },
+    { personIndex: 2, minutesAgo: 95, seed: TRACE_SEEDS[4], cap: { text: tr('コーヒー', 'Coffee'), fontKey: 'hand', color: '#E4FF54', x: 0.32, y: 0.22 } },
     { personIndex: 3, minutesAgo: 140, seed: TRACE_SEEDS[3] },
     { personIndex: 0, minutesAgo: 210, seed: TRACE_SEEDS[5] },
     { personIndex: 2, minutesAgo: 280, seed: TRACE_SEEDS[7] },
-    { personIndex: 1, minutesAgo: 360, seed: TRACE_SEEDS[9], cap: { text: 'おやすみ', fontKey: 'mincho', color: '#FFFDF7', x: 0.5, y: 0.5 } },
+    { personIndex: 1, minutesAgo: 360, seed: TRACE_SEEDS[9], cap: { text: tr('おやすみ', 'Good night'), fontKey: 'mincho', color: '#FFFDF7', x: 0.5, y: 0.5 } },
   ];
   for (const p of plan) {
     const person = people[p.personIndex];
@@ -159,14 +160,14 @@ export function makeMyMemories(meId: string): Post[] {
   const DAY = 24 * HOUR;
   const t = Date.now();
   const plan: { daysAgo: number; seed: string; cap?: Post['caption'] }[] = [
-    { daysAgo: 365, seed: 'me-y1', cap: { text: '一年前の\nわたしの机', fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.82 } },
-    { daysAgo: 30, seed: 'me-m1', cap: { text: 'しずかな朝', fontKey: 'mincho', color: '#FFFDF7', x: 0.5, y: 0.2 } },
-    { daysAgo: 7, seed: 'me-w1', cap: { text: 'おつかれ', fontKey: 'maru', color: '#E4FF54', x: 0.5, y: 0.5 } },
+    { daysAgo: 365, seed: 'me-y1', cap: { text: tr('一年前の\nわたしの机', 'My desk\na year ago'), fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.82 } },
+    { daysAgo: 30, seed: 'me-m1', cap: { text: tr('しずかな朝', 'A quiet morning'), fontKey: 'mincho', color: '#FFFDF7', x: 0.5, y: 0.2 } },
+    { daysAgo: 7, seed: 'me-w1', cap: { text: tr('おつかれ', 'Nice work'), fontKey: 'maru', color: '#E4FF54', x: 0.5, y: 0.5 } },
     { daysAgo: 2, seed: 'me-d2' },
-    { daysAgo: 3, seed: 'me-d3', cap: { text: '夜ふかし', fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.82 } },
+    { daysAgo: 3, seed: 'me-d3', cap: { text: tr('夜ふかし', 'Up late'), fontKey: 'hand', color: '#FFFDF7', x: 0.5, y: 0.82 } },
     { daysAgo: 12, seed: 'me-d12' },
     { daysAgo: 40, seed: 'me-d40' },
-    { daysAgo: 95, seed: 'me-d95', cap: { text: 'あの日の窓', fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.2 } },
+    { daysAgo: 95, seed: 'me-d95', cap: { text: tr('あの日の窓', 'The window that day'), fontKey: 'mincho', color: '#1A1A14', x: 0.5, y: 0.2 } },
     { daysAgo: 200, seed: 'me-d200' },
   ];
   return plan.map((p) => {
