@@ -154,14 +154,15 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         </FadeIn>
       )}
 
-      {/* 中央：他人＋自分の投稿を混ぜた縦スワイプ。未投稿（パス未取得）は予告のモザイク1枚。 */}
+      {/* 中央：パス開＝他人＋自分の縦スワイプ。パス閉でも自分の投稿があればそれだけ流す。
+          自分も無いときは他人をモザイク1枚で予告、誰もいなければ公式カード。 */}
       <View
         style={styles.stage}
         onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
-        {open ? (
+        {open || myActive.length > 0 ? (
           <MyPostsSwiper
-            posts={feedPosts}
+            posts={open ? feedPosts : myActive}
             me={me}
             official={s.users.find(isBrandUser)}
             users={s.users}
