@@ -45,6 +45,10 @@ alter table public.posts add column if not exists view_count int not null defaul
 -- お題投稿の公開範囲。通常投稿では未使用だが、列が NOT NULL のため insert 時にも値が要る。
 -- default 'public' を持たせて、クライアントが省略しても制約違反にならないようにする。
 alter table public.posts add column if not exists topic_visibility text not null default 'public';
+-- 「号外 第N号」：1週間ぶんの自分の投稿を1枚にまとめた特殊投稿。フォロワーのホームに 24h で流れる。
+-- kind='photo' が通常投稿、'issue' が号外。issue=jsonb に { label, images[], sourcePostIds[] }。
+alter table public.posts add column if not exists kind text not null default 'photo';
+alter table public.posts add column if not exists issue jsonb;
 
 -- ============ reactions（1人1投稿につき1つ）============
 create table if not exists public.reactions (

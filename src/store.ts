@@ -324,7 +324,7 @@ export const useStore = create<Store>()(
 
         // 「号外 第N号」発行：今週（日曜0時～現在）の自分の通常投稿を1枚にまとめてフォロワーのホームに流す。
         // 24時間で消える（通常投稿と同じTTL）。同じ週でも何回でも出せる（ラベルは同じ「N号」）。
-        // ライブ（Supabase）は将来対応。いまはローカルのみ。
+        // ライブ（Supabase）対応：be.publishIssue が DB に挿入。失敗時はローカルにのみ残す。
         publishWeeklyIssue: () => {
           const st = get();
           const me = st.currentUserId;
@@ -335,22 +335,41 @@ export const useStore = create<Store>()(
             .filter((p) => p.userId === me && !p.topicKey && p.kind !== 'issue' && p.createdAt >= weekStart && p.createdAt <= createdAt)
             .sort((a, b) => a.createdAt - b.createdAt);
           if (weekPosts.length === 0) return null;
-          const issuePost: Post = {
+          const expiresAt = createdAt + POST_TTL_HOURS * HOUR;
+          const label = issueLabel(createdAt);
+          const localPost: Post = {
             id: uid('p_'),
             userId: me,
-            imageUrl: weekPosts[0].imageUrl, // 表紙＝1枚目（既存表示と互換）
+            imageUrl: weekPosts[0].imageUrl,
             createdAt,
-            expiresAt: createdAt + POST_TTL_HOURS * HOUR,
+            expiresAt,
             kind: 'issue',
             issue: {
-              label: issueLabel(createdAt),
+              label,
               images: weekPosts.map((p) => p.imageUrl),
               sourcePostIds: weekPosts.map((p) => p.id),
             },
           };
-          set((s) => ({ posts: [...s.posts, issuePost] }));
-          scheduleEngagement(issuePost.id);
-          return issuePost.id;
+          if (hasSupabase) {
+            // BE 経由：呼び出し側へ即返すため、楽観的にローカル追加→裏で BE に上げて id を差し替える。
+            // 失敗時は console 警告のみで体験は止めない（次回 hydrate で消える可能性はある）。
+            set((s) => ({ posts: [...s.posts, localPost] }));
+            be.publishIssue({
+              label,
+              coverImageUrl: weekPosts[0].imageUrl,
+              images: weekPosts.map((p) => p.imageUrl),
+              sourcePostIds: weekPosts.map((p) => p.id),
+              expiresAt,
+            })
+              .then((real) => {
+                set((s) => ({ posts: s.posts.map((p) => (p.id === localPost.id ? real : p)) }));
+              })
+              .catch((e) => console.warn('publishIssue failed', e));
+          } else {
+            set((s) => ({ posts: [...s.posts, localPost] }));
+            scheduleEngagement(localPost.id);
+          }
+          return localPost.id;
         },
 
         liveHydrate: async () => {

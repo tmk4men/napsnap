@@ -56,6 +56,15 @@ function rowToUser(r: any): User {
 }
 
 function rowToPost(r: any): Post {
+  const kind: 'photo' | 'issue' = r.kind === 'issue' ? 'issue' : 'photo';
+  const issue =
+    kind === 'issue' && r.issue
+      ? {
+          label: String(r.issue.label ?? ''),
+          images: Array.isArray(r.issue.images) ? r.issue.images.map(String) : [],
+          sourcePostIds: Array.isArray(r.issue.sourcePostIds) ? r.issue.sourcePostIds.map(String) : [],
+        }
+      : undefined;
   return {
     id: r.id,
     userId: r.user_id,
@@ -68,6 +77,8 @@ function rowToPost(r: any): Post {
     reactionCount: typeof r.reaction_count === 'number' ? r.reaction_count : 0,
     viewCount: typeof r.view_count === 'number' ? r.view_count : 0,
     topicVisibility: r.topic_visibility === 'followers' ? 'followers' : 'public',
+    kind,
+    issue,
   };
 }
 
@@ -245,6 +256,40 @@ export async function addPost(input: {
       // posts.topic_visibility は NOT NULL なので、通常投稿でも 'public' を入れる
       // （通常投稿では未使用だが、制約違反を避ける）。お題投稿のみ実体的に意味を持つ。
       topic_visibility: input.topicKey ? input.topicVisibility ?? 'public' : 'public',
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return rowToPost(data);
+}
+
+// 「号外 第N号」を発行：1週間ぶんの自分の投稿を綴じた特殊投稿（kind='issue'）。
+// 画像 URL は既存の R2/Storage のものをそのまま issue.images に入れる。
+// 元投稿の image_url が後で 24h TTL で消えても、Storage オブジェクト自体はまだ生きてる前提
+// （現状は server-side cleanup を持たない）。長期的には issue 発行時に再アップロードか
+// オブジェクト lifetime 延長が要る。
+export async function publishIssue(input: {
+  label: string;
+  coverImageUrl: string;
+  images: string[];
+  sourcePostIds: string[];
+  expiresAt: number;
+}): Promise<Post> {
+  const id = await myId();
+  if (!id) throw new Error('未サインイン');
+  const { data, error } = await db()
+    .from('posts')
+    .insert({
+      user_id: id,
+      image_url: input.coverImageUrl,
+      kind: 'issue',
+      issue: {
+        label: input.label,
+        images: input.images,
+        sourcePostIds: input.sourcePostIds,
+      },
+      expires_at: new Date(input.expiresAt).toISOString(),
+      topic_visibility: 'public',
     })
     .select('*')
     .single();
