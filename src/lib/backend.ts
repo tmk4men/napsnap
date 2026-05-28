@@ -52,10 +52,13 @@ export async function authStatus(): Promise<{ isAnonymous: boolean; providers: s
   return { isAnonymous, providers };
 }
 
-// リダイレクト先。ネイティブはアプリスキーム（app.json の scheme=napsnap）、Web は現在のオリジン。
+// リダイレクト先。ネイティブはアプリスキーム（app.json の scheme=napsnap）、
+// Web は「いま開いてるページのURL」（origin+pathname）。
+// Supabase の Redirect URLs 許可リストに登録した値と一致させる必要がある
+// （Pages は /napsnap/ 配下なので origin だけだと一致せず弾かれる）。
 function authRedirectUri(): string {
   if (typeof window !== 'undefined' && window.location) {
-    return window.location.origin;
+    return window.location.origin + window.location.pathname;
   }
   return 'napsnap://auth-callback';
 }
@@ -73,23 +76,36 @@ export async function linkProvider(provider: LinkProvider): Promise<boolean> {
     console.warn('[auth] linkIdentity init failed', error);
     return false;
   }
-  // 動的 import：ネイティブだけ expo-web-browser を使い、Web は通常のリダイレクトに任せる。
   try {
     const WebBrowser = require('expo-web-browser');
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     if (result.type !== 'success' || !result.url) return false;
-    // リダイレクトURLのフラグメントから access/refresh token を取り出して session を確定。
     const url: string = result.url;
-    const frag = url.includes('#') ? url.split('#')[1] : url.split('?')[1] ?? '';
-    const params = new URLSearchParams(frag);
-    const access_token = params.get('access_token');
-    const refresh_token = params.get('refresh_token');
+    // PKCE フロー（supabase-js v2 既定）＝戻りは `?code=...`、
+    // implicit フロー＝戻りは `#access_token=...&refresh_token=...`。両方に対応。
+    const qIndex = url.indexOf('?');
+    const hIndex = url.indexOf('#');
+    const query = qIndex >= 0 ? url.substring(qIndex + 1).split('#')[0] : '';
+    const frag = hIndex >= 0 ? url.substring(hIndex + 1) : '';
+    const code = new URLSearchParams(query).get('code');
+    if (code) {
+      const { error: exErr } = await s.auth.exchangeCodeForSession(code);
+      if (exErr) {
+        console.warn('[auth] exchangeCodeForSession failed', exErr);
+        return false;
+      }
+      return true;
+    }
+    const fp = new URLSearchParams(frag);
+    const access_token = fp.get('access_token');
+    const refresh_token = fp.get('refresh_token');
     if (access_token && refresh_token) {
       const { error: setErr } = await s.auth.setSession({ access_token, refresh_token });
       if (setErr) {
         console.warn('[auth] setSession failed', setErr);
         return false;
       }
+      return true;
     }
     return true;
   } catch (e) {
