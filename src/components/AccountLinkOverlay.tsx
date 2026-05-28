@@ -66,7 +66,7 @@ export function AccountLinkOverlay({ onClose }: { onClose: () => void }) {
       >
         <Text style={styles.lead}>
           {isAnon
-            ? 'いまはこの端末だけのアカウントです。外部アカウントと連携すると、機種変更やアプリの入れ直しでも引き継げます。'
+            ? '外部アカウントと連携すると、機種変更やアプリの入れ直しでも引き継げます。'
             : '外部アカウントと連携済みです。機種をまたいで引き継げます。'}
         </Text>
 

@@ -63,11 +63,27 @@ function authRedirectUri(): string {
   return 'napsnap://auth-callback';
 }
 
-// 匿名アカウントに provider を紐付ける。成功で true。
-// 失敗（未設定・ユーザーキャンセル等）でも例外を投げずに false を返す。
+const isWebRuntime = typeof window !== 'undefined' && !!window.location;
+
+// 匿名アカウントに provider を紐付ける。
+// Web：そのままページ全体を OAuth にリダイレクト（ポップアップを使わない＝確実）。
+//   戻り（?code=）は起動時に completeWebOAuth() が拾って session を確定する。
+//   この関数は戻り値を返す前にページ遷移するので、呼び出し側の後続処理は基本走らない。
+// ネイティブ：expo-web-browser の認証セッションで開いて、戻りの code/token から session を確定。
 export async function linkProvider(provider: LinkProvider): Promise<boolean> {
   const s = db();
   const redirectTo = authRedirectUri();
+
+  if (isWebRuntime) {
+    const { error } = await s.auth.linkIdentity({ provider, options: { redirectTo } });
+    if (error) {
+      console.warn('[auth] linkIdentity (web redirect) failed', error);
+      return false;
+    }
+    // ここに到達する前に window.location が OAuth へ遷移する。
+    return true;
+  }
+
   const { data, error } = await s.auth.linkIdentity({
     provider,
     options: { redirectTo, skipBrowserRedirect: true },
@@ -80,38 +96,60 @@ export async function linkProvider(provider: LinkProvider): Promise<boolean> {
     const WebBrowser = require('expo-web-browser');
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     if (result.type !== 'success' || !result.url) return false;
-    const url: string = result.url;
-    // PKCE フロー（supabase-js v2 既定）＝戻りは `?code=...`、
-    // implicit フロー＝戻りは `#access_token=...&refresh_token=...`。両方に対応。
-    const qIndex = url.indexOf('?');
-    const hIndex = url.indexOf('#');
-    const query = qIndex >= 0 ? url.substring(qIndex + 1).split('#')[0] : '';
-    const frag = hIndex >= 0 ? url.substring(hIndex + 1) : '';
-    const code = new URLSearchParams(query).get('code');
-    if (code) {
-      const { error: exErr } = await s.auth.exchangeCodeForSession(code);
-      if (exErr) {
-        console.warn('[auth] exchangeCodeForSession failed', exErr);
-        return false;
-      }
-      return true;
-    }
-    const fp = new URLSearchParams(frag);
-    const access_token = fp.get('access_token');
-    const refresh_token = fp.get('refresh_token');
-    if (access_token && refresh_token) {
-      const { error: setErr } = await s.auth.setSession({ access_token, refresh_token });
-      if (setErr) {
-        console.warn('[auth] setSession failed', setErr);
-        return false;
-      }
-      return true;
-    }
-    return true;
+    return await finishCodeOrToken(result.url);
   } catch (e) {
     console.warn('[auth] openAuthSession failed', e);
     return false;
   }
+}
+
+// リダイレクトURLから PKCE(?code=) / implicit(#access_token=) を読んで session を確定。
+async function finishCodeOrToken(url: string): Promise<boolean> {
+  const s = db();
+  const qIndex = url.indexOf('?');
+  const hIndex = url.indexOf('#');
+  const query = qIndex >= 0 ? url.substring(qIndex + 1).split('#')[0] : '';
+  const frag = hIndex >= 0 ? url.substring(hIndex + 1) : '';
+  const code = new URLSearchParams(query).get('code');
+  if (code) {
+    const { error } = await s.auth.exchangeCodeForSession(code);
+    if (error) {
+      console.warn('[auth] exchangeCodeForSession failed', error);
+      return false;
+    }
+    return true;
+  }
+  const fp = new URLSearchParams(frag);
+  const access_token = fp.get('access_token');
+  const refresh_token = fp.get('refresh_token');
+  if (access_token && refresh_token) {
+    const { error } = await s.auth.setSession({ access_token, refresh_token });
+    if (error) {
+      console.warn('[auth] setSession failed', error);
+      return false;
+    }
+    return true;
+  }
+  return true;
+}
+
+// Web 起動時：OAuth から `?code=` で戻ってきていたら session を確定し、URL を掃除する。
+// 連携できたら true（呼び出し側でトースト等を出す用途）。
+export async function completeWebOAuth(): Promise<boolean> {
+  if (!isWebRuntime || !supabase) return false;
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (!code) return false;
+  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  // URL から code/state を消す（リロードや共有で誤動作しないように）。
+  try {
+    window.history.replaceState({}, '', window.location.pathname);
+  } catch {}
+  if (error) {
+    console.warn('[auth] completeWebOAuth exchange failed', error);
+    return false;
+  }
+  return true;
 }
 
 // ---------- 行 → アプリ型 ----------

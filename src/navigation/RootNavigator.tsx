@@ -6,6 +6,7 @@ import { AccountSetupScreen } from '../screens/AccountSetupScreen';
 import { AppShell } from './AppShell';
 import { useStore } from '../store';
 import { hasSupabase } from '../config';
+import * as be from '../lib/backend';
 
 export function RootNavigator() {
   const [hydrated, setHydrated] = useState(useStore.persist.hasHydrated());
@@ -21,8 +22,12 @@ export function RootNavigator() {
   useEffect(() => {
     if (!hydrated) return;
     if (hasSupabase) {
-      // ライブ：匿名セッション確保＋サーバから全取得（オンボ済みかもここで確定）。
-      useStore.getState().liveHydrate().finally(() => setLiveReady(true));
+      // ライブ：OAuth から戻ってきていたら先に session を確定（連携完了）→ その後サーバから全取得。
+      be.completeWebOAuth()
+        .catch(() => {})
+        .finally(() => {
+          useStore.getState().liveHydrate().finally(() => setLiveReady(true));
+        });
     } else {
       // モック：復帰時、期限切れを掃除してから、無ければ作り直す。
       useStore.getState().ensureOfficialFollowed();
