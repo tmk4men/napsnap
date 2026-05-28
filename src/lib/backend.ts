@@ -75,12 +75,16 @@ export async function linkProvider(provider: LinkProvider): Promise<boolean> {
   const redirectTo = authRedirectUri();
 
   if (isWebRuntime) {
-    const { error } = await s.auth.linkIdentity({ provider, options: { redirectTo } });
-    if (error) {
-      console.warn('[auth] linkIdentity (web redirect) failed', error);
+    // URL だけ取得して、こちらで明示的にページ遷移する（linkIdentity 任せだと飛ばない場合がある）。
+    const { data, error } = await s.auth.linkIdentity({
+      provider,
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (error || !data?.url) {
+      console.warn('[auth] linkIdentity (web) failed', error);
       return false;
     }
-    // ここに到達する前に window.location が OAuth へ遷移する。
+    window.location.assign(data.url);
     return true;
   }
 
