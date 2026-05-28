@@ -74,6 +74,7 @@ interface Actions {
   pruneExpired: () => void;
   resetDemo: () => void;
   deleteAccount: () => Promise<boolean>;
+  restoreAccount: (provider: 'apple' | 'google') => Promise<boolean>;
 }
 
 export type Store = PersistedState & Actions;
@@ -590,6 +591,16 @@ export const useStore = create<Store>()(
         resetDemo: () => {
           if (hasSupabase) be.signOut().catch(() => {}); // ライブ：サインアウト＝次回は新しい匿名ユーザー
           set({ ...initial });
+        },
+
+        // 新規DL/機種変時の「引き継ぎ」：過去に連携した Apple/Google でサインインし直す。
+        // Web は signInWithProvider 内でページ遷移するのでここに戻らない。ネイティブは戻ってから再取得。
+        restoreAccount: async (provider) => {
+          if (!hasSupabase) return false;
+          const ok = await be.signInWithProvider(provider);
+          if (!ok) return false;
+          await get().liveHydrate();
+          return true;
         },
 
         // アカウント削除（退会）。ライブはサーバーの本人データ＋auth ユーザーを消してからローカルを初期化。

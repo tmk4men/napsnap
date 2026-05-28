@@ -132,6 +132,45 @@ export async function linkProvider(provider: LinkProvider): Promise<boolean> {
   }
 }
 
+// 既存アカウントへ「引き継ぎ（サインイン）」する。
+// linkProvider が匿名に紐付けるのに対し、これは過去に連携済みのアカウントへサインインし直す＝機種変/再DL時の復元。
+// Web：全画面リダイレクト（戻りは起動時 completeWebOAuth が拾う）。ネイティブ：openAuthSession。
+export async function signInWithProvider(provider: LinkProvider): Promise<boolean> {
+  const s = db();
+  const redirectTo = authRedirectUri();
+
+  if (isWebRuntime) {
+    const { data, error } = await s.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (error || !data?.url) {
+      console.warn('[auth] signInWithOAuth (web) failed', error);
+      return false;
+    }
+    window.location.assign(data.url);
+    return true;
+  }
+
+  const { data, error } = await s.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+  if (error || !data?.url) {
+    console.warn('[auth] signInWithOAuth init failed', error);
+    return false;
+  }
+  try {
+    const WebBrowser = require('expo-web-browser');
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    if (result.type !== 'success' || !result.url) return false;
+    return await finishCodeOrToken(result.url);
+  } catch (e) {
+    console.warn('[auth] signIn openAuthSession failed', e);
+    return false;
+  }
+}
+
 // リダイレクトURLから PKCE(?code=) / implicit(#access_token=) を読んで session を確定。
 async function finishCodeOrToken(url: string): Promise<boolean> {
   const s = db();

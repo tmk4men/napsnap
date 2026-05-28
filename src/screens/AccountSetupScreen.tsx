@@ -29,9 +29,20 @@ import { CropModal } from '../components/CropModal';
 export function AccountSetupScreen() {
   const insets = useSafeAreaInsets();
   const completeAccountSetup = useStore((s) => s.completeAccountSetup);
+  const restoreAccount = useStore((s) => s.restoreAccount);
   const mockPeople = useMemo(() => makeMockPeople(), []);
 
   const [submitting, setSubmitting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+
+  async function onRestore() {
+    if (restoring || submitting) return;
+    setRestoring(true);
+    // Web は Google にページ遷移＝戻ってこない。ネイティブは結果を待つ。
+    const ok = await restoreAccount('google');
+    if (!ok) setRestoring(false);
+    // 成功＝onboarded のアカウントに切り替わり画面が外れる。
+  }
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [avatarUri, setAvatarUri] = useState<string>('');
@@ -168,6 +179,7 @@ export function AccountSetupScreen() {
           label={submitting ? '作成中…' : copy.setupStart}
           disabled={
             submitting ||
+            restoring ||
             !name.trim() ||
             !handle.trim() ||
             hasBanned(name) ||
@@ -177,6 +189,14 @@ export function AccountSetupScreen() {
           }
           onPress={finish}
         />
+        {/* すでにアカウントがある人の引き継ぎ（連携済みの Google でサインイン）。ライブのみ。 */}
+        {hasSupabase && (
+          <Pressable onPress={onRestore} disabled={restoring || submitting} style={styles.restoreBtn} hitSlop={8}>
+            <Text style={styles.restoreText}>
+              {restoring ? '引き継ぎ中…' : 'すでにアカウントがある方はこちら（引き継ぐ）'}
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {cropUri && (
@@ -196,6 +216,8 @@ export function AccountSetupScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: space.lg },
   brand: { color: colors.text, fontSize: 34, letterSpacing: -1, marginBottom: space.md, fontFamily: fonts.brand },
+  restoreBtn: { alignItems: 'center', paddingVertical: space.md, marginTop: space.xs },
+  restoreText: { color: colors.textDim, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, textDecorationLine: 'underline' },
 
   avatarStage: { alignItems: 'center', marginTop: space.xl, gap: space.md },
   avatarPreviewWrap: { position: 'relative' },
