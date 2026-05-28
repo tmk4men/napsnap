@@ -55,8 +55,8 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     );
   }
 
-  // ホームに並べる投稿＝自分の投稿（新しい順）＋フォロー中の他人投稿（残り時間短い順）の連結。
-  // 自分の最新が先頭。他人の山の後ろに埋もれて見えなくなるのを防ぐ。
+  // ホームに並べる投稿＝フォロー中の他人投稿（残り時間短い順）＋自分の投稿（新しい順）の連結。
+  // 他人優先：他人がいるなら先に他人。自分の投稿はその後ろに新しい順で並べる。
   const others = useMemo(
     () => followedActivePosts(s).filter((p) => !seenSnapshot.current!.has(p.id)),
     [s.posts, s.following, s.currentUserId]
@@ -68,7 +68,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         .sort((a, b) => b.createdAt - a.createdAt),
     [s.posts, s.currentUserId]
   );
-  const feedPosts = useMemo(() => [...myActive, ...others], [myActive, others]);
+  const feedPosts = useMemo(() => [...others, ...myActive], [others, myActive]);
   const followedLatest = others[0];
 
   const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
