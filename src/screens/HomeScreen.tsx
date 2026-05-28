@@ -170,6 +170,25 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             onReact={(postId, type: ReactionType) => reactToPost(postId, type)}
             onMarkViewed={markViewed}
             myReactionOf={(postId) => myReaction(s, postId)}
+            onOpenIssue={(p) => {
+              if (!p.issue) return;
+              // 号外の中身を全画面チェキで見返せるように。元投稿が残ってればその Post を使い、
+              // 期限切れで消えてれば images URL からダミー Post を組む。
+              const built: Post[] = p.issue.images.map((url, i) => {
+                const origId = p.issue!.sourcePostIds[i];
+                const orig = origId ? s.posts.find((x) => x.id === origId) : undefined;
+                return (
+                  orig ?? {
+                    id: `${p.id}__view_${i}`,
+                    userId: p.userId,
+                    imageUrl: url,
+                    createdAt: p.createdAt,
+                    expiresAt: p.expiresAt,
+                  }
+                );
+              });
+              setViewingMemory(built);
+            }}
           />
         ) : mediaMode && followedLatest ? (
           <FadeIn key={followedLatest.id} delay={130} dy={16} style={styles.heroWrap}>

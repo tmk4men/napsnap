@@ -29,6 +29,7 @@ export function MyPostsSwiper({
   onReact,
   onMarkViewed,
   myReactionOf,
+  onOpenIssue,
 }: {
   posts: Post[];
   me?: User;
@@ -38,6 +39,7 @@ export function MyPostsSwiper({
   onReact: (postId: string, type: ReactionType) => void;
   onMarkViewed: (postId: string) => void;
   myReactionOf: (postId: string) => ReactionType | undefined;
+  onOpenIssue?: (post: Post) => void;
 }) {
   const total = posts.length + 1; // 末尾に公式の促しカード
   const [index, setIndex] = useState(0);
@@ -141,21 +143,21 @@ export function MyPostsSwiper({
             <OfficialCard official={official} message="写真を上げてみよう" width={Math.min(cardW, 320)} />
           ) : (
             <>
-              {cardW > 0 && current && (
-                <Pressable onPress={replaySound} disabled={!hasSound}>
-                  {current.kind === 'issue' && current.issue ? (
-                    <IssueCard
-                      label={current.issue.label}
-                      images={current.issue.images}
-                      createdAt={current.createdAt}
-                      width={cardW}
-                      tiltSeed={current.id}
-                    />
-                  ) : (
-                    <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
-                  )}
+              {cardW > 0 && current && (current.kind === 'issue' && current.issue ? (
+                <Pressable onPress={() => onOpenIssue?.(current)} disabled={!onOpenIssue}>
+                  <IssueCard
+                    label={current.issue.label}
+                    images={current.issue.images}
+                    createdAt={current.createdAt}
+                    width={cardW}
+                    tiltSeed={current.id}
+                  />
                 </Pressable>
-              )}
+              ) : (
+                <Pressable onPress={replaySound} disabled={!hasSound}>
+                  <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
+                </Pressable>
+              ))}
               {current && (
                 <View style={styles.metaRow}>
                   <Avatar user={author} size={26} />

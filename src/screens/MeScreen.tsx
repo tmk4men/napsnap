@@ -190,7 +190,26 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
             {mine.map(({ post, viewCount, reactionCount }) => (
               <View key={post.id} style={{ width: ME_ITEM_W }}>
                 {post.kind === 'issue' && post.issue ? (
-                  <IssueCard label={post.issue.label} images={post.issue.images} createdAt={post.createdAt} width={ME_ITEM_W} tiltSeed={post.id} />
+                  <Pressable
+                    onPress={() => {
+                      const built: Post[] = post.issue!.images.map((url, i) => {
+                        const origId = post.issue!.sourcePostIds[i];
+                        const orig = origId ? s.posts.find((x) => x.id === origId) : undefined;
+                        return (
+                          orig ?? {
+                            id: `${post.id}__view_${i}`,
+                            userId: post.userId,
+                            imageUrl: url,
+                            createdAt: post.createdAt,
+                            expiresAt: post.expiresAt,
+                          }
+                        );
+                      });
+                      setViewing(built);
+                    }}
+                  >
+                    <IssueCard label={post.issue.label} images={post.issue.images} createdAt={post.createdAt} width={ME_ITEM_W} tiltSeed={post.id} />
+                  </Pressable>
                 ) : (
                   <ChekiCard uri={post.imageUrl} caption={post.caption} width={ME_ITEM_W} date={post.createdAt} tiltSeed={post.id} />
                 )}
