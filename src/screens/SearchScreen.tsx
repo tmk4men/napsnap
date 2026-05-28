@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar } from '../components/ui';
+import { AdBanner } from '../components/AdBanner';
 import { Backdrop } from '../components/Backdrop';
 import { CloseIcon, SearchIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { useStore } from '../store';
@@ -155,6 +156,11 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
           })}
         </ScrollView>
       )}
+
+      {/* 検索タブのバナー広告（[[napsnap-ad-strategy]]）。Web デモはプレースホルダ枠のみ。 */}
+      <View style={[styles.adWrap, { paddingBottom: insets.bottom }]}>
+        <AdBanner />
+      </View>
     </View>
   );
 }
@@ -216,4 +222,5 @@ const styles = StyleSheet.create({
   followText: { color: colors.limeInk, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui },
   followingBtn: { backgroundColor: colors.surfaceRaised, borderColor: colors.hairline },
   followingText: { color: colors.textDim },
+  adWrap: { borderTopWidth: rule.hair, borderColor: colors.hairline, backgroundColor: colors.bg },
 });
