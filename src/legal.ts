@@ -1,5 +1,7 @@
 // プライバシーポリシー / 利用規約の本文。ハンバーガーメニューから表示する。
+// 端末言語に追従（src/i18n.ts）。ja/en の対で持ち、現在言語の塊を export する。
 // ※これは napsnap の方針に沿って用意した雛形。公開前に専門家のレビューを推奨。
+import { pick } from './i18n';
 
 export interface LegalDoc {
   title: string;
@@ -8,11 +10,11 @@ export interface LegalDoc {
   sections: { heading: string; body: string }[];
 }
 
-const UPDATED = '2026年5月28日';
+const UPDATED = { ja: '2026年5月28日', en: 'May 28, 2026' };
 
-export const PRIVACY_POLICY: LegalDoc = {
+const PRIVACY_POLICY_JA: LegalDoc = {
   title: 'プライバシーポリシー',
-  updated: UPDATED,
+  updated: UPDATED.ja,
   intro:
     'napsnap（以下「本サービス」）は、顔や人物を写さず、日常の痕跡をゆるやかに分かち合うためのサービスです。本ポリシーは、本サービスが取得する情報とその扱いについて説明します。',
   sections: [
@@ -53,32 +55,82 @@ export const PRIVACY_POLICY: LegalDoc = {
     },
     {
       heading: '8. 安全管理',
-      body:
-        '取得した情報の漏えい・滅失・毀損の防止のため、合理的な安全管理措置を講じます。',
+      body: '取得した情報の漏えい・滅失・毀損の防止のため、合理的な安全管理措置を講じます。',
     },
     {
       heading: '9. お問い合わせ',
-      body:
-        '本ポリシーに関するお問い合わせは、アプリ内のお問い合わせ窓口またはサポート用の連絡先までご連絡ください。',
+      body: '本ポリシーに関するお問い合わせは、アプリ内のお問い合わせ窓口またはサポート用の連絡先までご連絡ください。',
     },
     {
       heading: '10. 改定',
-      body:
-        '本ポリシーは、必要に応じて改定することがあります。重要な変更がある場合は、アプリ内でお知らせします。',
+      body: '本ポリシーは、必要に応じて改定することがあります。重要な変更がある場合は、アプリ内でお知らせします。',
     },
   ],
 };
 
-export const TERMS_OF_SERVICE: LegalDoc = {
+const PRIVACY_POLICY_EN: LegalDoc = {
+  title: 'Privacy Policy',
+  updated: UPDATED.en,
+  intro:
+    'napsnap ("the Service") is a place to gently share the traces of daily life without showing faces or people. This policy explains what information the Service collects and how it is handled.',
+  sections: [
+    {
+      heading: '1. Information we collect',
+      body:
+        '• Profile info: display name, user ID (@), icon image\n• Post info: photo, about 2 seconds of ambient sound recorded right after the shot, and an optional caption\n• Usage info: follow relationships, reactions, and views (records of viewing)\n• Device info: the minimum needed for the app to function',
+    },
+    {
+      heading: '2. How we use it',
+      body:
+        'We use the information to display posts, provide features such as mutual unlocking and notifications, prevent misuse, improve quality, and show ads.',
+    },
+    {
+      heading: '3. Retention and auto-deletion',
+      body:
+        '• Regular posts (photos and audio) are automatically deleted roughly 24 hours after posting.\n• Posts to a "prompt" are deleted at the end of that day (the following midnight).\n• Your own posts remain only on your device as "memories."\n• Items you react to ("kept") can be revisited for a limited time (about 24 hours).',
+    },
+    {
+      heading: '4. About faces and people',
+      body:
+        'The Service does not make faces or people the focus. Before posting, we check whether a face is included, and photos in which a face is detected cannot be posted.',
+    },
+    {
+      heading: '5. Advertising',
+      body:
+        'The Service may display ads using Google AdMob. To deliver ads, AdMob and other ad providers may collect and use information such as an advertising identifier (your device\'s ad ID) and general usage. Handling of this information is governed by each ad provider\'s privacy policy (e.g., Google\'s policy: https://policies.google.com/privacy ).\nYou can disable ad personalization at any time in your device settings (iOS: tracking permission / Android: reset or opt out of the ad ID).',
+    },
+    {
+      heading: '6. Sharing with third parties',
+      body:
+        'Except as required by law, we do not provide your personal information to third parties without your consent. The collection of information by the ad providers above is carried out within the scope each provider defines.',
+    },
+    {
+      heading: '7. External services',
+      body:
+        'The Service may use external services for storing and delivering posts, and for fonts and image delivery used in display. Each provider\'s own policy applies.',
+    },
+    {
+      heading: '8. Security',
+      body: 'We take reasonable security measures to prevent leakage, loss, or damage of the information we collect.',
+    },
+    {
+      heading: '9. Contact',
+      body: 'For questions about this policy, please contact us via the in-app contact window or our support contact.',
+    },
+    {
+      heading: '10. Changes',
+      body: 'We may revise this policy as needed. If there are significant changes, we will let you know in the app.',
+    },
+  ],
+};
+
+const TERMS_OF_SERVICE_JA: LegalDoc = {
   title: '利用規約',
-  updated: UPDATED,
+  updated: UPDATED.ja,
   intro:
     'この利用規約（以下「本規約」）は、napsnap（以下「本サービス」）の利用条件を定めるものです。利用者は本規約に同意のうえ本サービスを利用するものとします。',
   sections: [
-    {
-      heading: '1. 適用',
-      body: '本規約は、本サービスの利用に関する一切の関係に適用されます。',
-    },
+    { heading: '1. 適用', body: '本規約は、本サービスの利用に関する一切の関係に適用されます。' },
     {
       heading: '2. アカウント',
       body:
@@ -96,8 +148,7 @@ export const TERMS_OF_SERVICE: LegalDoc = {
     },
     {
       heading: '5. サービスの変更・停止',
-      body:
-        '運営上の都合により、本サービスの内容を変更し、または提供を停止・終了することがあります。',
+      body: '運営上の都合により、本サービスの内容を変更し、または提供を停止・終了することがあります。',
     },
     {
       heading: '6. 免責',
@@ -106,13 +157,50 @@ export const TERMS_OF_SERVICE: LegalDoc = {
     },
     {
       heading: '7. 規約の変更',
-      body:
-        '本規約は、必要に応じて変更することがあります。変更後に本サービスを利用した場合、変更に同意したものとみなします。',
+      body: '本規約は、必要に応じて変更することがあります。変更後に本サービスを利用した場合、変更に同意したものとみなします。',
     },
-    {
-      heading: '8. 準拠法',
-      body:
-        '本規約の解釈・適用は、日本法に準拠します。',
-    },
+    { heading: '8. 準拠法', body: '本規約の解釈・適用は、日本法に準拠します。' },
   ],
 };
+
+const TERMS_OF_SERVICE_EN: LegalDoc = {
+  title: 'Terms of Service',
+  updated: UPDATED.en,
+  intro:
+    'These Terms of Service ("Terms") set out the conditions for using napsnap ("the Service"). By using the Service, you agree to these Terms.',
+  sections: [
+    { heading: '1. Application', body: 'These Terms apply to all matters relating to use of the Service.' },
+    {
+      heading: '2. Account',
+      body:
+        'You must create your account with accurate information and manage it at your own responsibility. If impersonation or misuse is found, we may restrict your use.',
+    },
+    {
+      heading: '3. Prohibited conduct',
+      body:
+        'The following are prohibited:\n• Posting photos in which a face or person is identifiable\n• Infringing the rights of others (portrait, copyright, privacy, etc.)\n• Defamation, discrimination, obscenity, or other inappropriate expression\n• Conduct that violates laws or public order and morals\n• Conduct that interferes with operation of the Service',
+    },
+    {
+      heading: '4. Posted content',
+      body:
+        'Rights to content you post belong to you. You grant the Service permission to use your content to the extent necessary to provide and display the Service. Most posts are automatically deleted after a set time.',
+    },
+    {
+      heading: '5. Changes and suspension',
+      body: 'For operational reasons, we may change, suspend, or end the Service.',
+    },
+    {
+      heading: '6. Disclaimer',
+      body:
+        'We strive to provide the Service stably where possible, but do not guarantee its completeness, accuracy, or usefulness. We are not responsible for disputes between users or with third parties.',
+    },
+    {
+      heading: '7. Changes to these Terms',
+      body: 'We may change these Terms as needed. If you use the Service after a change, you are deemed to have agreed to it.',
+    },
+    { heading: '8. Governing law', body: 'These Terms are governed by and interpreted under the laws of Japan.' },
+  ],
+};
+
+export const PRIVACY_POLICY = pick({ ja: PRIVACY_POLICY_JA, en: PRIVACY_POLICY_EN });
+export const TERMS_OF_SERVICE = pick({ ja: TERMS_OF_SERVICE_JA, en: TERMS_OF_SERVICE_EN });
