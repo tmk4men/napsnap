@@ -214,11 +214,12 @@ export function unreadActivityCount(s: Snapshot & Pick<Store, 'lastSeenActivityA
 }
 
 // 自分の全投稿（期限に関係なくローカルに残る「思い出」）。新しい順。
+// 「号外」は元の投稿を綴じたメタ投稿なのでカレンダー／思い出には出さない。
 export function myArchive(s: Pick<Store, 'currentUserId' | 'posts'>): Post[] {
   const { currentUserId } = s;
   if (!currentUserId) return [];
   return s.posts
-    .filter((p) => p.userId === currentUserId && !p.topicKey)
+    .filter((p) => p.userId === currentUserId && !p.topicKey && p.kind !== 'issue')
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 

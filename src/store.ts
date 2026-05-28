@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { AccessPass, FeedState, NotifyKind, NotifyPrefs, Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from './types';
 import { uid } from './lib/id';
-import { HOUR, isActive, nextMidnight, now } from './lib/time';
+import { HOUR, isActive, issueLabel, nextMidnight, now, startOfWeek } from './lib/time';
 import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
 import { makeFollowPosts, makeMyMemories, makeOfficialPosts, makeOfficialUser, makeSeedReactions, makeTopicPosts, OFFICIAL_ID } from './seed';
 import { dayIndex, todaysTopic } from './topics';
@@ -55,6 +55,7 @@ interface Actions {
   updateProfile: (displayName: string, handle: string) => void;
   toggleFollow: (userId: string) => void;
   addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption, topicKey?: string) => Promise<string>;
+  publishWeeklyIssue: () => string | null;
   liveHydrate: () => Promise<void>;
   markViewed: (postId: string) => void;
   reactToPost: (postId: string, type: ReactionType) => void;
@@ -321,6 +322,37 @@ export const useStore = create<Store>()(
           return post.id;
         },
 
+        // 「号外 第N号」発行：今週（日曜0時～現在）の自分の通常投稿を1枚にまとめてフォロワーのホームに流す。
+        // 24時間で消える（通常投稿と同じTTL）。同じ週でも何回でも出せる（ラベルは同じ「N号」）。
+        // ライブ（Supabase）は将来対応。いまはローカルのみ。
+        publishWeeklyIssue: () => {
+          const st = get();
+          const me = st.currentUserId;
+          if (!me) return null;
+          const createdAt = now();
+          const weekStart = startOfWeek(createdAt);
+          const weekPosts = st.posts
+            .filter((p) => p.userId === me && !p.topicKey && p.kind !== 'issue' && p.createdAt >= weekStart && p.createdAt <= createdAt)
+            .sort((a, b) => a.createdAt - b.createdAt);
+          if (weekPosts.length === 0) return null;
+          const issuePost: Post = {
+            id: uid('p_'),
+            userId: me,
+            imageUrl: weekPosts[0].imageUrl, // 表紙＝1枚目（既存表示と互換）
+            createdAt,
+            expiresAt: createdAt + POST_TTL_HOURS * HOUR,
+            kind: 'issue',
+            issue: {
+              label: issueLabel(createdAt),
+              images: weekPosts.map((p) => p.imageUrl),
+              sourcePostIds: weekPosts.map((p) => p.id),
+            },
+          };
+          set((s) => ({ posts: [...s.posts, issuePost] }));
+          scheduleEngagement(issuePost.id);
+          return issuePost.id;
+        },
+
         liveHydrate: async () => {
           if (!hasSupabase) return;
           try {
@@ -517,7 +549,11 @@ export const useStore = create<Store>()(
             );
             const posts = st.posts.filter(
               // 自分の通常投稿（=思い出）は残す。お題は0時に消えるので自分のでも残さない。
-              (p) => (p.userId === currentUserId && !p.topicKey) || isActive(p.expiresAt) || keepReacted.has(p.id)
+              // 「号外」は元投稿を綴じたメタ投稿なので、期限切れ(24h)で普通に捨てる。
+              (p) =>
+                (p.userId === currentUserId && !p.topicKey && p.kind !== 'issue') ||
+                isActive(p.expiresAt) ||
+                keepReacted.has(p.id)
             );
             if (posts.length === st.posts.length) return {} as any; // 変化なし
             const ids = new Set(posts.map((p) => p.id));

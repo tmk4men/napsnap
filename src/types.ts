@@ -50,6 +50,14 @@ export interface Post {
   // お題投稿の公開範囲。'public'=全実在ユーザーに見える / 'followers'=自分とフォロワーだけ。
   // 通常投稿（topicKey なし）には適用されない。
   topicVisibility?: TopicVisibility;
+  // 「号外」：1週間ぶんの自分の投稿を綴じてフォロワーのホームに流す（24h で消える）。
+  // kind='issue' のとき issue が必ず入る。imageUrl は1枚目（表紙）と同じURLを入れて既存表示と互換にする。
+  kind?: 'photo' | 'issue';
+  issue?: {
+    label: string; // 例: "5月 第3号"
+    images: string[]; // 綴じた週の投稿の画像URL配列（時系列）
+    sourcePostIds: string[]; // 元の投稿ID（参照用）
+  };
 }
 
 export type TopicVisibility = 'public' | 'followers';

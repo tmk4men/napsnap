@@ -7,6 +7,7 @@ import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
+import { IssueCard } from '../components/IssueCard';
 import { FootprintIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { shareInvite } from '../lib/share';
 import { MemoryCalendar } from '../components/MemoryCalendar';
@@ -19,6 +20,7 @@ import { useStore } from '../store';
 import { currentUser, myArchive, myPosts, nextProfileEditDays, profileEditsLeft } from '../selectors';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
+import { issueLabel, startOfWeek } from '../lib/time';
 import { Post } from '../types';
 
 const ME_ITEM_W = 210;
@@ -32,6 +34,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const toggleFollow = useStore((st) => st.toggleFollow);
   const updateProfileImage = useStore((st) => st.updateProfileImage);
   const updateProfile = useStore((st) => st.updateProfile);
+  const publishWeeklyIssue = useStore((st) => st.publishWeeklyIssue);
   const { play, playingId } = useClipPlayer();
   const me = currentUser(s);
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
@@ -50,6 +53,30 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const [cropUri, setCropUri] = useState<string | null>(null);
   const [editProfile, setEditProfile] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
+  const [issueNote, setIssueNote] = useState<string | null>(null);
+
+  // 「今週」（日曜0時以降）の自分の通常投稿。号外の元素材。
+  const weekStart = startOfWeek();
+  const weekPostsCount = useMemo(
+    () =>
+      s.posts.filter(
+        (p) =>
+          p.userId === s.currentUserId &&
+          !p.topicKey &&
+          p.kind !== 'issue' &&
+          p.createdAt >= weekStart
+      ).length,
+    [s.posts, s.currentUserId, weekStart]
+  );
+  const thisIssueLabel = issueLabel();
+
+  function onPublishIssue() {
+    const id = publishWeeklyIssue();
+    if (id) {
+      setIssueNote(`${thisIssueLabel} を綴じて投稿した`);
+      setTimeout(() => setIssueNote(null), 2400);
+    }
+  }
 
   async function onShare() {
     const r = await shareInvite(me?.handle ?? '');
@@ -125,6 +152,27 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
         {/* カレンダー（過去の自分の投稿を日別に。タップで MemoryViewer 起動） */}
         <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
 
+        {/* 今週の号外：日曜0時以降の自分の投稿をまとめて1枚の号外として発行（24hで消える） */}
+        <Text style={styles.sectionLabel}>今週の号外</Text>
+        <View style={styles.issueRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.issueLabel}>{thisIssueLabel}</Text>
+            <Text style={styles.issueSub}>{weekPostsCount > 0 ? `全${weekPostsCount}枚を綴じる` : 'まだ今週の投稿がない'}</Text>
+          </View>
+          <Pressable
+            onPress={onPublishIssue}
+            disabled={weekPostsCount === 0}
+            style={({ pressed }) => [
+              styles.issueBtn,
+              weekPostsCount === 0 && styles.issueBtnDisabled,
+              pressed && weekPostsCount > 0 && { opacity: 0.85 },
+            ]}
+          >
+            <Text style={[styles.issueBtnText, weekPostsCount === 0 && styles.issueBtnTextDisabled]}>綴じて投稿</Text>
+          </Pressable>
+        </View>
+        {issueNote && <Text style={styles.issueNote}>{issueNote}</Text>}
+
         {/* 投稿（24h以内） */}
         <Text style={styles.sectionLabel}>投稿</Text>
         {mine.length === 0 ? (
@@ -141,7 +189,11 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
           >
             {mine.map(({ post, viewCount, reactionCount }) => (
               <View key={post.id} style={{ width: ME_ITEM_W }}>
-                <ChekiCard uri={post.imageUrl} caption={post.caption} width={ME_ITEM_W} date={post.createdAt} tiltSeed={post.id} />
+                {post.kind === 'issue' && post.issue ? (
+                  <IssueCard label={post.issue.label} images={post.issue.images} createdAt={post.createdAt} width={ME_ITEM_W} tiltSeed={post.id} />
+                ) : (
+                  <ChekiCard uri={post.imageUrl} caption={post.caption} width={ME_ITEM_W} date={post.createdAt} tiltSeed={post.id} />
+                )}
                 <View style={styles.meStatRow}>
                   <View style={styles.meStat}>
                     <FootprintIcon size={14} color={colors.textDim} />
@@ -275,4 +327,29 @@ const styles = StyleSheet.create({
   meStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   meStatText: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
   meSound: { marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 2 },
+
+  // 今週の号外
+  issueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surfaceRaised,
+    borderTopWidth: rule.thin,
+    borderBottomWidth: rule.thin,
+    borderColor: colors.text,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    gap: space.sm,
+  },
+  issueLabel: { color: colors.text, fontSize: font.lead, fontWeight: '900', fontFamily: fonts.serif, letterSpacing: 0 },
+  issueSub: { color: colors.textDim, fontSize: font.small, fontFamily: fonts.handle, marginTop: 2 },
+  issueBtn: {
+    backgroundColor: colors.text,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.xs,
+  },
+  issueBtnDisabled: { backgroundColor: colors.surfaceSunken },
+  issueBtnText: { color: colors.bg, fontSize: font.small, fontWeight: '800', fontFamily: fonts.ui, letterSpacing: 0.5 },
+  issueBtnTextDisabled: { color: colors.textFaint },
+  issueNote: { color: colors.text, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: space.xs },
 });

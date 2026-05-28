@@ -6,6 +6,7 @@ import { fonts } from '../lib/fonts';
 import { Avatar, Remaining } from './ui';
 import { ShareIcon, VerifiedBadge } from './icons';
 import { ChekiCard } from './ChekiCard';
+import { IssueCard } from './IssueCard';
 import { OfficialCard } from './OfficialCard';
 import { ReactionBar } from './ReactionBar';
 import { Post, ReactionType, User } from '../types';
@@ -142,7 +143,17 @@ export function MyPostsSwiper({
             <>
               {cardW > 0 && current && (
                 <Pressable onPress={replaySound} disabled={!hasSound}>
-                  <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
+                  {current.kind === 'issue' && current.issue ? (
+                    <IssueCard
+                      label={current.issue.label}
+                      images={current.issue.images}
+                      createdAt={current.createdAt}
+                      width={cardW}
+                      tiltSeed={current.id}
+                    />
+                  ) : (
+                    <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
+                  )}
                 </Pressable>
               )}
               {current && (

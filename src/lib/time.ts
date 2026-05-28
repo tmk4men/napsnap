@@ -50,3 +50,27 @@ export function timeAgo(ts: number): string {
   if (diff < HOUR) return `${Math.floor(diff / MINUTE)}分前`;
   return `${Math.floor(diff / HOUR)}時間前`;
 }
+
+// 「号外 第N号」用：その日が月の何週目か（1-based）。
+// 月初の曜日を考慮し、(その月の1日が含まれるカレンダー週=1週目) として数える。
+// 例: 5/1 が金曜なら 5/1 は1週目、5/4 から2週目。
+export function weekOfMonth(ts: number = Date.now()): number {
+  const d = new Date(ts);
+  const first = new Date(d.getFullYear(), d.getMonth(), 1);
+  const offset = first.getDay(); // その月の1日の曜日（日=0）
+  return Math.ceil((d.getDate() + offset) / 7);
+}
+
+// 「今週の日曜0時」のタイムスタンプ。号外綴じの「今週」境界に使う。
+export function startOfWeek(ts: number = Date.now()): number {
+  const d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay()); // 日曜=0 にそろえる
+  return d.getTime();
+}
+
+// 「5月 第3号」のラベル。ts はその週に属する任意の時刻。
+export function issueLabel(ts: number = Date.now()): string {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}月 第${weekOfMonth(ts)}号`;
+}
