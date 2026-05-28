@@ -15,12 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "app.napsnap",
       "infoPlist": {
         "NSCameraUsageDescription": "生活の痕跡を1枚撮るためにカメラを使います。",
         "NSMicrophoneUsageDescription": "その瞬間の音を2.5秒だけ録音します。"
       }
     },
     "android": {
+      "package": "app.napsnap",
       "adaptiveIcon": {
         "backgroundColor": "#050505",
         "foregroundImage": "./assets/android-icon-foreground.png",

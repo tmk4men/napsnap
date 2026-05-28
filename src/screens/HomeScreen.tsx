@@ -55,8 +55,8 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     );
   }
 
-  // ホームに並べる投稿＝フォロー中の他人投稿（古い順）＋自分の投稿（古い順）の連結。
-  // 別ページ（FeedScreen）に飛ばさず、ここでまとめて縦スワイプで全部見れるように。
+  // ホームに並べる投稿＝自分の投稿（新しい順）＋フォロー中の他人投稿（残り時間短い順）の連結。
+  // 自分の最新が先頭。他人の山の後ろに埋もれて見えなくなるのを防ぐ。
   const others = useMemo(
     () => followedActivePosts(s).filter((p) => !seenSnapshot.current!.has(p.id)),
     [s.posts, s.following, s.currentUserId]
@@ -65,10 +65,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     () =>
       s.posts
         .filter((p) => p.userId === s.currentUserId && !p.topicKey && isActive(p.expiresAt))
-        .sort((a, b) => a.expiresAt - b.expiresAt),
+        .sort((a, b) => b.createdAt - a.createdAt),
     [s.posts, s.currentUserId]
   );
-  const feedPosts = useMemo(() => [...others, ...myActive], [others, myActive]);
+  const feedPosts = useMemo(() => [...myActive, ...others], [myActive, others]);
   const followedLatest = others[0];
 
   const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
