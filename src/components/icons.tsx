@@ -354,6 +354,17 @@ export function MenuIcon({ size = 22, color = colors.text }: IconProps) {
   );
 }
 
+// --- 三点メニュー（横並びの・・・） ---
+export function MoreIcon({ size = 20, color = colors.text }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Circle cx={5} cy={12} r={1.9} fill={color} />
+      <Circle cx={12} cy={12} r={1.9} fill={color} />
+      <Circle cx={19} cy={12} r={1.9} fill={color} />
+    </Svg>
+  );
+}
+
 // --- 共有（上向き矢印＋箱） ---
 export function ShareIcon({ size = 20, color = colors.text }: IconProps) {
   return (

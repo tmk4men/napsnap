@@ -483,6 +483,14 @@ export async function publishIssue(input: {
   return rowToPost(data);
 }
 
+// 自分の投稿を削除（user_id 一致で自分のものだけ。RLS でも他人のは消せない）。
+export async function deletePost(postId: string) {
+  const id = await myId();
+  if (!id) throw new Error('未サインイン');
+  const { error } = await db().from('posts').delete().eq('id', postId).eq('user_id', id);
+  if (error) throw error;
+}
+
 // 自分＋フォロー中の、まだ消えていない投稿（RLSで可視範囲が絞られる）。
 export async function listActivePosts(): Promise<Post[]> {
   const { data, error } = await db()

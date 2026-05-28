@@ -31,6 +31,17 @@ export async function persistMemoryImage(uri: string): Promise<string> {
   }
 }
 
+// 1枚の思い出写真を端末ローカルから削除する（投稿削除時）。memoryUri が無い／既に消えていても素通し。
+export function deleteMemoryImage(uri?: string): void {
+  if (!uri) return;
+  try {
+    const f = new File(uri);
+    if (f.exists) f.delete();
+  } catch {
+    // 失敗しても無視（残っても害は無い）
+  }
+}
+
 // 退会／デモリセット時の後片付け。思い出フォルダごと消す（残っても害は無いが容量節約）。
 export async function clearMemoryImages(): Promise<void> {
   try {

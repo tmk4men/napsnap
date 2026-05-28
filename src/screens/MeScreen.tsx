@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, rule, space } from '../theme';
+import { colors, font, radius, rule, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
-import { Avatar, Remaining, useTick } from '../components/ui';
+import { Avatar, FadeIn, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
 import { IssueCard } from '../components/IssueCard';
-import { FootprintIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark, VerifiedBadge } from '../components/icons';
+import { FootprintIcon, MoreIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { shareInvite } from '../lib/share';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -36,6 +36,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const toggleFollow = useStore((st) => st.toggleFollow);
   const updateProfileImage = useStore((st) => st.updateProfileImage);
   const updateProfile = useStore((st) => st.updateProfile);
+  const deletePost = useStore((st) => st.deletePost);
   const publishWeeklyIssue = useStore((st) => st.publishWeeklyIssue);
   const { play, playingId } = useClipPlayer();
   const me = currentUser(s);
@@ -56,6 +57,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const [editProfile, setEditProfile] = useState(false);
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [issueNote, setIssueNote] = useState<string | null>(null);
+  const [menuPostId, setMenuPostId] = useState<string | null>(null);
 
   // 「今週」（日曜0時以降）の自分の通常投稿。号外の元素材。
   const weekStart = startOfWeek();
@@ -244,7 +246,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
                     <Remaining expiresAt={post.expiresAt} color={colors.warn} size={12} />
                   </View>
                 </View>
-                <View style={styles.meSound}>
+                <View style={styles.meBottomRow}>
                   <SoundBadge
                     hasSound={postHasSound(post)}
                     playing={playingId === post.id}
@@ -253,6 +255,13 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
                       if (src) play(post.id, src);
                     }}
                   />
+                  <Pressable
+                    onPress={() => setMenuPostId(post.id)}
+                    hitSlop={10}
+                    style={({ pressed }) => [styles.moreBtn, pressed && { opacity: 0.6 }]}
+                  >
+                    <MoreIcon size={18} color={colors.textDim} />
+                  </Pressable>
                 </View>
               </View>
             ))}
@@ -263,6 +272,29 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
       </ScrollView>
 
       {viewing && <MemoryViewer posts={viewing} onClose={() => setViewing(null)} />}
+      {menuPostId && (
+        <View style={styles.menuOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setMenuPostId(null)} />
+          <FadeIn style={[styles.menuSheet, { bottom: insets.bottom + space.md }]} dy={16} duration={180}>
+            <Pressable
+              onPress={() => {
+                const id = menuPostId;
+                setMenuPostId(null);
+                deletePost(id);
+              }}
+              style={({ pressed }) => [styles.menuItem, pressed && { backgroundColor: colors.surface }]}
+            >
+              <Text style={[styles.menuItemText, { color: colors.warn }]}>{tr('この投稿を削除', 'Delete this post')}</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setMenuPostId(null)}
+              style={({ pressed }) => [styles.menuItem, styles.menuCancel, pressed && { backgroundColor: colors.surface }]}
+            >
+              <Text style={styles.menuItemText}>{tr('キャンセル', 'Cancel')}</Text>
+            </Pressable>
+          </FadeIn>
+        </View>
+      )}
       {cropUri && (
         <CropModal
           uri={cropUri}
@@ -363,7 +395,25 @@ const styles = StyleSheet.create({
   meStatRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: space.sm, paddingHorizontal: 2 },
   meStat: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   meStatText: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
-  meSound: { marginTop: 6, alignSelf: 'flex-start', paddingHorizontal: 2 },
+  meBottomRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6, paddingHorizontal: 2 },
+  moreBtn: { marginLeft: 'auto', width: 32, height: 28, alignItems: 'flex-end', justifyContent: 'center' },
+
+  // 3点メニュー（投稿削除）の下部シート
+  menuOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.10)' },
+  menuSheet: {
+    position: 'absolute',
+    left: space.lg,
+    right: space.lg,
+    backgroundColor: colors.surfaceSunken,
+    borderRadius: radius.xs,
+    borderWidth: rule.hair,
+    borderColor: colors.line,
+    boxShadow: shadow.card,
+    overflow: 'hidden',
+  },
+  menuItem: { paddingVertical: 15, alignItems: 'center' },
+  menuCancel: { borderTopWidth: rule.hair, borderTopColor: colors.hairline },
+  menuItemText: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0.3 },
 
   // 今週の号外
   issueRow: {

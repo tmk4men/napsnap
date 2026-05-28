@@ -12,7 +12,7 @@ import { dayIndex, todaysTopic } from './topics';
 import { hasSupabase } from './config';
 import * as be from './lib/backend';
 import { liveBootstrap, liveCompleteSetup, LiveSnapshot } from './lib/live';
-import { clearMemoryImages, persistMemoryImage } from './lib/memoryImage';
+import { clearMemoryImages, deleteMemoryImage, persistMemoryImage } from './lib/memoryImage';
 
 const SEARCH_HISTORY_MAX = 4;
 
@@ -57,6 +57,7 @@ interface Actions {
   updateProfile: (displayName: string, handle: string) => void;
   toggleFollow: (userId: string) => void;
   addPost: (imageUrl: string, audioUrl?: string, caption?: PostCaption, topicKey?: string) => Promise<string>;
+  deletePost: (postId: string) => Promise<void>;
   publishWeeklyIssue: () => string | null;
   liveHydrate: () => Promise<void>;
   markViewed: (postId: string) => void;
@@ -344,6 +345,30 @@ export const useStore = create<Store>()(
           }
           scheduleEngagement(post.id);
           return post.id;
+        },
+
+        // 自分の投稿を削除。サーバー（ライブ）からも消し、端末ローカルの思い出写真も消す＝完全に残さない。
+        // 失敗（通信エラー等）したらローカルも消さず、再試行できるようにする。
+        deletePost: async (postId) => {
+          const { currentUserId, posts } = get();
+          const target = posts.find((p) => p.id === postId);
+          if (!target || target.userId !== currentUserId) return;
+          if (hasSupabase) {
+            try {
+              await be.deletePost(postId);
+            } catch (e) {
+              console.warn('deletePost failed', e);
+              return;
+            }
+          }
+          // 思い出として端末ローカルに複製した写真も消す（ローカルにも残さない）。
+          deleteMemoryImage(target.memoryUri);
+          set((st) => ({
+            posts: st.posts.filter((p) => p.id !== postId),
+            reactions: st.reactions.filter((r) => r.postId !== postId),
+            views: st.views.filter((v) => v.postId !== postId),
+            feedStates: st.feedStates.filter((f) => f.postId !== postId),
+          }));
         },
 
         // 「号外 第N号」発行：今週（日曜0時～現在）の自分の通常投稿を1枚にまとめてフォロワーのホームに流す。

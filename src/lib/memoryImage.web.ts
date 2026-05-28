@@ -4,5 +4,8 @@ export async function persistMemoryImage(uri: string): Promise<string> {
   return uri;
 }
 
+// 投稿削除時の後片付け。Web は data: URL を store ごと消すので、ファイル削除は不要＝素通し。
+export function deleteMemoryImage(_uri?: string): void {}
+
 // 退会／デモリセット時の後片付け。Web は何もしない。
 export async function clearMemoryImages(): Promise<void> {}
