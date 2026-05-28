@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { AccessPass, FeedState, NotifyKind, NotifyPrefs, Post, PostCaption, Reaction, ReactionType, TopicVisibility, User, ViewRecord } from './types';
 import { uid } from './lib/id';
-import { HOUR, isActive, issueLabel, nextMidnight, now, startOfWeek } from './lib/time';
+import { HOUR, isActive, isFriday, issueLabel, nextMidnight, now, startOfWeek } from './lib/time';
 import { tr } from './i18n';
 import { PASS_HOURS, POST_TTL_HOURS, REACTION_TTL_HOURS, REACTIONS } from './copy';
 import { makeFollowPosts, makeMyMemories, makeOfficialPosts, makeOfficialUser, makeSeedReactions, makeTopicPosts, OFFICIAL_ID } from './seed';
@@ -334,6 +334,8 @@ export const useStore = create<Store>()(
           const me = st.currentUserId;
           if (!me) return null;
           const createdAt = now();
+          // 号外は金曜日のみ発行可能。
+          if (!isFriday(createdAt)) return null;
           const weekStart = startOfWeek(createdAt);
           const weekPosts = st.posts
             .filter((p) => p.userId === me && !p.topicKey && p.kind !== 'issue' && p.createdAt >= weekStart && p.createdAt <= createdAt)

@@ -20,7 +20,7 @@ import { useStore } from '../store';
 import { currentUser, myArchive, myPosts, nextProfileEditDays, profileEditsLeft } from '../selectors';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
-import { issueLabel, startOfWeek } from '../lib/time';
+import { isFriday, issueLabel, startOfWeek } from '../lib/time';
 import { showRewardedAd } from '../lib/ads';
 import { tr } from '../i18n';
 import { Post } from '../types';
@@ -71,6 +71,9 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
     [s.posts, s.currentUserId, weekStart]
   );
   const thisIssueLabel = issueLabel();
+  // 号外は金曜日だけ綴じて出せる。
+  const friday = isFriday();
+  const canPublishIssue = weekPostsCount > 0 && friday;
 
   function onPublishIssue() {
     const id = publishWeeklyIssue();
@@ -166,18 +169,24 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
         <View style={styles.issueRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.issueLabel}>{thisIssueLabel}</Text>
-            <Text style={styles.issueSub}>{weekPostsCount > 0 ? tr(`全${weekPostsCount}枚を綴じる`, `Bind ${weekPostsCount} photos`) : tr('まだ今週の投稿がない', 'No posts this week yet')}</Text>
+            <Text style={styles.issueSub}>
+              {!friday
+                ? tr('号外は金曜日だけ出せる', 'Extras can only be posted on Fridays')
+                : weekPostsCount > 0
+                ? tr(`全${weekPostsCount}枚を綴じる`, `Bind ${weekPostsCount} photos`)
+                : tr('まだ今週の投稿がない', 'No posts this week yet')}
+            </Text>
           </View>
           <Pressable
             onPress={onPublishIssue}
-            disabled={weekPostsCount === 0}
+            disabled={!canPublishIssue}
             style={({ pressed }) => [
               styles.issueBtn,
-              weekPostsCount === 0 && styles.issueBtnDisabled,
-              pressed && weekPostsCount > 0 && { opacity: 0.85 },
+              !canPublishIssue && styles.issueBtnDisabled,
+              pressed && canPublishIssue && { opacity: 0.85 },
             ]}
           >
-            <Text style={[styles.issueBtnText, weekPostsCount === 0 && styles.issueBtnTextDisabled]}>{tr('綴じて投稿', 'Bind & post')}</Text>
+            <Text style={[styles.issueBtnText, !canPublishIssue && styles.issueBtnTextDisabled]}>{tr('綴じて投稿', 'Bind & post')}</Text>
           </Pressable>
         </View>
         {issueNote && <Text style={styles.issueNote}>{issueNote}</Text>}

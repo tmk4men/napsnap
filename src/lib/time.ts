@@ -69,6 +69,11 @@ export function weekOfMonth(ts: number = Date.now()): number {
   return Math.ceil((d.getDate() + offset) / 7);
 }
 
+// 号外は金曜日だけ発行できる（週末前にその週を綴じる）。
+export function isFriday(ts: number = Date.now()): boolean {
+  return new Date(ts).getDay() === 5;
+}
+
 // 「今週の日曜0時」のタイムスタンプ。号外綴じの「今週」境界に使う。
 export function startOfWeek(ts: number = Date.now()): number {
   const d = new Date(ts);
