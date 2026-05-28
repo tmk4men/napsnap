@@ -71,12 +71,7 @@ export function AccountLinkOverlay({ onClose }: { onClose: () => void }) {
             : tr('外部アカウントと連携済みです。機種をまたいで引き継げます。', 'Your account is linked. It carries over across devices.')}
         </Text>
 
-        <ProviderRow
-          label={tr('Apple で連携', 'Link with Apple')}
-          done={linked('apple')}
-          busy={busy === 'apple'}
-          onPress={() => onLink('apple', 'Apple')}
-        />
+        <ProviderRow label={tr('Apple で連携', 'Link with Apple')} sub={tr('準備中', 'Coming soon')} disabled done={false} onPress={() => {}} />
         <ProviderRow
           label={tr('Google で連携', 'Link with Google')}
           done={linked('google')}
