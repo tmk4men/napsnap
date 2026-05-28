@@ -13,7 +13,8 @@ function dayStart(ts: number): number {
   return d.getTime();
 }
 
-// 自分の思い出を月カレンダーで見返す。投稿のある日はライムのドット付き、タップでその日の投稿へ。
+// 自分の思い出を月カレンダーで見返す。投稿のある日は赤い朱印が押される（軽い達成感）。
+// タップでその日の投稿へ。
 export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDay: (dayPosts: Post[]) => void }) {
   const today = new Date();
   const [view, setView] = useState({ y: today.getFullYear(), m: today.getMonth() });
@@ -84,7 +85,7 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
               style={styles.cell}
             >
               <View style={[styles.dayInner, isToday && styles.dayToday, has && styles.dayHas]}>
-                <Text style={[styles.dayNum, has && styles.dayNumHas, isToday && styles.dayNumToday]}>{d}</Text>
+                <Text style={[styles.dayNum, isToday && styles.dayNumToday, has && styles.dayNumHas]}>{d}</Text>
               </View>
             </Pressable>
           );
@@ -121,9 +122,16 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 2 },
   dayInner: { width: 32, height: 32, borderRadius: radius.xs, alignItems: 'center', justifyContent: 'center' },
-  dayHas: { backgroundColor: colors.limeSoft },
+  // 朱印：赤いベタ＋内側に白の細枠＋わずかな傾きで「ハンコを押した」感。
+  dayHas: {
+    backgroundColor: colors.warn,
+    borderWidth: 1.5,
+    borderColor: colors.bg,
+    transform: [{ rotate: '-4deg' }],
+  },
   dayToday: { borderWidth: rule.thin, borderColor: colors.text },
   dayNum: { color: colors.textDim, fontSize: font.small, fontWeight: '500', fontFamily: fonts.handle },
-  dayNumHas: { color: colors.text, fontWeight: '500' },
+  // 朱印の中の日付＝白の明朝で「印に彫った」風味。
+  dayNumHas: { color: '#FFFFFF', fontWeight: '800', fontFamily: fonts.serif },
   dayNumToday: { color: colors.text },
 });
