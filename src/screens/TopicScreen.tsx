@@ -24,6 +24,7 @@ import { useStore } from '../store';
 import { isBrandUser, myReaction, topicPostsKnown, topicPostsStrangers, userById } from '../selectors';
 import { todaysTopic } from '../topics';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
+import { tr } from '../i18n';
 
 type Section = 'known' | 'strangers';
 
@@ -152,8 +153,8 @@ export function TopicScreen({ nav }: { nav: Nav }) {
 
       {/* タブ（フォロー / おすすめ）：中央揃え */}
       <View style={styles.tabs}>
-        <TabBtn label="フォロー" active={section === 'known'} onPress={() => switchSection('known')} />
-        <TabBtn label="おすすめ" active={section === 'strangers'} onPress={() => switchSection('strangers')} />
+        <TabBtn label={tr('フォロー', 'Following')} active={section === 'known'} onPress={() => switchSection('known')} />
+        <TabBtn label={tr('おすすめ', 'For you')} active={section === 'strangers'} onPress={() => switchSection('strangers')} />
       </View>
 
       {/* 横ページャ：左=知ってる人、右=知らん人 */}
@@ -185,7 +186,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
                 <View style={styles.empty}>
                   <OfficialCard
                     official={official}
-                    message="最初の一枚を出してみよう"
+                    message={tr('最初の一枚を出してみよう', 'Post the first one')}
                     width={cardW}
                     mosaic
                   />
@@ -205,7 +206,7 @@ export function TopicScreen({ nav }: { nav: Nav }) {
                 <View style={styles.empty}>
                   <OfficialCard
                     official={official}
-                    message="今日はまだ誰もいない"
+                    message={tr('今日はまだ誰もいない', 'No one yet today')}
                     width={cardW}
                     mosaic
                   />

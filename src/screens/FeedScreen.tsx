@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
+import { tr } from '../i18n';
 import { Avatar, PrimaryButton, Pill, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ReactionBar } from '../components/ReactionBar';
@@ -134,7 +135,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
         <View style={styles.topRight}>
-          <Pill>のこり {queue.length}</Pill>
+          <Pill>{tr(`のこり ${queue.length}`, `${queue.length} left`)}</Pill>
         </View>
       </View>
 
@@ -164,7 +165,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
               <Avatar user={author} size={28} blur={!open} />
               {open ? (
                 <>
-                  <Text style={styles.metaName}>{author?.displayName ?? '友達'}</Text>
+                  <Text style={styles.metaName}>{author?.displayName ?? tr('友達', 'Friend')}</Text>
                   {author?.isOfficial && <VerifiedBadge size={14} />}
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.metaAgo}>{timeAgo(post.createdAt)}</Text>
@@ -198,7 +199,7 @@ export function FeedScreen({ nav }: { nav: Nav }) {
           </>
         ) : (
           <View style={styles.relock}>
-            <Text style={styles.relockText}>6時間が終わった。もう1枚でひらく。</Text>
+            <Text style={styles.relockText}>{tr('6時間が終わった。もう1枚でひらく。', 'The 6 hours are up. One more photo to reopen.')}</Text>
             <PrimaryButton label={copy.shoot} onPress={() => nav.openCamera()} />
           </View>
         )}

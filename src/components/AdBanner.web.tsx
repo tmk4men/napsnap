@@ -2,12 +2,13 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 
 // Web デモ向けプレースホルダ。実機（ネイティブ）では AdBanner.native.tsx が選ばれる。
 export function AdBanner() {
   return (
-    <View style={[styles.wrap, styles.webPlaceholder]} accessibilityLabel="広告枠">
-      <Text style={styles.webPlaceholderText}>広告（実機で表示）</Text>
+    <View style={[styles.wrap, styles.webPlaceholder]} accessibilityLabel={tr('広告枠', 'Ad slot')}>
+      <Text style={styles.webPlaceholderText}>{tr('広告（実機で表示）', 'Ad (shows on device)')}</Text>
     </View>
   );
 }

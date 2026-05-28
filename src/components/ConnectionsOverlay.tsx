@@ -6,6 +6,7 @@ import { fonts } from '../lib/fonts';
 import { Avatar, FadeIn } from './ui';
 import { CloseIcon, SearchIcon, TraceMark, VerifiedBadge } from './icons';
 import { User } from '../types';
+import { tr } from '../i18n';
 
 type Tab = 'following' | 'followers';
 
@@ -40,10 +41,10 @@ export function ConnectionsOverlay({
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
         <View style={styles.tabs}>
           <Pressable onPress={() => setTab('following')} style={[styles.tab, tab === 'following' && styles.tabActive]}>
-            <Text style={[styles.tabText, tab === 'following' && styles.tabTextActive]}>フォロー {following.length}</Text>
+            <Text style={[styles.tabText, tab === 'following' && styles.tabTextActive]}>{tr('フォロー', 'Following')} {following.length}</Text>
           </Pressable>
           <Pressable onPress={() => setTab('followers')} style={[styles.tab, tab === 'followers' && styles.tabActive]}>
-            <Text style={[styles.tabText, tab === 'followers' && styles.tabTextActive]}>フォロワー {followers.length}</Text>
+            <Text style={[styles.tabText, tab === 'followers' && styles.tabTextActive]}>{tr('フォロワー', 'Followers')} {followers.length}</Text>
           </Pressable>
         </View>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
@@ -57,7 +58,7 @@ export function ConnectionsOverlay({
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="@IDや名前でさがす"
+          placeholder={tr('@IDや名前でさがす', 'Search by @ID or name')}
           placeholderTextColor={colors.textFaint}
           autoCapitalize="none"
           style={styles.searchInput}
@@ -73,7 +74,7 @@ export function ConnectionsOverlay({
         <View style={styles.empty}>
           <TraceMark size={44} />
           <Text style={styles.emptyText}>
-            {query ? '見つからない' : tab === 'following' ? 'まだ誰もフォローしてない' : 'まだフォロワーがいない'}
+            {query ? tr('見つからない', 'Not found') : tab === 'following' ? tr('まだ誰もフォローしてない', 'Not following anyone yet') : tr('まだフォロワーがいない', 'No followers yet')}
           </Text>
         </View>
       ) : (
@@ -94,7 +95,7 @@ export function ConnectionsOverlay({
                   onPress={() => onToggle(p.id)}
                   style={({ pressed }) => [styles.followBtn, on && styles.followBtnOn, pressed && { opacity: 0.8 }]}
                 >
-                  <Text style={[styles.followText, on && styles.followTextOn]}>{on ? 'フォロー中' : 'フォロー'}</Text>
+                  <Text style={[styles.followText, on && styles.followTextOn]}>{on ? tr('フォロー中', 'Following') : tr('フォロー', 'Follow')}</Text>
                 </Pressable>
               </View>
             );

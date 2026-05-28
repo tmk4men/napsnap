@@ -69,7 +69,8 @@
           "userTrackingUsageDescription": "広告をあなたに合わせて表示するために、トラッキングの許可をお願いします。許可しなくてもアプリは使えます。"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-localization"
     ],
     "experiments": {
       "baseUrl": "/napsnap"

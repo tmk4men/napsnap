@@ -22,6 +22,7 @@ import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
 import { issueLabel, startOfWeek } from '../lib/time';
 import { showRewardedAd } from '../lib/ads';
+import { tr } from '../i18n';
 import { Post } from '../types';
 
 const ME_ITEM_W = 210;
@@ -74,15 +75,15 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   function onPublishIssue() {
     const id = publishWeeklyIssue();
     if (id) {
-      setIssueNote(`${thisIssueLabel} を綴じて投稿した`);
+      setIssueNote(tr(`${thisIssueLabel} を綴じて投稿した`, `Published ${thisIssueLabel}`));
       setTimeout(() => setIssueNote(null), 2400);
     }
   }
 
   async function onShare() {
     const r = await shareInvite(me?.handle ?? '');
-    if (r === 'copied') setShareNote('共有リンクをコピーした');
-    else if (r === 'none') setShareNote('共有できなかった');
+    if (r === 'copied') setShareNote(tr('共有リンクをコピーした', 'Copied the invite link'));
+    else if (r === 'none') setShareNote(tr('共有できなかった', "Couldn't share"));
     else setShareNote(null);
     if (r !== 'shared') setTimeout(() => setShareNote(null), 2200);
   }
@@ -139,11 +140,11 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
             <View style={styles.stats}>
               <Pressable onPress={() => setConn('following')} style={styles.connStat} hitSlop={6}>
                 <Text style={styles.connNum}>{followingUsers.length}</Text>
-                <Text style={styles.connLabel}>フォロー</Text>
+                <Text style={styles.connLabel}>{tr('フォロー', 'Following')}</Text>
               </Pressable>
               <Pressable onPress={() => setConn('followers')} style={styles.connStat} hitSlop={6}>
                 <Text style={styles.connNum}>{Math.max(s.followersTotal ?? 0, followers.length)}</Text>
-                <Text style={styles.connLabel}>フォロワー</Text>
+                <Text style={styles.connLabel}>{tr('フォロワー', 'Followers')}</Text>
               </Pressable>
             </View>
           </View>
@@ -154,18 +155,18 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
 
         {shareNote && <Text style={styles.shareNote}>{shareNote}</Text>}
         {avatarLocked && (
-          <Text style={styles.avatarLockNote}>プロフ画像はあと{avatarLockHours}時間は変えられない</Text>
+          <Text style={styles.avatarLockNote}>{tr(`プロフ画像はあと${avatarLockHours}時間は変えられない`, `You can change your photo again in ${avatarLockHours}h`)}</Text>
         )}
 
         {/* カレンダー（過去の自分の投稿を日別に。タップで MemoryViewer 起動） */}
         <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
 
         {/* 今週の号外：日曜0時以降の自分の投稿をまとめて1枚の号外として発行（24hで消える） */}
-        <Text style={styles.sectionLabel}>今週の号外</Text>
+        <Text style={styles.sectionLabel}>{tr('今週の号外', 'This week\'s extra')}</Text>
         <View style={styles.issueRow}>
           <View style={{ flex: 1 }}>
             <Text style={styles.issueLabel}>{thisIssueLabel}</Text>
-            <Text style={styles.issueSub}>{weekPostsCount > 0 ? `全${weekPostsCount}枚を綴じる` : 'まだ今週の投稿がない'}</Text>
+            <Text style={styles.issueSub}>{weekPostsCount > 0 ? tr(`全${weekPostsCount}枚を綴じる`, `Bind ${weekPostsCount} photos`) : tr('まだ今週の投稿がない', 'No posts this week yet')}</Text>
           </View>
           <Pressable
             onPress={onPublishIssue}
@@ -176,13 +177,13 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
               pressed && weekPostsCount > 0 && { opacity: 0.85 },
             ]}
           >
-            <Text style={[styles.issueBtnText, weekPostsCount === 0 && styles.issueBtnTextDisabled]}>綴じて投稿</Text>
+            <Text style={[styles.issueBtnText, weekPostsCount === 0 && styles.issueBtnTextDisabled]}>{tr('綴じて投稿', 'Bind & post')}</Text>
           </Pressable>
         </View>
         {issueNote && <Text style={styles.issueNote}>{issueNote}</Text>}
 
         {/* 投稿（24h以内） */}
-        <Text style={styles.sectionLabel}>投稿</Text>
+        <Text style={styles.sectionLabel}>{tr('投稿', 'Posts')}</Text>
         {mine.length === 0 ? (
           <View style={styles.empty}>
             <TraceMark size={48} />

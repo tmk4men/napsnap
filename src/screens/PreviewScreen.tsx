@@ -4,6 +4,7 @@ import { useAudioPlayer } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { copy } from '../copy';
+import { tr } from '../i18n';
 import { GhostButton, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { ChekiCard } from '../components/ChekiCard';
@@ -104,7 +105,7 @@ export function PreviewScreen({
         msg = String(e);
       }
       console.warn('postIt failed', e);
-      setPostError(`送れなかった：${msg.slice(0, 160)}`);
+      setPostError(tr(`送れなかった：${msg.slice(0, 160)}`, `Couldn't post: ${msg.slice(0, 160)}`));
       setPosting(false);
     }
   }
@@ -117,7 +118,7 @@ export function PreviewScreen({
         <Pressable onPress={nav.closeOverlay} style={styles.iconBtn} hitSlop={12}>
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
-        <Text style={styles.heading}>{topic ? `お題：${topic.prompt}` : copy.previewTitle}</Text>
+        <Text style={styles.heading}>{topic ? tr(`お題：${topic.prompt}`, `Prompt: ${topic.prompt}`) : copy.previewTitle}</Text>
         <View style={styles.topSpacer} />
       </View>
 
@@ -144,22 +145,22 @@ export function PreviewScreen({
         {banned ? (
           <View style={styles.warn}>
             <View style={styles.warnDot} />
-            <Text style={styles.warnText}>使えない言葉が入ってるみたい。</Text>
+            <Text style={styles.warnText}>{tr('使えない言葉が入ってるみたい。', 'That contains a word that can\'t be used.')}</Text>
           </View>
         ) : hasFace ? (
           <View style={styles.warn}>
             <View style={styles.warnDot} />
-            <Text style={styles.warnText}>顔が写ってるかも。napsnapは顔なしで。</Text>
+            <Text style={styles.warnText}>{tr('顔が写ってるかも。napsnapは顔なしで。', 'A face may be showing. napsnap is face-free.')}</Text>
           </View>
         ) : checking ? (
-          <Text style={styles.checking}>顔がないか確認中…</Text>
+          <Text style={styles.checking}>{tr('顔がないか確認中…', 'Checking for faces…')}</Text>
         ) : checkFailed ? (
-          <Text style={styles.checking}>顔チェックできなかった（そのまま出せます）</Text>
+          <Text style={styles.checking}>{tr('顔チェックできなかった（そのまま出せます）', "Couldn't check for faces (you can still post)")}</Text>
         ) : null}
 
         {hasFace ? (
           /* 顔ブロックは出せない＝撮り直しは回数に数えず、何度でも */
-          <PrimaryButton label="撮り直す" onPress={() => nav.openCamera(topicKey)} />
+          <PrimaryButton label={tr('撮り直す', 'Retake')} onPress={() => nav.openCamera(topicKey)} />
         ) : (
           /* 投稿ボタン：矢印アイコンだけのミニマル。投稿中は下に小さく状態表示。 */
           <Pressable
@@ -170,10 +171,10 @@ export function PreviewScreen({
             <PostArrowIcon size={28} color={canPost ? colors.limeInk : colors.textFaint} />
           </Pressable>
         )}
-        {posting && <Text style={styles.postingHint}>送信中…</Text>}
+        {posting && <Text style={styles.postingHint}>{tr('送信中…', 'Posting…')}</Text>}
         {postError && <Text style={styles.postErrorText}>{postError}</Text>}
         {canRetake && !hasFace && (
-          <GhostButton label="撮り直す（あと1回）" onPress={nav.retake} style={{ marginTop: space.xs }} />
+          <GhostButton label={tr('撮り直す（あと1回）', 'Retake (1 left)')} onPress={nav.retake} style={{ marginTop: space.xs }} />
         )}
       </View>
     </View>

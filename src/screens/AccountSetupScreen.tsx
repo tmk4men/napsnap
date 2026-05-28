@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
+import { tr } from '../i18n';
 import { Avatar, PrimaryButton } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { PencilIcon } from '../components/icons';
@@ -164,19 +165,19 @@ export function AccountSetupScreen() {
               handleStatus === 'free' && { color: colors.textDim },
             ]}
           >
-            {handleStatus === 'checking' && '確認中…'}
-            {handleStatus === 'taken' && 'この ID は使われてる'}
-            {handleStatus === 'free' && 'この ID 使える'}
+            {handleStatus === 'checking' && tr('確認中…', 'Checking…')}
+            {handleStatus === 'taken' && tr('この ID は使われてる', 'This ID is taken')}
+            {handleStatus === 'free' && tr('この ID 使える', 'This ID is available')}
           </Text>
         )}
       </ScrollView>
 
       <View style={{ paddingBottom: insets.bottom + space.md, paddingTop: space.sm }}>
         {(hasBanned(name) || hasBanned(handle)) && (
-          <Text style={styles.bannedNote}>使えない言葉が入ってるみたい。</Text>
+          <Text style={styles.bannedNote}>{tr('使えない言葉が入ってるみたい。', 'That contains a word that can\'t be used.')}</Text>
         )}
         <PrimaryButton
-          label={submitting ? '作成中…' : copy.setupStart}
+          label={submitting ? tr('作成中…', 'Creating…') : copy.setupStart}
           disabled={
             submitting ||
             restoring ||
@@ -193,7 +194,7 @@ export function AccountSetupScreen() {
         {hasSupabase && (
           <Pressable onPress={onRestore} disabled={restoring || submitting} style={styles.restoreBtn} hitSlop={8}>
             <Text style={styles.restoreText}>
-              {restoring ? '引き継ぎ中…' : 'すでにアカウントがある方はこちら（引き継ぐ）'}
+              {restoring ? tr('引き継ぎ中…', 'Restoring…') : tr('すでにアカウントがある方はこちら（引き継ぐ）', 'Already have an account? Restore it')}
             </Text>
           </Pressable>
         )}

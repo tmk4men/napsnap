@@ -3,6 +3,7 @@ import { Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, rule } from '../theme';
 import { captionFont } from '../lib/fonts';
 import { fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 import { MediaImage } from './MediaImage';
 import { PostCaption } from '../types';
 
@@ -32,7 +33,7 @@ export function ChekiCard({
   tilt,
   editable = false,
   onChangeText,
-  placeholder = 'ひとこと（任意）',
+  placeholder = tr('ひとこと（任意）', 'A few words (optional)'),
   redactStrip = false,
   captionLines = 1,
 }: {

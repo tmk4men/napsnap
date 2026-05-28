@@ -4,8 +4,9 @@ import { colors, font, radius, rule, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { ChevronLeftIcon, ChevronRightIcon } from './icons';
 import { Post } from '../types';
+import { lang } from '../i18n';
 
-const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+const WEEKDAYS = lang === 'en' ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['日', '月', '火', '水', '木', '金', '土'];
 
 function dayStart(ts: number): number {
   const d = new Date(ts);
@@ -55,7 +56,9 @@ export function MemoryCalendar({ posts, onPressDay }: { posts: Post[]; onPressDa
           <ChevronLeftIcon size={18} color={colors.textDim} />
         </Pressable>
         <Text style={styles.title}>
-          {view.y}年 {view.m + 1}月
+          {lang === 'en'
+            ? new Date(view.y, view.m, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+            : `${view.y}年 ${view.m + 1}月`}
         </Text>
         <Pressable onPress={() => shift(1)} hitSlop={10} style={styles.nav}>
           <ChevronRightIcon size={18} color={colors.textDim} />

@@ -12,6 +12,7 @@ import { hasSupabase } from '../config';
 import * as be from '../lib/backend';
 import { isBrandUser } from '../selectors';
 import { User } from '../types';
+import { tr } from '../i18n';
 
 // @ID でユーザーを探してフォローする専用タブ。
 // ・検索は @ID のみ（名前は被るため）。
@@ -80,7 +81,7 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
             value={q}
             onChangeText={setQ}
             onSubmitEditing={submit}
-            placeholder="@IDでさがす"
+            placeholder={tr('@IDでさがす', 'Search by @ID')}
             placeholderTextColor={colors.textFaint}
             autoCapitalize="none"
             returnKeyType="search"
@@ -96,7 +97,7 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
         {/* 検索履歴（入力していないときだけ・最大4件・×で削除） */}
         {query === '' && s.searchHistory.length > 0 && (
           <View style={styles.histWrap}>
-            <Text style={styles.histLabel}>さいきん</Text>
+            <Text style={styles.histLabel}>{tr('さいきん', 'Recent')}</Text>
             <View style={styles.histRow}>
               {s.searchHistory.map((h) => (
                 <View key={h} style={styles.chip}>
@@ -118,7 +119,7 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
           {query !== '' && (
             <>
               <TraceMark size={44} />
-              <Text style={styles.emptyText}>見つからない</Text>
+              <Text style={styles.emptyText}>{tr('見つからない', 'Not found')}</Text>
             </>
           )}
         </View>
@@ -148,7 +149,7 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
                   ]}
                 >
                   <Text style={[styles.followText, following && styles.followingText]}>
-                    {following ? 'フォロー中' : 'フォロー'}
+                    {following ? tr('フォロー中', 'Following') : tr('フォロー', 'Follow')}
                   </Text>
                 </Pressable>
               </View>

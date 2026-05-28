@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 import { MediaImage } from './MediaImage';
 
 // 「号外」を1枚のカードに収める。新聞の小さな縮刷版＝マストヘッド＋写真グリッド＋デートライン。
@@ -23,7 +24,8 @@ function fmtRange(images: number, createdAt: number): string {
   const saturday = new Date(sunday);
   saturday.setDate(saturday.getDate() + 6);
   const fmt = (x: Date) => `${x.getMonth() + 1}.${x.getDate()}`;
-  return `${fmt(sunday)} – ${fmt(saturday)}　全${images}枚`;
+  const count = tr(`全${images}枚`, `${images} photos`);
+  return `${fmt(sunday)} – ${fmt(saturday)}　${count}`;
 }
 
 export function IssueCard({
@@ -55,7 +57,7 @@ export function IssueCard({
     <View style={[styles.card, { width, padding: frame, transform: [{ rotate: `${rot}deg` }] }]}>
       {/* マストヘッド */}
       <View style={styles.mastheadBlock}>
-        <Text style={styles.kicker}>napsnap 号外</Text>
+        <Text style={styles.kicker}>{tr('napsnap 号外', 'napsnap EXTRA')}</Text>
         <Text style={styles.issueLabel}>{label}</Text>
       </View>
       <View style={styles.ruleDoubleTop} />

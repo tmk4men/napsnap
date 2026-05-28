@@ -12,6 +12,7 @@ import { OfficialCard } from './OfficialCard';
 import { ReactionBar } from './ReactionBar';
 import { Post, ReactionType, User } from '../types';
 import { shareCheki } from '../lib/share';
+import { tr } from '../i18n';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { isBrandUser } from '../selectors';
 import { timeAgo } from '../lib/time';
@@ -142,7 +143,7 @@ export function MyPostsSwiper({
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: ty }] }]} {...responder.panHandlers}>
         <View style={styles.center}>
           {isPrompt ? (
-            <OfficialCard official={official} message="写真を上げてみよう" width={Math.min(cardW, 320)} />
+            <OfficialCard official={official} message={tr('写真を上げてみよう', 'Try posting a photo')} width={Math.min(cardW, 320)} />
           ) : isAd ? (
             <AdSlide width={cardW} />
           ) : (
@@ -167,7 +168,7 @@ export function MyPostsSwiper({
                   <Avatar user={author} size={26} />
                   {!currentIsMine && (
                     <>
-                      <Text style={styles.metaName}>{isBrandUser(author) ? 'napsnap' : author?.displayName ?? '友達'}</Text>
+                      <Text style={styles.metaName}>{isBrandUser(author) ? 'napsnap' : author?.displayName ?? tr('友達', 'Friend')}</Text>
                       {author?.isOfficial && <VerifiedBadge size={14} />}
                       <Text style={styles.metaDot}>·</Text>
                       <Text style={styles.metaAgo}>{timeAgo(current.createdAt)}</Text>

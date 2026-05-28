@@ -8,6 +8,7 @@ import { Backdrop } from './Backdrop';
 import { CloseIcon } from './icons';
 import { useStore } from '../store';
 import { TopicVisibility } from '../types';
+import { tr } from '../i18n';
 
 // ハンバーガーメニュー内「セキュリティ」から開く設定オーバーレイ。
 // いまは「お題の公開範囲」だけ。今後の設定項目はここに追加する想定。
@@ -20,7 +21,7 @@ export function SettingsOverlay({ onClose }: { onClose: () => void }) {
     <FadeIn style={styles.container} dy={16} duration={220}>
       <Backdrop />
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.title}>セキュリティ</Text>
+        <Text style={styles.title}>{tr('セキュリティ', 'Security')}</Text>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
@@ -31,19 +32,22 @@ export function SettingsOverlay({ onClose }: { onClose: () => void }) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
-          <Text style={styles.heading}>お題の公開範囲</Text>
+          <Text style={styles.heading}>{tr('お題の公開範囲', 'Prompt post visibility')}</Text>
           <Text style={styles.body}>
-            あなたが今後お題に出す投稿が、どこまで見える範囲かを選びます。すでに出した投稿には反映されません。
+            {tr(
+              'あなたが今後お題に出す投稿が、どこまで見える範囲かを選びます。すでに出した投稿には反映されません。',
+              'Choose who can see your future prompt posts. This does not affect posts you have already made.'
+            )}
           </Text>
           <RadioRow
-            label="全体公開"
-            sub="napsnap を使っている全ての人に見える（既定）"
+            label={tr('全体公開', 'Public')}
+            sub={tr('napsnap を使っている全ての人に見える（既定）', 'Visible to everyone on napsnap (default)')}
             on={topicVisibility === 'public'}
             onPress={() => setTopicVisibility('public')}
           />
           <RadioRow
-            label="フォロワーのみ"
-            sub="自分とフォロワーだけに見える"
+            label={tr('フォロワーのみ', 'Followers only')}
+            sub={tr('自分とフォロワーだけに見える', 'Visible only to you and your followers')}
             on={topicVisibility === 'followers'}
             onPress={() => setTopicVisibility('followers')}
           />

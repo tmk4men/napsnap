@@ -8,6 +8,7 @@ import { Backdrop } from './Backdrop';
 import { CloseIcon } from './icons';
 import { useStore } from '../store';
 import { NotifyKind } from '../types';
+import { tr } from '../i18n';
 
 // アクティビティ通知の種類ごとのオンオフ設定オーバーレイ。
 // アクティビティ画面の歯車アイコンから開く。
@@ -17,18 +18,18 @@ export function NotifySettingsOverlay({ onClose }: { onClose: () => void }) {
   const setNotifyPref = useStore((s) => s.setNotifyPref);
 
   const rows: { kind: NotifyKind; label: string; sub: string }[] = [
-    { kind: 'follow', label: 'フォロー', sub: '誰かにフォローされたとき' },
-    { kind: 'react', label: 'リアクション', sub: '自分の投稿に反応がついたとき' },
-    { kind: 'post', label: '投稿', sub: 'フォローしている人が投稿したとき' },
-    { kind: 'view', label: '閲覧', sub: '自分の投稿が見られたとき' },
-    { kind: 'topic', label: 'お題', sub: 'お題が更新されたとき' },
+    { kind: 'follow', label: tr('フォロー', 'Follows'), sub: tr('誰かにフォローされたとき', 'When someone follows you') },
+    { kind: 'react', label: tr('リアクション', 'Reactions'), sub: tr('自分の投稿に反応がついたとき', 'When your post gets a reaction') },
+    { kind: 'post', label: tr('投稿', 'Posts'), sub: tr('フォローしている人が投稿したとき', 'When someone you follow posts') },
+    { kind: 'view', label: tr('閲覧', 'Views'), sub: tr('自分の投稿が見られたとき', 'When your post is viewed') },
+    { kind: 'topic', label: tr('お題', 'Prompts'), sub: tr('お題が更新されたとき', 'When the prompt updates') },
   ];
 
   return (
     <FadeIn style={styles.container} dy={16} duration={220}>
       <Backdrop />
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.title}>通知設定</Text>
+        <Text style={styles.title}>{tr('通知設定', 'Notifications')}</Text>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
           <CloseIcon size={18} color={colors.text} />
         </Pressable>

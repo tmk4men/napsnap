@@ -2,15 +2,16 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 
 // 縦スワイプに差し込む広告スライド（Web プレースホルダ）。実機は AdSlide.native.tsx。
 export function AdSlide({ width }: { width: number }) {
   const w = Math.min(width, 320);
   return (
     <View style={styles.wrap}>
-      <Text style={styles.kicker}>広告</Text>
+      <Text style={styles.kicker}>{tr('広告', 'Ad')}</Text>
       <View style={[styles.box, { width: w, height: Math.round(w * 0.83) }]}>
-        <Text style={styles.placeholder}>広告（実機で表示）</Text>
+        <Text style={styles.placeholder}>{tr('広告（実機で表示）', 'Ad (shows on device)')}</Text>
       </View>
     </View>
   );

@@ -9,14 +9,15 @@ import { timeAgo } from '../lib/time';
 import { ActivityItem } from '../selectors';
 import { useStore } from '../store';
 import { NotifySettingsOverlay } from './NotifySettingsOverlay';
+import { tr } from '../i18n';
 
 function lineFor(item: ActivityItem): string {
-  const name = item.user?.displayName ?? '友達';
-  if (item.kind === 'follow') return `${name} にフォローされた`;
-  if (item.kind === 'post') return `${name} が投稿した`;
-  if (item.kind === 'react') return `${name} が反応した`;
-  if (item.kind === 'view') return `${name} が見た`;
-  return `${name} が痕跡を残した`;
+  const name = item.user?.displayName ?? tr('友達', 'Friend');
+  if (item.kind === 'follow') return tr(`${name} にフォローされた`, `${name} followed you`);
+  if (item.kind === 'post') return tr(`${name} が投稿した`, `${name} posted`);
+  if (item.kind === 'react') return tr(`${name} が反応した`, `${name} reacted`);
+  if (item.kind === 'view') return tr(`${name} が見た`, `${name} saw your post`);
+  return tr(`${name} が痕跡を残した`, `${name} left a trace`);
 }
 
 // 通知（アクティビティ）一覧。自分の投稿への反応/足跡＋フォロー中の新着。
@@ -45,7 +46,7 @@ export function ActivityOverlay({
   return (
     <FadeIn style={styles.container} dy={16} duration={220}>
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.title}>アクティビティ</Text>
+        <Text style={styles.title}>{tr('アクティビティ', 'Activity')}</Text>
         <View style={styles.headerActions}>
           <Pressable
             onPress={() => setShowNotifySettings(true)}
@@ -68,9 +69,9 @@ export function ActivityOverlay({
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.topicLine}>
-                今日のお題は「{topicPrompt}」だよ。
+                {tr(`今日のお題は「${topicPrompt}」だよ。`, `Today's prompt is "${topicPrompt}".`)}
               </Text>
-              <Text style={styles.topicSub}>投稿してみよう！</Text>
+              <Text style={styles.topicSub}>{tr('投稿してみよう！', 'Give it a try!')}</Text>
             </View>
           </Pressable>
         )}
@@ -78,8 +79,8 @@ export function ActivityOverlay({
         {!passOpen && (
           <View style={styles.turn}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.turnTitle}>あなたの番</Text>
-              <Text style={styles.turnSub}>1枚出すと、みんなの今が見える。</Text>
+              <Text style={styles.turnTitle}>{tr('あなたの番', 'Your turn')}</Text>
+              <Text style={styles.turnSub}>{tr('1枚出すと、みんなの今が見える。', 'Post one photo to see everyone\'s now.')}</Text>
             </View>
             <Pressable
               onPress={onShoot}
@@ -94,7 +95,7 @@ export function ActivityOverlay({
         {items.length === 0 ? (
           <View style={styles.empty}>
             <TraceMark size={40} />
-            <Text style={styles.emptyText}>まだ何もない</Text>
+            <Text style={styles.emptyText}>{tr('まだ何もない', 'Nothing yet')}</Text>
           </View>
         ) : (
           items.map((it) => {
@@ -121,7 +122,7 @@ export function ActivityOverlay({
                     hitSlop={6}
                   >
                     <Text style={[styles.followText, followingBack && styles.followingText]}>
-                      {followingBack ? 'フォロー中' : 'フォローバック'}
+                      {followingBack ? tr('フォロー中', 'Following') : tr('フォローバック', 'Follow back')}
                     </Text>
                   </Pressable>
                 ) : it.postImage ? (

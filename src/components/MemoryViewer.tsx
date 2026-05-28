@@ -9,9 +9,13 @@ import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SaveDeviceIcon, SpeakerOn
 import { Post } from '../types';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { saveChekiToDevice } from '../lib/share';
+import { tr, lang } from '../i18n';
 
 function fmtDate(ts: number): string {
   const d = new Date(ts);
+  if (lang === 'en') {
+    return d.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+  }
   const w = ['日', '月', '火', '水', '木', '金', '土'][d.getDay()];
   return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}（${w}）`;
 }
@@ -74,7 +78,7 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
             disabled={saving}
             style={[styles.iconBtn, saving && { opacity: 0.5 }]}
             hitSlop={8}
-            accessibilityLabel="端末に保存"
+            accessibilityLabel={tr('端末に保存', 'Save to device')}
           >
             <SaveDeviceIcon size={18} color={colors.text} />
           </Pressable>
@@ -82,7 +86,7 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
       </View>
       {savedFlash && (
         <View pointerEvents="none" style={styles.toast}>
-          <Text style={styles.toastText}>保存しました</Text>
+          <Text style={styles.toastText}>{tr('保存しました', 'Saved')}</Text>
         </View>
       )}
 

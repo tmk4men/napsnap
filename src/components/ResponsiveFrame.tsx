@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { colors, font, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 
 // napsnap はスマホ前提のSNS。GitHub Pages のデモはPCブラウザでも開かれるため、
 // 広い画面では「本物の端末」風モックに収めてプロダクトショットに見せる。狭い画面では全幅。
@@ -31,7 +32,7 @@ export function ResponsiveFrame({ children }: { children: React.ReactNode }) {
 
       <View style={styles.brandRow}>
         <Text style={styles.brand}>napsnap</Text>
-        <Text style={styles.tagline}>顔のない、今日の痕跡。</Text>
+        <Text style={styles.tagline}>{tr('顔のない、今日の痕跡。', "Today's traces, without faces.")}</Text>
       </View>
     </View>
   );

@@ -3,13 +3,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { BannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
 import { colors, font, space } from '../theme';
 import { fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 import { adUnitIds } from '../lib/ads';
 
 // 縦スワイプに差し込む広告スライド（実機）。300x250 のミディアムレクタングルを1枚のカード風に。
 export function AdSlide(_props: { width: number }) {
   return (
     <View style={styles.wrap}>
-      <Text style={styles.kicker}>広告</Text>
+      <Text style={styles.kicker}>{tr('広告', 'Ad')}</Text>
       <BannerAd
         unitId={adUnitIds.banner}
         size={BannerAdSize.MEDIUM_RECTANGLE}

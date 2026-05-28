@@ -21,6 +21,7 @@ import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { activityItems, currentUser, followedActivePosts, isBrandUser, isPassOpen, memoryHighlights, myReaction, topicUnseen } from '../selectors';
 import { isActive } from '../lib/time';
+import { tr, lang } from '../i18n';
 import { todaysTopic } from '../topics';
 import { Post, ReactionType } from '../types';
 
@@ -40,8 +41,10 @@ export function HomeScreen({ nav }: { nav: Nav }) {
 
   // 題字横の日付（号外のデートライン）。
   const now = new Date();
-  const wd = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
-  const dateline = `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}（${wd}）`;
+  const dateline =
+    lang === 'en'
+      ? now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+      : `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}（${['日', '月', '火', '水', '木', '金', '土'][now.getDay()]}）`;
 
   const markViewed = useStore((st) => st.markViewed);
   const reactToPost = useStore((st) => st.reactToPost);
@@ -227,9 +230,9 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             )}
           </FadeIn>
         ) : s.following.length === 0 ? (
-          <OfficialCard official={s.users.find(isBrandUser)} message="ようこそ" width={Math.min(cardW, 320)} />
+          <OfficialCard official={s.users.find(isBrandUser)} message={tr('ようこそ', 'Welcome')} width={Math.min(cardW, 320)} />
         ) : (
-          <OfficialCard official={s.users.find(isBrandUser)} message="日常を投稿してみよう" width={Math.min(cardW, 320)} />
+          <OfficialCard official={s.users.find(isBrandUser)} message={tr('日常を投稿してみよう', 'Try posting your day')} width={Math.min(cardW, 320)} />
         )}
       </View>
 
@@ -260,14 +263,14 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           onClose={() => setShowMenu(false)}
           items={[
             ...(Platform.OS === 'web'
-              ? [{ label: themeMode === 'dark' ? 'ライトモードにする' : 'ダークモードにする', onPress: toggleThemeMode }]
+              ? [{ label: themeMode === 'dark' ? tr('ライトモードにする', 'Switch to light mode') : tr('ダークモードにする', 'Switch to dark mode'), onPress: toggleThemeMode }]
               : []),
-            { label: 'アカウント連携', onPress: () => setShowLink(true) },
-            { label: 'セキュリティ', onPress: () => setShowSettings(true) },
-            { label: 'プライバシーポリシー', onPress: () => setDoc(PRIVACY_POLICY) },
-            { label: '利用規約', onPress: () => setDoc(TERMS_OF_SERVICE) },
-            { label: 'デモを最初からやり直す', onPress: resetDemo, danger: true },
-            { label: 'アカウントを削除', onPress: () => setShowDelete(true), danger: true },
+            { label: tr('アカウント連携', 'Link account'), onPress: () => setShowLink(true) },
+            { label: tr('セキュリティ', 'Security'), onPress: () => setShowSettings(true) },
+            { label: tr('プライバシーポリシー', 'Privacy Policy'), onPress: () => setDoc(PRIVACY_POLICY) },
+            { label: tr('利用規約', 'Terms of Service'), onPress: () => setDoc(TERMS_OF_SERVICE) },
+            { label: tr('デモを最初からやり直す', 'Restart demo'), onPress: resetDemo, danger: true },
+            { label: tr('アカウントを削除', 'Delete account'), onPress: () => setShowDelete(true), danger: true },
           ]}
         />
       )}

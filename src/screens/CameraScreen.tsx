@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
+import { tr } from '../i18n';
 import { BoltIcon, CameraIcon, CloseIcon, FlipCameraIcon, NoFaceIcon } from '../components/icons';
 import { Waveform } from '../components/Waveform';
 import { detectFacesInVideo, preloadDetector, preloadVideoDetector } from '../lib/faceCheck';
@@ -240,7 +241,7 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.noCam]}>
           <CameraIcon size={46} color={colors.onMediaDim} />
-          <Text style={styles.noCamText}>カメラを許可すると{'\n'}撮影できる。</Text>
+          <Text style={styles.noCamText}>{tr('カメラを許可すると\n撮影できる。', 'Allow camera access\nto take a photo.')}</Text>
         </View>
       )}
 
@@ -251,7 +252,7 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
         {topic ? (
           <View style={styles.guidePill}>
             <View style={styles.guideDot} />
-            <Text style={styles.guideText}>{`お題：${topic.prompt}`}</Text>
+            <Text style={styles.guideText}>{tr(`お題：${topic.prompt}`, `Prompt: ${topic.prompt}`)}</Text>
           </View>
         ) : (
           // 人を写さない合図。顔を検知したら赤に変わる（Web）。
@@ -265,7 +266,7 @@ export function CameraScreen({ nav, topicKey }: { nav: Nav; topicKey?: string })
       <View style={[styles.bottom, { paddingBottom: insets.bottom + space.lg }]}>
         {faceLive && (
           <View style={styles.faceWarn}>
-            <Text style={styles.faceWarnText}>顔が写ってる。napsnapは顔なしで。</Text>
+            <Text style={styles.faceWarnText}>{tr('顔が写ってる。napsnapは顔なしで。', 'A face is showing. napsnap is face-free.')}</Text>
           </View>
         )}
         <View style={styles.shutterRow}>

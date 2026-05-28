@@ -1,5 +1,6 @@
 import { Platform, Share } from 'react-native';
 import { Post } from '../types';
+import { tr } from '../i18n';
 
 // napsnap の Web デモ公開URL（自分のIDと一緒に他サイトへ貼る用）。
 export const NAPSNAP_URL = 'https://tmk4men.github.io/napsnap/';
@@ -7,9 +8,10 @@ export const NAPSNAP_URL = 'https://tmk4men.github.io/napsnap/';
 // 他サイトに貼る招待文。本文（URLなし）と URL を分けて持つ。
 export function buildInvite(handle: string): { body: string; url: string; message: string } {
   const id = handle ? `@${handle}` : '';
-  const body =
-    `napsnap やってる。顔を出さない、24時間で消える日常SNS。\n` +
-    (id ? `${id} をさがして、一緒にやろう。` : '一緒にやろう。');
+  const body = tr(
+    `napsnap やってる。顔を出さない、24時間で消える日常SNS。\n` + (id ? `${id} をさがして、一緒にやろう。` : '一緒にやろう。'),
+    `I'm on napsnap — a face-free daily SNS where posts vanish in 24h.\n` + (id ? `Find ${id} and join me.` : `Join me.`)
+  );
   // クリップボード/ネイティブ用：本文＋URL を1回だけ。
   const message = `${body}\n${NAPSNAP_URL}`;
   return { body, url: NAPSNAP_URL, message };

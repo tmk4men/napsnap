@@ -1,3 +1,5 @@
+import { lang } from '../i18n';
+
 export const SECOND = 1000;
 export const MINUTE = 60 * SECOND;
 export const HOUR = 60 * MINUTE;
@@ -22,16 +24,17 @@ export function remainingMs(expiresAt: number): number {
   return Math.max(0, expiresAt - Date.now());
 }
 
-// 「あと5時間12分」「あと48分」「まもなく終了」
+// 「あと5時間12分」「あと48分」「まもなく終了」/ English equivalents
 export function formatRemaining(expiresAt: number): string {
   const ms = remainingMs(expiresAt);
-  if (ms <= 0) return '終了';
+  const en = lang === 'en';
+  if (ms <= 0) return en ? 'Ended' : '終了';
   const totalMin = Math.floor(ms / MINUTE);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
-  if (h > 0) return `あと${h}時間${m}分`;
-  if (m > 0) return `あと${m}分`;
-  return 'まもなく終了';
+  if (h > 0) return en ? `${h}h ${m}m left` : `あと${h}時間${m}分`;
+  if (m > 0) return en ? `${m}m left` : `あと${m}分`;
+  return en ? 'Ending soon' : 'まもなく終了';
 }
 
 // 残り時間をコンパクトに（タイマー用）「5:12」
@@ -43,12 +46,17 @@ export function formatClock(expiresAt: number): string {
   return `${h}:${String(m).padStart(2, '0')}`;
 }
 
-// 「たった今」「3分前」「2時間前」
+// 「たった今」「3分前」「2時間前」/ English equivalents
 export function timeAgo(ts: number): string {
   const diff = Date.now() - ts;
-  if (diff < MINUTE) return 'たった今';
-  if (diff < HOUR) return `${Math.floor(diff / MINUTE)}分前`;
-  return `${Math.floor(diff / HOUR)}時間前`;
+  const en = lang === 'en';
+  if (diff < MINUTE) return en ? 'just now' : 'たった今';
+  if (diff < HOUR) {
+    const m = Math.floor(diff / MINUTE);
+    return en ? `${m}m ago` : `${m}分前`;
+  }
+  const h = Math.floor(diff / HOUR);
+  return en ? `${h}h ago` : `${h}時間前`;
 }
 
 // 「号外 第N号」用：その日が月の何週目か（1-based）。
@@ -69,8 +77,13 @@ export function startOfWeek(ts: number = Date.now()): number {
   return d.getTime();
 }
 
-// 「5月 第3号」のラベル。ts はその週に属する任意の時刻。
+// 「5月 第3号」/ 「May No.3」のラベル。ts はその週に属する任意の時刻。
 export function issueLabel(ts: number = Date.now()): string {
   const d = new Date(ts);
-  return `${d.getMonth() + 1}月 第${weekOfMonth(ts)}号`;
+  const n = weekOfMonth(ts);
+  if (lang === 'en') {
+    const month = d.toLocaleString('en-US', { month: 'long' });
+    return `${month} No.${n}`;
+  }
+  return `${d.getMonth() + 1}月 第${n}号`;
 }

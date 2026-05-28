@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { copy } from '../copy';
+import { tr } from '../i18n';
 import { Avatar, Remaining, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { Nav } from '../navigation/nav';
@@ -140,7 +141,7 @@ export function KeptScreen({ nav }: { nav: Nav }) {
             )}
             <View style={styles.metaRow}>
               <Avatar user={author} size={26} />
-              <Text style={styles.metaName}>{author?.displayName ?? '友達'}</Text>
+              <Text style={styles.metaName}>{author?.displayName ?? tr('友達', 'Friend')}</Text>
               {author?.isOfficial && <VerifiedBadge size={13} />}
               <Text style={styles.metaDot}>·</Text>
               <Text style={styles.metaAgo}>{timeAgo(current.post.createdAt)}</Text>

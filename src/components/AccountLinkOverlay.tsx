@@ -7,6 +7,7 @@ import { FadeIn } from './ui';
 import { Backdrop } from './Backdrop';
 import { CloseIcon } from './icons';
 import { hasSupabase } from '../config';
+import { tr } from '../i18n';
 import * as be from '../lib/backend';
 
 // ハンバーガーメニュー「アカウント連携」から開く。
@@ -33,17 +34,17 @@ export function AccountLinkOverlay({ onClose }: { onClose: () => void }) {
 
   async function onLink(provider: be.LinkProvider, label: string) {
     if (!hasSupabase) {
-      setNote('このデモ環境ではアカウント連携は使えません（実機ビルドで有効）');
+      setNote(tr('このデモ環境ではアカウント連携は使えません（実機ビルドで有効）', 'Account linking is unavailable in this demo (works in the native build)'));
       return;
     }
     setBusy(provider);
     const ok = await be.linkProvider(provider);
     setBusy(null);
     if (ok) {
-      setNote(`${label} と連携しました`);
+      setNote(tr(`${label} と連携しました`, `Linked with ${label}`));
       refresh();
     } else {
-      setNote(`${label} の連携に失敗、またはキャンセルされました`);
+      setNote(tr(`${label} の連携に失敗、またはキャンセルされました`, `Couldn't link ${label}, or it was canceled`));
     }
     setTimeout(() => setNote(null), 2600);
   }
@@ -54,7 +55,7 @@ export function AccountLinkOverlay({ onClose }: { onClose: () => void }) {
     <FadeIn style={styles.container} dy={16} duration={220}>
       <Backdrop />
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.title}>アカウント連携</Text>
+        <Text style={styles.title}>{tr('アカウント連携', 'Link account')}</Text>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
@@ -66,28 +67,31 @@ export function AccountLinkOverlay({ onClose }: { onClose: () => void }) {
       >
         <Text style={styles.lead}>
           {isAnon
-            ? '外部アカウントと連携すると、機種変更やアプリの入れ直しでも引き継げます。'
-            : '外部アカウントと連携済みです。機種をまたいで引き継げます。'}
+            ? tr('外部アカウントと連携すると、機種変更やアプリの入れ直しでも引き継げます。', 'Link an external account to keep your account across device changes and reinstalls.')
+            : tr('外部アカウントと連携済みです。機種をまたいで引き継げます。', 'Your account is linked. It carries over across devices.')}
         </Text>
 
         <ProviderRow
-          label="Apple で連携"
+          label={tr('Apple で連携', 'Link with Apple')}
           done={linked('apple')}
           busy={busy === 'apple'}
           onPress={() => onLink('apple', 'Apple')}
         />
         <ProviderRow
-          label="Google で連携"
+          label={tr('Google で連携', 'Link with Google')}
           done={linked('google')}
           busy={busy === 'google'}
           onPress={() => onLink('google', 'Google')}
         />
-        <ProviderRow label="LINE で連携" sub="準備中" disabled done={false} onPress={() => {}} />
+        <ProviderRow label={tr('LINE で連携', 'Link with LINE')} sub={tr('準備中', 'Coming soon')} disabled done={false} onPress={() => {}} />
 
         {note && <Text style={styles.note}>{note}</Text>}
 
         <Text style={styles.fine}>
-          連携で取得するのは、引き継ぎに必要な最小限の識別情報だけです。投稿やプロフィールの内容を相手サービスに送ることはありません。
+          {tr(
+            '連携で取得するのは、引き継ぎに必要な最小限の識別情報だけです。投稿やプロフィールの内容を相手サービスに送ることはありません。',
+            'Linking only uses the minimal identity info needed to carry over your account. Your posts and profile are never sent to the provider.'
+          )}
         </Text>
       </ScrollView>
     </FadeIn>
@@ -122,7 +126,7 @@ function ProviderRow({
       {busy ? (
         <ActivityIndicator size="small" color={colors.text} />
       ) : done ? (
-        <Text style={styles.doneTag}>連携済み</Text>
+        <Text style={styles.doneTag}>{tr('連携済み', 'Linked')}</Text>
       ) : (
         <Text style={styles.chevron}>›</Text>
       )}

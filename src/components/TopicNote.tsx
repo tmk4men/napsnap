@@ -2,13 +2,14 @@ import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { colors, font, radius, rule, shadow, space } from '../theme';
 import { captionFont, fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 
 // 「今日のお題」を号外の“囲み記事”として見せる。
 // 生成り紙 × 朱の見出し罫 × 詰めた明朝で、紙面に組んだ告知のような佇まい。
 
 export function TopicNote({
   prompt,
-  kicker = '今日のお題',
+  kicker = tr('今日のお題', "Today's prompt"),
   style,
   children,
 }: {

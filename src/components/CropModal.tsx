@@ -3,6 +3,7 @@ import { Image, PanResponder, Pressable, StyleSheet, Text, View } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
+import { tr } from '../i18n';
 
 const V = 300; // トリミング枠の一辺
 const OUT = 256; // 出力サイズ
@@ -123,8 +124,8 @@ export function CropModal({
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + space.lg, paddingBottom: insets.bottom + space.lg }]}>
-      <Text style={styles.title}>範囲を選ぶ</Text>
-      <Text style={styles.hint}>ドラッグで移動・スライダーで拡大</Text>
+      <Text style={styles.title}>{tr('範囲を選ぶ', 'Choose area')}</Text>
+      <Text style={styles.hint}>{tr('ドラッグで移動・スライダーで拡大', 'Drag to move, slide to zoom')}</Text>
 
       <View style={styles.stage}>
         <View style={styles.viewport} {...pan.panHandlers}>
@@ -147,10 +148,10 @@ export function CropModal({
 
       <View style={styles.actions}>
         <Pressable onPress={onCancel} style={({ pressed }) => [styles.btn, styles.cancel, pressed && { opacity: 0.8 }]}>
-          <Text style={styles.cancelText}>キャンセル</Text>
+          <Text style={styles.cancelText}>{tr('キャンセル', 'Cancel')}</Text>
         </Pressable>
         <Pressable onPress={confirm} style={({ pressed }) => [styles.btn, styles.ok, pressed && { opacity: 0.85 }]}>
-          <Text style={styles.okText}>決定</Text>
+          <Text style={styles.okText}>{tr('決定', 'Done')}</Text>
         </Pressable>
       </View>
     </View>

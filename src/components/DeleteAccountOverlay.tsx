@@ -6,6 +6,7 @@ import { fonts } from '../lib/fonts';
 import { FadeIn } from './ui';
 import { Backdrop } from './Backdrop';
 import { CloseIcon } from './icons';
+import { tr } from '../i18n';
 import { useStore } from '../store';
 
 // ハンバーガーメニュー「アカウントを削除」から開く退会オーバーレイ。
@@ -24,7 +25,7 @@ export function DeleteAccountOverlay({ onClose }: { onClose: () => void }) {
     const ok = await deleteAccount();
     if (!ok) {
       setBusy(false);
-      setError('削除に失敗しました。通信環境を確認してもう一度お試しください。');
+      setError(tr('削除に失敗しました。通信環境を確認してもう一度お試しください。', 'Deletion failed. Check your connection and try again.'));
       return;
     }
     // 成功＝store が初期化され、RootNavigator が登録画面に戻る。オーバーレイは閉じるだけ。
@@ -35,7 +36,7 @@ export function DeleteAccountOverlay({ onClose }: { onClose: () => void }) {
     <FadeIn style={styles.container} dy={16} duration={220}>
       <Backdrop />
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.title}>アカウントを削除</Text>
+        <Text style={styles.title}>{tr('アカウントを削除', 'Delete account')}</Text>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12} disabled={busy}>
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
@@ -45,21 +46,21 @@ export function DeleteAccountOverlay({ onClose }: { onClose: () => void }) {
         contentContainerStyle={{ padding: space.lg, paddingBottom: insets.bottom + space.xl }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.lead}>アカウントを削除すると、次のものが完全に消えます。元には戻せません。</Text>
+        <Text style={styles.lead}>{tr('アカウントを削除すると、次のものが完全に消えます。元には戻せません。', 'Deleting your account permanently removes the following. This cannot be undone.')}</Text>
 
         <View style={styles.bullets}>
-          <Text style={styles.bullet}>・プロフィール（名前・@ID・アイコン）</Text>
-          <Text style={styles.bullet}>・フォロー／フォロワーの関係</Text>
-          <Text style={styles.bullet}>・あなたの投稿・反応・足あと</Text>
-          <Text style={styles.bullet}>・連携した外部アカウントとの紐付け</Text>
-          <Text style={styles.bullet}>・この端末に残っている思い出</Text>
+          <Text style={styles.bullet}>{tr('・プロフィール（名前・@ID・アイコン）', '• Profile (name, @ID, icon)')}</Text>
+          <Text style={styles.bullet}>{tr('・フォロー／フォロワーの関係', '• Following / follower relationships')}</Text>
+          <Text style={styles.bullet}>{tr('・あなたの投稿・反応・足あと', '• Your posts, reactions, and views')}</Text>
+          <Text style={styles.bullet}>{tr('・連携した外部アカウントとの紐付け', '• Links to external accounts')}</Text>
+          <Text style={styles.bullet}>{tr('・この端末に残っている思い出', '• Memories stored on this device')}</Text>
         </View>
 
         <Pressable style={styles.checkRow} onPress={() => setConfirmed((v) => !v)} disabled={busy}>
           <View style={[styles.checkbox, confirmed && styles.checkboxOn]}>
             {confirmed && <Text style={styles.checkMark}>✓</Text>}
           </View>
-          <Text style={styles.checkLabel}>上記を理解し、アカウントを削除します</Text>
+          <Text style={styles.checkLabel}>{tr('上記を理解し、アカウントを削除します', 'I understand and want to delete my account')}</Text>
         </Pressable>
 
         {error && <Text style={styles.error}>{error}</Text>}
@@ -76,12 +77,12 @@ export function DeleteAccountOverlay({ onClose }: { onClose: () => void }) {
           {busy ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text style={styles.deleteBtnText}>アカウントを削除する</Text>
+            <Text style={styles.deleteBtnText}>{tr('アカウントを削除する', 'Delete my account')}</Text>
           )}
         </Pressable>
 
         <Pressable onPress={onClose} disabled={busy} style={styles.cancelBtn}>
-          <Text style={styles.cancelText}>やめる</Text>
+          <Text style={styles.cancelText}>{tr('やめる', 'Cancel')}</Text>
         </Pressable>
       </ScrollView>
     </FadeIn>

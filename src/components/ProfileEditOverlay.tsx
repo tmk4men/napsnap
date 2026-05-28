@@ -6,6 +6,7 @@ import { fonts } from '../lib/fonts';
 import { FadeIn, PrimaryButton } from './ui';
 import { CloseIcon } from './icons';
 import { hasBanned } from '../lib/words';
+import { tr } from '../i18n';
 
 const AD_SECONDS = 5;
 
@@ -44,7 +45,7 @@ export function ProfileEditOverlay({
   return (
     <FadeIn style={styles.container} dy={16}>
       <View style={[styles.bar, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.barTitle}>なまえ / ID を変える</Text>
+        <Text style={styles.barTitle}>{tr('なまえ / ID を変える', 'Edit name / ID')}</Text>
         <Pressable onPress={onClose} style={styles.close} hitSlop={12}>
           <CloseIcon size={18} color={colors.text} />
         </Pressable>
@@ -53,19 +54,19 @@ export function ProfileEditOverlay({
       <View style={styles.body}>
         {blocked ? (
           <View style={styles.center}>
-            <Text style={styles.bigNote}>2週間に2回まで</Text>
-            <Text style={styles.sub}>あと{nextInDays}日で、また変えられる。</Text>
+            <Text style={styles.bigNote}>{tr('2週間に2回まで', 'Up to twice per 2 weeks')}</Text>
+            <Text style={styles.sub}>{tr(`あと${nextInDays}日で、また変えられる。`, `You can change it again in ${nextInDays} days.`)}</Text>
           </View>
         ) : step === 'ad' ? (
           <View style={styles.center}>
             <View style={styles.adBox}>
-              <Text style={styles.adTag}>広告</Text>
-              <Text style={styles.adBody}>広告を見ると{'\n'}なまえ / ID を変えられます</Text>
+              <Text style={styles.adTag}>{tr('広告', 'Ad')}</Text>
+              <Text style={styles.adBody}>{tr('広告を見ると\nなまえ / ID を変えられます', 'Watch an ad to\nchange your name / ID')}</Text>
             </View>
-            <Text style={styles.sub}>あと{editsLeft}回、変えられる（2週間に2回）</Text>
+            <Text style={styles.sub}>{tr(`あと${editsLeft}回、変えられる（2週間に2回）`, `${editsLeft} change(s) left (twice per 2 weeks)`)}</Text>
             <View style={{ height: space.md }} />
             <PrimaryButton
-              label={left > 0 ? `広告 ${left}秒…` : '変更へ進む'}
+              label={left > 0 ? tr(`広告 ${left}秒…`, `Ad ${left}s…`) : tr('変更へ進む', 'Continue')}
               disabled={left > 0}
               onPress={() => setStep('form')}
             />
@@ -88,10 +89,10 @@ export function ProfileEditOverlay({
             </View>
             <View style={{ height: space.lg }} />
             {(hasBanned(name) || hasBanned(handle)) && (
-              <Text style={styles.bannedNote}>使えない言葉が入ってるみたい。</Text>
+              <Text style={styles.bannedNote}>{tr('使えない言葉が入ってるみたい。', 'That contains a word that can\'t be used.')}</Text>
             )}
             <PrimaryButton
-              label="保存する"
+              label={tr('保存する', 'Save')}
               disabled={!name.trim() || !handle.trim() || hasBanned(name) || hasBanned(handle)}
               onPress={() => onSave(name, handle)}
             />
