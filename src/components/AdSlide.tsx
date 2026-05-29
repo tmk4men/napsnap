@@ -5,9 +5,11 @@ import { colors, font, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { tr } from '../i18n';
 import { adUnitIds } from '../lib/ads';
+import { ADS_ENABLED } from '../config';
 
 // 縦スワイプに差し込む広告スライド（実機）。300x250 のミディアムレクタングルを1枚のカード風に。
 export function AdSlide(_props: { width: number }) {
+  if (!ADS_ENABLED) return null;
   return (
     <View style={styles.wrap}>
       <Text style={styles.kicker}>{tr('広告', 'Ad')}</Text>

@@ -3,9 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, font, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { tr } from '../i18n';
+import { ADS_ENABLED } from '../config';
 
 // 縦スワイプに差し込む広告スライド（Web プレースホルダ）。実機は AdSlide.native.tsx。
 export function AdSlide({ width }: { width: number }) {
+  if (!ADS_ENABLED) return null;
   const w = Math.min(width, 320);
   return (
     <View style={styles.wrap}>

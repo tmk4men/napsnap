@@ -22,6 +22,7 @@ import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
 import { isFriday, issueLabel, startOfWeek } from '../lib/time';
 import { showRewardedAd } from '../lib/ads';
+import { ADS_ENABLED } from '../config';
 import { tr } from '../i18n';
 import { Post } from '../types';
 
@@ -101,11 +102,13 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   async function changePhoto() {
     if (avatarLocked || adLoading) return;
     // アバター変更ゲート：Rewarded 広告を1回視聴したら変更可能（[[napsnap-avatar-ad-gate]]）。
-    // Web デモは即時に通す（ads.web.ts が true を返す）。
-    setAdLoading(true);
-    const ok = await showRewardedAd();
-    setAdLoading(false);
-    if (!ok) return;
+    // 広告オフ（ADS_ENABLED=false）の間はゲートも無効＝そのまま変更できる。Web デモも即時に通す。
+    if (ADS_ENABLED) {
+      setAdLoading(true);
+      const ok = await showRewardedAd();
+      setAdLoading(false);
+      if (!ok) return;
+    }
     const uri = await pickRawImage();
     if (!uri) return;
     if (Platform.OS === 'web') setCropUri(uri);

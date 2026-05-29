@@ -19,6 +19,7 @@ import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon } from '../components/
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
+import { ADS_ENABLED } from '../config';
 import { activityItems, currentUser, followedActivePosts, isBrandUser, isPassOpen, memoryHighlights, myReaction, topicUnseen } from '../selectors';
 import { isActive } from '../lib/time';
 import { tr, lang } from '../i18n';
@@ -77,7 +78,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const feedPosts = useMemo(() => {
     const base = [...others, ...myActive];
     const AD_EVERY = 4;
-    if (base.length < AD_EVERY) return base; // 投稿が少ないうちは広告を挟まない
+    if (!ADS_ENABLED || base.length < AD_EVERY) return base; // 広告オフ／投稿が少ないうちは挟まない
     const out: Post[] = [];
     base.forEach((p, i) => {
       out.push(p);

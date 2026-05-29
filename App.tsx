@@ -7,6 +7,7 @@ import { RootNavigator } from './src/navigation/RootNavigator';
 import { initAds } from './src/lib/ads';
 import { loadWebFonts } from './src/lib/fonts';
 import { themeMode } from './src/theme';
+import { ADS_ENABLED } from './src/config';
 
 export default function App() {
   useEffect(() => {
@@ -14,8 +15,8 @@ export default function App() {
     loadWebFonts();
     // マナーモードでも痕跡の音が鳴るようにしておく
     setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
-    // AdMob SDK 初期化（ネイティブのみ。Web は no-op）。
-    initAds();
+    // AdMob SDK 初期化（ネイティブのみ。Web は no-op）。広告オフの間は呼ばない＝広告IDも収集しない。
+    if (ADS_ENABLED) initAds();
   }, []);
 
   return (
