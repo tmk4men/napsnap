@@ -410,6 +410,9 @@ export const useStore = create<Store>()(
               label,
               images: weekPosts.map((p) => p.imageUrl),
               sourcePostIds: weekPosts.map((p) => p.id),
+              // 号外は号外として全画像を24h保持：発行時点のローカル複製を号外自身に持たせ、
+              // 元投稿が期限切れで消えても号外内では順番どおり読み込める。
+              memoryUris: weekPosts.map((p) => p.memoryUri),
             },
           };
           if (hasSupabase) {
@@ -424,7 +427,12 @@ export const useStore = create<Store>()(
               expiresAt,
             })
               .then((real) => {
-                set((s) => ({ posts: s.posts.map((p) => (p.id === localPost.id ? real : p)) }));
+                // memoryUris は端末ローカル限定（BE は持たない）ので、差し替え時に引き継ぐ。
+                const merged: Post =
+                  real.issue && localPost.issue
+                    ? { ...real, issue: { ...real.issue, memoryUris: localPost.issue.memoryUris } }
+                    : real;
+                set((s) => ({ posts: s.posts.map((p) => (p.id === localPost.id ? merged : p)) }));
               })
               .catch((e) => console.warn('publishIssue failed', e));
           } else {

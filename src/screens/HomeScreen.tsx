@@ -33,7 +33,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const s = useStore();
   const markActivitySeen = useStore((st) => st.markActivitySeen);
   const markTopicSeen = useStore((st) => st.markTopicSeen);
-  const resetDemo = useStore((st) => st.resetDemo);
   const open = isPassOpen(s);
   const me = currentUser(s);
   const topic = todaysTopic();
@@ -200,20 +199,23 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             myReactionOf={(postId) => myReaction(s, postId)}
             onOpenIssue={(p) => {
               if (!p.issue) return;
-              // 号外の中身を全画面チェキで見返せるように。元投稿が残ってればその Post を使い、
-              // 期限切れで消えてれば images URL からダミー Post を組む。
+              // 号外の中身を全画面チェキで見返せるように。号外は号外として全画像を24h保持するので、
+              // 画像は号外自身のスナップショット（memoryUri 優先→images URL）を使い、期限も号外の expiresAt に統一する。
+              // 元投稿が残っていればキャプション/音声だけ補完する（無くても画像は順番どおり読み込める）。
               const built: Post[] = p.issue.images.map((url, i) => {
                 const origId = p.issue!.sourcePostIds[i];
                 const orig = origId ? s.posts.find((x) => x.id === origId) : undefined;
-                return (
-                  orig ?? {
-                    id: `${p.id}__view_${i}`,
-                    userId: p.userId,
-                    imageUrl: url,
-                    createdAt: p.createdAt,
-                    expiresAt: p.expiresAt,
-                  }
-                );
+                return {
+                  id: orig?.id ?? `${p.id}__view_${i}`,
+                  userId: p.userId,
+                  imageUrl: url,
+                  memoryUri: p.issue!.memoryUris?.[i] ?? orig?.memoryUri,
+                  caption: orig?.caption,
+                  audioUrl: orig?.audioUrl,
+                  audioSeed: orig?.audioSeed,
+                  createdAt: orig?.createdAt ?? p.createdAt,
+                  expiresAt: p.expiresAt,
+                };
               });
               setViewingMemory(built);
             }}
@@ -270,7 +272,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             { label: tr('セキュリティ', 'Security'), onPress: () => setShowSettings(true) },
             { label: tr('プライバシーポリシー', 'Privacy Policy'), onPress: () => setDoc(PRIVACY_POLICY) },
             { label: tr('利用規約', 'Terms of Service'), onPress: () => setDoc(TERMS_OF_SERVICE) },
-            { label: tr('デモを最初からやり直す', 'Restart demo'), onPress: resetDemo, danger: true },
             { label: tr('アカウントを削除', 'Delete account'), onPress: () => setShowDelete(true), danger: true },
           ]}
         />

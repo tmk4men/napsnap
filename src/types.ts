@@ -62,6 +62,9 @@ export interface Post {
     label: string; // 例: "5月 第3号"
     images: string[]; // 綴じた週の投稿の画像URL配列（時系列）
     sourcePostIds: string[]; // 元の投稿ID（参照用）
+    // 発行時点の端末ローカル複製URI（images と同じ並び）。元投稿が期限切れで消えても
+    // 号外として全画像を24h表示できるよう、号外自身がローカルコピーを持つ。サーバーには送らない。
+    memoryUris?: (string | undefined)[];
   };
 }
 
