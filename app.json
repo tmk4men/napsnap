@@ -72,7 +72,8 @@
       ],
       "expo-web-browser",
       "expo-localization",
-      "./plugins/withDisableExpoStubPch"
+      "./plugins/withDisableExpoStubPch",
+      "./plugins/withRemoveAdIdPermission"
     ],
     "experiments": {
       "baseUrl": "/napsnap"
