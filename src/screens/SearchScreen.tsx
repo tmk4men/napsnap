@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar } from '../components/ui';
+import { ModerationMenu, ModerationTarget } from '../components/ModerationMenu';
 import { AdBanner } from '../components/AdBanner';
 import { Backdrop } from '../components/Backdrop';
 import { CloseIcon, SearchIcon, TraceMark, VerifiedBadge } from '../components/icons';
@@ -26,6 +27,7 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
   const removeSearchHistory = useStore((st) => st.removeSearchHistory);
   const [q, setQ] = useState('');
   const [remote, setRemote] = useState<User[]>([]); // ライブ：DBから引いた候補
+  const [moderating, setModerating] = useState<ModerationTarget | null>(null);
 
   const query = q.trim().replace(/^@/, '').toLowerCase();
 
@@ -53,7 +55,7 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
   const pool = hasSupabase
     ? [...s.users, ...remote.filter((u) => !s.users.some((x) => x.id === u.id))]
     : s.users.filter((u) => u.isMock);
-  const candidates = pool.filter((u) => u.id !== s.currentUserId && !isBrandUser(u));
+  const candidates = pool.filter((u) => u.id !== s.currentUserId && !isBrandUser(u) && !s.blocked.includes(u.id));
   // 検索クエリの完全一致のみ表示（入力中の予測サジェストはしない）。
   const list = query ? candidates.filter((u) => u.handle.toLowerCase() === query) : [];
 
@@ -132,7 +134,12 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
             const following = s.following.includes(p.id);
             return (
               <View key={p.id} style={styles.row}>
-                <Avatar user={p} size={44} />
+                <Pressable
+                  onPress={() => setModerating({ userId: p.id, name: p.displayName })}
+                  hitSlop={6}
+                >
+                  <Avatar user={p} size={44} />
+                </Pressable>
                 <View style={{ flex: 1, marginLeft: space.md }}>
                   <View style={styles.nameRow}>
                     <Text style={styles.name}>{p.displayName}</Text>
@@ -162,6 +169,8 @@ export function SearchScreen({ onClose }: { onClose: () => void }) {
       <View style={[styles.adWrap, { paddingBottom: insets.bottom }]}>
         <AdBanner />
       </View>
+
+      {moderating && <ModerationMenu target={moderating} onClose={() => setModerating(null)} />}
     </View>
   );
 }

@@ -10,6 +10,7 @@ import { IssueCard } from './IssueCard';
 import { AdSlide } from './AdSlide';
 import { OfficialCard } from './OfficialCard';
 import { ReactionBar } from './ReactionBar';
+import { ModerationMenu, ModerationTarget } from './ModerationMenu';
 import { Post, ReactionType, User } from '../types';
 import { shareCheki } from '../lib/share';
 import { tr } from '../i18n';
@@ -45,6 +46,7 @@ export function MyPostsSwiper({
 }) {
   const total = posts.length + 1; // 末尾に公式の促しカード
   const [index, setIndex] = useState(0);
+  const [moderating, setModerating] = useState<ModerationTarget | null>(null);
   const safeIndex = Math.min(index, total - 1);
   const isPrompt = safeIndex >= posts.length; // 最後のスライド＝公式カード
   const current = posts[safeIndex];
@@ -128,6 +130,8 @@ export function MyPostsSwiper({
 
   // 下部のリアクションバーの分だけカード高さを少し詰める（他人投稿だけ）。広告は対象外。
   const showReactions = !!current && !isPrompt && !currentIsMine && !isAd && passOpen;
+  // 他人（公式以外）の投稿のみ、アイコンのタップで通報/ブロックを開ける。
+  const canModerate = !!current && !isPrompt && !isAd && !currentIsMine && !!author && !isBrandUser(author);
   const bottomReserve = showReactions ? 84 : 110;
   const cardW = Math.max(0, Math.min(stage.w - 16, Math.floor((stage.h - bottomReserve) / 1.31), 380));
 
@@ -165,7 +169,16 @@ export function MyPostsSwiper({
               ))}
               {current && (
                 <View style={styles.metaRow}>
-                  <Avatar user={author} size={26} />
+                  {canModerate && author ? (
+                    <Pressable
+                      onPress={() => setModerating({ userId: author.id, postId: current.id, name: author.displayName })}
+                      hitSlop={8}
+                    >
+                      <Avatar user={author} size={26} />
+                    </Pressable>
+                  ) : (
+                    <Avatar user={author} size={26} />
+                  )}
                   {!currentIsMine && (
                     <>
                       <Text style={styles.metaName}>{isBrandUser(author) ? 'napsnap' : author?.displayName ?? tr('友達', 'Friend')}</Text>
@@ -195,6 +208,7 @@ export function MyPostsSwiper({
           )}
         </View>
       </Animated.View>
+      {moderating && <ModerationMenu target={moderating} onClose={() => setModerating(null)} />}
     </View>
   );
 }

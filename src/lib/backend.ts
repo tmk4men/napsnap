@@ -581,3 +581,51 @@ export async function upsertPushToken(token: string, platform: string) {
     .upsert({ user_id: id, token, platform }, { onConflict: 'user_id,token' });
   if (error) throw error;
 }
+
+// ---------- モデレーション（通報 / ブロック）----------
+// Google Play / App Store の UGC ポリシー必須機能。投稿者アイコンのタップから到達する。
+export type ReportReason = 'spam' | 'abuse' | 'sexual' | 'impersonation' | 'other';
+
+// 不適切な投稿／ユーザーを通報する。reports に1行入れるだけ（運営は service role で確認）。
+export async function reportContent(input: { reason: ReportReason; postId?: string; targetUserId?: string; detail?: string }) {
+  const id = await myId();
+  if (!id) throw new Error('未サインイン');
+  const { error } = await db().from('reports').insert({
+    reporter_id: id,
+    target_post_id: input.postId ?? null,
+    target_user_id: input.targetUserId ?? null,
+    reason: input.reason,
+    detail: input.detail ?? null,
+  });
+  if (error) throw error;
+}
+
+// 自分がブロックしている相手の id 一覧（起動時に取得してクライアント側でも痕跡を隠す）。
+// liveBootstrap の Promise.all で並走するため、throw すると feed 全体の hydrate を巻き込む。
+// blocks テーブル未作成（schema.sql 未適用）でもアプリが起動するよう、失敗は [] に握りつぶす。
+export async function listBlocks(): Promise<string[]> {
+  const id = await myId();
+  if (!id) return [];
+  const { data, error } = await db().from('blocks').select('blocked_id').eq('blocker_id', id);
+  if (error) {
+    console.warn('[moderation] listBlocks failed (blocks テーブル未作成？)', error.message);
+    return [];
+  }
+  return (data ?? []).map((r: any) => r.blocked_id);
+}
+
+export async function block(targetId: string) {
+  const id = await myId();
+  if (!id) throw new Error('未サインイン');
+  const { error } = await db()
+    .from('blocks')
+    .upsert({ blocker_id: id, blocked_id: targetId }, { onConflict: 'blocker_id,blocked_id' });
+  if (error) throw error;
+}
+
+export async function unblock(targetId: string) {
+  const id = await myId();
+  if (!id) throw new Error('未サインイン');
+  const { error } = await db().from('blocks').delete().eq('blocker_id', id).eq('blocked_id', targetId);
+  if (error) throw error;
+}

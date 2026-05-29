@@ -82,6 +82,31 @@ create table if not exists public.push_tokens (
 );
 create index if not exists push_tokens_user_idx on public.push_tokens(user_id);
 
+-- ============ blocks（ブロック。UGCポリシー必須）============
+-- blocker が blocked を見えなくする。posts_read RLS で相手の投稿を配信段階で除外する。
+create table if not exists public.blocks (
+  blocker_id uuid not null references public.profiles(id) on delete cascade,
+  blocked_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (blocker_id, blocked_id)
+);
+create index if not exists blocks_blocker_idx on public.blocks(blocker_id);
+
+-- ============ reports（通報。UGCポリシー必須）============
+-- 不適切な投稿／ユーザーの通報先。運営は service role で読み、対応する。
+-- target_post_id / target_user_id はどちらか（または両方）が入る。
+create table if not exists public.reports (
+  id             uuid primary key default gen_random_uuid(),
+  reporter_id    uuid not null references public.profiles(id) on delete cascade,
+  target_post_id uuid references public.posts(id) on delete set null,
+  target_user_id uuid references public.profiles(id) on delete set null,
+  reason         text not null,        -- spam / abuse / sexual / impersonation / other
+  detail         text,
+  created_at     timestamptz not null default now()
+);
+create index if not exists reports_target_user_idx on public.reports(target_user_id);
+create index if not exists reports_created_idx on public.reports(created_at);
+
 -- ============ RLS 有効化 ============
 alter table public.profiles  enable row level security;
 alter table public.follows   enable row level security;
@@ -89,6 +114,8 @@ alter table public.posts     enable row level security;
 alter table public.reactions enable row level security;
 alter table public.views     enable row level security;
 alter table public.push_tokens enable row level security;
+alter table public.blocks    enable row level security;
+alter table public.reports   enable row level security;
 
 -- profiles: 誰でも読める（検索/表示）。作成・更新は自分の行のみ。
 drop policy if exists profiles_read   on public.profiles;
@@ -107,10 +134,14 @@ drop policy if exists follows_delete on public.follows;
 create policy follows_delete on public.follows for delete using (follower_id = auth.uid());
 
 -- posts: 自分＋フォロー中の人の投稿だけ読める。作成/削除は本人のみ。
+-- ブロックした相手の投稿は配信段階で除外する（クライアント側のフィルタと二重の守り）。
 drop policy if exists posts_read   on public.posts;
 create policy posts_read   on public.posts for select using (
-  user_id = auth.uid()
-  or exists (select 1 from public.follows f where f.follower_id = auth.uid() and f.following_id = posts.user_id)
+  (
+    user_id = auth.uid()
+    or exists (select 1 from public.follows f where f.follower_id = auth.uid() and f.following_id = posts.user_id)
+  )
+  and not exists (select 1 from public.blocks b where b.blocker_id = auth.uid() and b.blocked_id = posts.user_id)
 );
 drop policy if exists posts_insert on public.posts;
 create policy posts_insert on public.posts for insert with check (user_id = auth.uid());
@@ -145,6 +176,20 @@ create policy views_insert on public.views for insert with check (viewer_id = au
 drop policy if exists push_tokens_rw on public.push_tokens;
 create policy push_tokens_rw on public.push_tokens for all
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- blocks: 自分がブロックした関係だけ読み書きできる（blocker=自分）。
+drop policy if exists blocks_read   on public.blocks;
+create policy blocks_read   on public.blocks for select using (blocker_id = auth.uid());
+drop policy if exists blocks_insert on public.blocks;
+create policy blocks_insert on public.blocks for insert with check (blocker_id = auth.uid());
+drop policy if exists blocks_delete on public.blocks;
+create policy blocks_delete on public.blocks for delete using (blocker_id = auth.uid());
+
+-- reports: 自分が出した通報だけ作成・閲覧できる（運営は service role で全件読む）。
+drop policy if exists reports_insert on public.reports;
+create policy reports_insert on public.reports for insert with check (reporter_id = auth.uid());
+drop policy if exists reports_read   on public.reports;
+create policy reports_read   on public.reports for select using (reporter_id = auth.uid());
 
 -- ============ Storage（画像/音声を1つの公開バケット media に）============
 insert into storage.buckets (id, name, public) values ('media', 'media', true)

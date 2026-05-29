@@ -49,6 +49,7 @@ interface PersistedState {
   searchHistory: string[]; // さがすタブの検索履歴（@IDのみ・新しい順・最大4件）
   topicVisibility: TopicVisibility; // 自分のお題投稿の公開範囲。'public'=全実在ユーザー / 'followers'=自分とフォロワーのみ。
   notifyPrefs: NotifyPrefs; // アクティビティ通知の種類ごとのオンオフ。
+  blocked: string[]; // 自分がブロックした相手の id。投稿/反応/足あとを全タブで隠す（UGCポリシー）。
 }
 
 interface Actions {
@@ -70,6 +71,9 @@ interface Actions {
   removeSearchHistory: (handle: string) => void;
   setTopicVisibility: (v: TopicVisibility) => void;
   setNotifyPref: (kind: NotifyKind, on: boolean) => void;
+  reportContent: (input: { reason: string; postId?: string; targetUserId?: string; detail?: string }) => Promise<void>;
+  blockUser: (userId: string) => Promise<void>;
+  unblockUser: (userId: string) => Promise<void>;
   refreshFollowPostsIfStale: () => void;
   refreshTopicPostsIfStale: () => void;
   refreshOfficialPostsIfStale: () => void;
@@ -101,6 +105,7 @@ const initial: PersistedState = {
   searchHistory: [],
   topicVisibility: 'public',
   notifyPrefs: { follow: true, react: true, post: true, view: true, topic: true },
+  blocked: [],
 };
 
 // ライブのスナップショットをローカル state に反映。
@@ -137,17 +142,23 @@ function applySnapshot(set: (p: Partial<Store>) => void, get: () => Store, snap:
   });
   const keptMemories = st.posts.filter((p) => isMyMemory(p) && !serverIds.has(p.id));
 
+  // ブロック中の相手の痕跡（投稿/反応/足あと/フォロワー表示）は配信されても手元で隠す。
+  // posts は RLS でも除外されるが、自分の投稿への反応/足あとは別経路で来るのでここで弾く。
+  const blockedSet = new Set(snap.blocked);
+  const mergedPosts = [...mergedServer, ...keptMemories].filter((p) => !blockedSet.has(p.userId));
+
   set({
     onboarded: snap.onboarded,
     currentUserId: snap.currentUserId,
     users: snap.users,
-    following: snap.following,
-    followers: snap.followers,
+    following: snap.following.filter((f) => !blockedSet.has(f)),
+    followers: snap.followers.filter((f) => !blockedSet.has(f.followerId)),
     followersTotal: snap.followersTotal,
-    posts: [...mergedServer, ...keptMemories],
-    reactions: snap.reactions,
-    views: [...snap.views, ...myLocalViews],
+    posts: mergedPosts,
+    reactions: snap.reactions.filter((r) => !blockedSet.has(r.userId)),
+    views: [...snap.views.filter((v) => !blockedSet.has(v.viewerId)), ...myLocalViews],
     accessPass,
+    blocked: snap.blocked,
   });
 }
 
@@ -531,6 +542,58 @@ export const useStore = create<Store>()(
         setNotifyPref: (kind, on) =>
           set((st) => ({ notifyPrefs: { ...st.notifyPrefs, [kind]: on } })),
 
+        // 通報：reports に1行入れるだけ（運営が確認）。モックでもUI上は受理して体験を止めない。
+        reportContent: async (input) => {
+          if (!hasSupabase) return;
+          try {
+            await be.reportContent({
+              reason: input.reason as be.ReportReason,
+              postId: input.postId,
+              targetUserId: input.targetUserId,
+              detail: input.detail,
+            });
+          } catch (e) {
+            console.warn('report failed', e);
+          }
+        },
+
+        // ブロック：フォロー解除＋ブロック集合に追加し、相手の痕跡を即座に全タブから隠す。
+        // ライブはサーバーにも block を書く（以降は RLS で相手の投稿が配信されない）。
+        blockUser: async (userId) => {
+          const { currentUserId, following } = get();
+          if (!userId || userId === currentUserId) return;
+          const wasFollowing = following.includes(userId);
+          set((st) => ({
+            blocked: st.blocked.includes(userId) ? st.blocked : [...st.blocked, userId],
+            following: st.following.filter((f) => f !== userId),
+            posts: st.posts.filter((p) => p.userId !== userId),
+            reactions: st.reactions.filter((r) => r.userId !== userId),
+            views: st.views.filter((v) => v.viewerId !== userId),
+            followers: st.followers.filter((f) => f.followerId !== userId),
+          }));
+          if (hasSupabase) {
+            try {
+              await be.block(userId);
+              if (wasFollowing) await be.unfollow(userId);
+            } catch (e) {
+              console.warn('block failed', e);
+            }
+          }
+        },
+
+        unblockUser: async (userId) => {
+          set((st) => ({ blocked: st.blocked.filter((b) => b !== userId) }));
+          if (hasSupabase) {
+            try {
+              await be.unblock(userId);
+            } catch (e) {
+              console.warn('unblock failed', e);
+            }
+            // 解除後は相手の投稿が再び見えるよう再取得。
+            get().liveHydrate();
+          }
+        },
+
         // デモが古くなってフォロー中（モック仲間）の投稿が全部期限切れなら、新しい時刻で作り直す。
         // 公式・お題・自分の投稿は触らない（それぞれ別ロジックで管理）。
         refreshFollowPostsIfStale: () => {
@@ -693,6 +756,7 @@ export const useStore = create<Store>()(
         searchHistory: s.searchHistory,
         topicVisibility: s.topicVisibility,
         notifyPrefs: s.notifyPrefs,
+        blocked: s.blocked,
       }),
       // 既存の保存データを消さずに移行する。新フィールドは初期値で補う（公式アカウントの
       // 後付けは復帰時の ensureOfficialFollowed で行う＝確実・冪等）。

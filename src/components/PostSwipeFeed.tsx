@@ -1,12 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, font, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar, Remaining } from './ui';
 import { VerifiedBadge } from './icons';
 import { ChekiCard } from './ChekiCard';
+import { ModerationMenu, ModerationTarget } from './ModerationMenu';
 import { Post, User } from '../types';
 import { timeAgo } from '../lib/time';
+import { useStore } from '../store';
+import { isBrandUser } from '../selectors';
 
 const NATIVE = Platform.OS !== 'web';
 
@@ -29,6 +32,9 @@ export function PostSwipeFeed({
   onTapPost?: () => void;
   empty?: React.ReactNode;
 }) {
+  const myId = useStore((st) => st.currentUserId);
+  const [moderating, setModerating] = useState<ModerationTarget | null>(null);
+
   const ty = useRef(new Animated.Value(0)).current;
   const sizeRef = useRef({ h: 0 });
   const idxRef = useRef(index);
@@ -103,7 +109,16 @@ export function PostSwipeFeed({
           )}
           {author && (
             <View style={styles.metaRow}>
-              <Avatar user={author} size={24} />
+              {myId !== author.id && !isBrandUser(author) ? (
+                <Pressable
+                  onPress={() => setModerating({ userId: author.id, postId: current.id, name: author.displayName })}
+                  hitSlop={8}
+                >
+                  <Avatar user={author} size={24} />
+                </Pressable>
+              ) : (
+                <Avatar user={author} size={24} />
+              )}
               <Text style={styles.metaName}>{author.displayName}</Text>
               {author.isOfficial && <VerifiedBadge size={13} />}
               <Text style={styles.metaDot}>·</Text>
@@ -115,6 +130,7 @@ export function PostSwipeFeed({
           )}
         </Pressable>
       </Animated.View>
+      {moderating && <ModerationMenu target={moderating} onClose={() => setModerating(null)} />}
     </View>
   );
 }

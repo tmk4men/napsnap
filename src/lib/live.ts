@@ -18,6 +18,7 @@ export interface LiveSnapshot {
   posts: Post[];
   reactions: Reaction[];
   views: ViewRecord[];
+  blocked: string[]; // 自分がブロックしている相手の id（クライアント側でも痕跡を隠す）
 }
 
 // 起動時：匿名セッション確保 → 全スライスを並列取得してスナップショット化。
@@ -35,7 +36,7 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
       console.warn('follow official failed', e);
     }
   }
-  const [active, mine, reactions, views, suggestions, followers, followersTotal] = await Promise.all([
+  const [active, mine, reactions, views, suggestions, followers, followersTotal, blocked] = await Promise.all([
     be.listActivePosts(),
     be.listMyPosts(),
     be.listReactions(),
@@ -43,6 +44,7 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
     be.suggestProfiles(30), // 発見用の候補（総数に依存しない少数）
     be.listFollowers(),     // 自分をフォローしている人（直近 50 人＝アクティビティ通知用）
     be.countFollowers(),    // フォロワー総数（プロフィール数字用・head:true なのでほぼ無料）
+    be.listBlocks(),        // 自分がブロックした相手（クライアント側の表示フィルタ用）
   ]);
   // active(自分＋フォローの期限内) と mine(自分の全投稿＝思い出) を id でマージ。
   const map = new Map<string, Post>();
@@ -79,6 +81,7 @@ export async function liveBootstrap(): Promise<LiveSnapshot | null> {
     posts,
     reactions,
     views,
+    blocked,
   };
 }
 

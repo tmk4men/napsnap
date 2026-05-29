@@ -23,8 +23,13 @@ export function topicUnseen(s: Pick<Store, 'topicSeenDay'>): boolean {
 
 type Snapshot = Pick<
   Store,
-  'currentUserId' | 'following' | 'followers' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass' | 'notifyPrefs'
+  'currentUserId' | 'following' | 'followers' | 'users' | 'posts' | 'views' | 'reactions' | 'feedStates' | 'accessPass' | 'notifyPrefs' | 'blocked'
 >;
+
+// ブロック中の相手か。フィード/お題/通知の各 selector で痕跡を隠すのに使う（UGCポリシー）。
+function blockedSet(s: Pick<Store, 'blocked'>): Set<string> {
+  return new Set(s.blocked ?? []);
+}
 
 export function isPassOpen(s: Pick<Store, 'accessPass'>): boolean {
   return !!s.accessPass && isActive(s.accessPass.expiresAt);
@@ -43,12 +48,14 @@ export function currentUser(s: Pick<Store, 'currentUserId' | 'users'>): User | u
 // お題への投稿は別世界なのでホーム/フィードには出さない。
 export function followedActivePosts(s: Snapshot): Post[] {
   const { currentUserId, following } = s;
+  const blocked = blockedSet(s);
   return s.posts
     .filter(
       (p) =>
         !p.topicKey &&
         p.userId !== currentUserId &&
         following.includes(p.userId) &&
+        !blocked.has(p.userId) &&
         isActive(p.expiresAt)
     )
     .sort((a, b) => a.expiresAt - b.expiresAt);
@@ -57,23 +64,26 @@ export function followedActivePosts(s: Snapshot): Post[] {
 // 「お題」：今日のお題への、期限内の投稿（自分・フォロー・知らない人含め全部）。
 // 並びは「残り時間が短い順」。後方互換のため残す。
 export function topicPosts(s: Snapshot, topicKey: string): Post[] {
+  const blocked = blockedSet(s);
   return s.posts
-    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt))
+    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt) && !blocked.has(p.userId))
     .sort((a, b) => a.expiresAt - b.expiresAt);
 }
 
 // お題タブ用：知ってる人（自分＋フォロー）／知らん人 を別ページで見せる分割版。
 export function topicPostsKnown(s: Snapshot, topicKey: string): Post[] {
   const knownIds = new Set<string>([s.currentUserId ?? '', ...s.following]);
+  const blocked = blockedSet(s);
   return s.posts
-    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt) && knownIds.has(p.userId))
+    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt) && knownIds.has(p.userId) && !blocked.has(p.userId))
     .sort((a, b) => a.expiresAt - b.expiresAt);
 }
 
 export function topicPostsStrangers(s: Snapshot, topicKey: string): Post[] {
   const knownIds = new Set<string>([s.currentUserId ?? '', ...s.following]);
+  const blocked = blockedSet(s);
   return s.posts
-    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt) && !knownIds.has(p.userId))
+    .filter((p) => p.topicKey === topicKey && isActive(p.expiresAt) && !knownIds.has(p.userId) && !blocked.has(p.userId))
     .sort((a, b) => a.expiresAt - b.expiresAt);
 }
 
@@ -176,6 +186,7 @@ export function activityItems(s: Snapshot): ActivityItem[] {
   const me = s.currentUserId;
   if (!me) return [];
   const prefs = s.notifyPrefs ?? { follow: true, react: true, post: true, view: true };
+  const blocked = blockedSet(s);
   const myPostIds = new Set(s.posts.filter((p) => p.userId === me).map((p) => p.id));
   const imageOf = (postId: string) => s.posts.find((p) => p.id === postId)?.imageUrl;
   const out: ActivityItem[] = [];
@@ -183,7 +194,7 @@ export function activityItems(s: Snapshot): ActivityItem[] {
 
   if (prefs.react) {
     for (const r of s.reactions) {
-      if (r.userId !== me && myPostIds.has(r.postId)) {
+      if (r.userId !== me && !blocked.has(r.userId) && myPostIds.has(r.postId)) {
         reactedPair.add(`${r.userId}_${r.postId}`);
         out.push({ id: 'r_' + r.id, kind: 'react', user: userById(s.users, r.userId), at: r.createdAt, postImage: imageOf(r.postId) });
       }
@@ -191,7 +202,7 @@ export function activityItems(s: Snapshot): ActivityItem[] {
   }
   if (prefs.view) {
     for (const v of s.views) {
-      if (v.viewerId !== me && myPostIds.has(v.postId) && !reactedPair.has(`${v.viewerId}_${v.postId}`)) {
+      if (v.viewerId !== me && !blocked.has(v.viewerId) && myPostIds.has(v.postId) && !reactedPair.has(`${v.viewerId}_${v.postId}`)) {
         out.push({ id: 'v_' + v.id, kind: 'view', user: userById(s.users, v.viewerId), at: v.viewedAt, postImage: imageOf(v.postId) });
       }
     }
@@ -204,6 +215,7 @@ export function activityItems(s: Snapshot): ActivityItem[] {
   // 自分をフォローしてくれた人。
   if (prefs.follow) {
     for (const f of s.followers) {
+      if (blocked.has(f.followerId)) continue;
       out.push({ id: 'f_' + f.followerId, kind: 'follow', user: userById(s.users, f.followerId), at: f.followedAt });
     }
   }
