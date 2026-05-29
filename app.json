@@ -23,6 +23,7 @@
     },
     "android": {
       "package": "app.napsnap",
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#FDFBF7",
         "foregroundImage": "./assets/android-icon-foreground.png",
