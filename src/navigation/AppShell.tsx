@@ -11,7 +11,8 @@ import { FeedScreen } from '../screens/FeedScreen';
 import { TabBar } from './TabBar';
 import { Nav, TabKey } from './nav';
 import { useStore } from '../store';
-import { currentUser, keptPosts } from '../selectors';
+import { currentUser, followedActivePosts, keptPosts } from '../selectors';
+import { updateNapsnapWidget } from '../lib/widget';
 import { FadeIn } from '../components/ui';
 import { hasSupabase } from '../config';
 import { registerPush, setupPushHandlers } from '../lib/push';
@@ -36,6 +37,19 @@ export function AppShell() {
   const s = useStore();
   const me = currentUser(s);
   const keptCount = useMemo(() => keptPosts(s).length, [s.reactions, s.posts, s.currentUserId]);
+
+  // ホーム画面ウィジェット（Android）に「友達の最新の今」を反映。
+  const widgetLatest = useMemo(() => {
+    const latest = [...followedActivePosts(s)].sort((a, b) => b.createdAt - a.createdAt)[0];
+    if (!latest) return null;
+    const u = s.users.find((x) => x.id === latest.userId);
+    const d = new Date(latest.createdAt);
+    const stamp = `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return { imageUrl: latest.imageUrl, handle: u?.handle, stamp };
+  }, [s.posts, s.following, s.users, s.currentUserId, s.blocked]);
+  useEffect(() => {
+    updateNapsnapWidget(widgetLatest ?? {});
+  }, [widgetLatest?.imageUrl]);
 
   // 取り込みのきっかけ（15秒の常時ポーリングは廃止）。
   // ・前面に戻った時は即取得 ・前面にいる間だけ90秒の緩い取り込み ・タブを開いた時（20秒間引き）

@@ -77,7 +77,25 @@
       "./plugins/withRemoveAdIdPermission",
       "./plugins/withAndroidOverridePathCheck",
       "./plugins/withReleaseSigning",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Napsnap",
+              "label": "napsnap",
+              "description": "友達の“今”",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
     ],
     "experiments": {
       "baseUrl": "/napsnap"

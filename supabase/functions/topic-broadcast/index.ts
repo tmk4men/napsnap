@@ -4,24 +4,16 @@
 // デプロイ:  supabase functions deploy topic-broadcast
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// topics.ts のミラー（同じ並び・同じ index 計算で全端末と合わせる）。
+// src/topics.ts の完全ミラー（同じ並び・同じ件数・同じ prompt）。
+// ⚠ アプリ側 TOPICS と必ず一致させること。件数が違うと mod 計算がずれて
+//   「プッシュのお題」と「アプリ表示のお題」が食い違う（過去にこのバグがあった）。
 const TOPICS = [
   { key: 'gohan', prompt: 'ごはん' },
   { key: 'sora', prompt: '空' },
   { key: 'nomimono', prompt: '飲みもの' },
-  { key: 'desk', prompt: '机の上にあるもの' },
+  { key: 'desk', prompt: '机の上' },
   { key: 'ashimoto', prompt: '足もと' },
   { key: 'oyatsu', prompt: 'おやつ' },
-  { key: 'mado', prompt: '窓の外' },
-  { key: 'sabori', prompt: 'サボりスポット' },
-  { key: 'reizoko', prompt: '冷蔵庫' },
-  { key: 'gohobi', prompt: 'ごほうび' },
-  { key: 'temoto', prompt: 'いまの手もと' },
-  { key: 'shoumona', prompt: 'しょうもないやつ' },
-  { key: 'iro', prompt: 'いまの気分を色で' },
-  { key: 'yashoku', prompt: '深夜のおとも' },
-  { key: 'omotomo', prompt: '作業のおとも' },
-  { key: 'konbini', prompt: 'コンビニ戦利品' },
 ];
 
 function todaysTopicJST(): { key: string; prompt: string } {
@@ -47,7 +39,7 @@ Deno.serve(async () => {
     const messages = (tokens as Array<{ token: string }>).map((row) => ({
       to: row.token,
       title: 'napsnap',
-      body: `今日の見出し：${t.prompt}`,
+      body: `今日のお題は「${t.prompt}」`,
       sound: null,
     }));
 
