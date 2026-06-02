@@ -29,6 +29,7 @@ export function MyPostsSwiper({
   official,
   users,
   passOpen,
+  active = true,
   onReact,
   onMarkViewed,
   myReactionOf,
@@ -39,6 +40,7 @@ export function MyPostsSwiper({
   official?: User;
   users: User[];
   passOpen: boolean;
+  active?: boolean; // このフィードが見えているか（横ページャでお題に居る間は false＝音/足あとを止める）
   onReact: (postId: string, type: ReactionType) => void;
   onMarkViewed: (postId: string) => void;
   myReactionOf: (postId: string) => ReactionType | undefined;
@@ -68,7 +70,7 @@ export function MyPostsSwiper({
   const player = useAudioPlayer(audioSrc ?? null);
 
   useEffect(() => {
-    if (!audioSrc || !passOpen) return;
+    if (!audioSrc || !passOpen || !active) return;
     try {
       player.loop = false;
       player.muted = false;
@@ -81,15 +83,15 @@ export function MyPostsSwiper({
       } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioSrc, passOpen]);
+  }, [audioSrc, passOpen, active]);
 
-  // 表示中の他人投稿に「見た」を記録（1スライド1回）。広告スライドは記録しない。
+  // 表示中の他人投稿に「見た」を記録（1スライド1回）。広告スライドは記録しない。お題ページ滞在中は記録しない。
   useEffect(() => {
     if (!current || isPrompt || currentIsMine || isAd) return;
-    if (!passOpen) return;
+    if (!passOpen || !active) return;
     onMarkViewed(current.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current?.id, currentIsMine, isPrompt, isAd, passOpen]);
+  }, [current?.id, currentIsMine, isPrompt, isAd, passOpen, active]);
 
   const replaySound = () => {
     if (!hasSound) return;
@@ -164,7 +166,7 @@ export function MyPostsSwiper({
                 </Pressable>
               ) : (
                 <Pressable onPress={replaySound} disabled={!hasSound}>
-                  <ChekiCard uri={current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
+                  <ChekiCard uri={currentIsMine ? (current.memoryUri ?? current.imageUrl) : current.imageUrl} caption={current.caption} width={cardW} date={current.createdAt} tiltSeed={current.id} />
                 </Pressable>
               ))}
               {current && (

@@ -12,7 +12,7 @@ import { dayIndex, todaysTopic } from './topics';
 import { hasSupabase } from './config';
 import * as be from './lib/backend';
 import { liveBootstrap, liveCompleteSetup, LiveSnapshot } from './lib/live';
-import { clearMemoryImages, deleteMemoryImage, persistMemoryImage } from './lib/memoryImage';
+import { clearMemoryImages, deleteMemoryImage, isLocalMemoryUri, persistMemoryImage } from './lib/memoryImage';
 
 const SEARCH_HISTORY_MAX = 4;
 
@@ -78,6 +78,7 @@ interface Actions {
   refreshTopicPostsIfStale: () => void;
   refreshOfficialPostsIfStale: () => void;
   ensureOfficialFollowed: () => void;
+  backfillMemories: () => Promise<void>;
   pruneExpired: () => void;
   resetDemo: () => void;
   deleteAccount: () => Promise<boolean>;
@@ -675,6 +676,37 @@ export const useStore = create<Store>()(
             posts: [...st.posts, ...fresh],
             reactions: [...st.reactions, ...makeSeedReactions(fresh, mock, st.currentUserId ?? '')],
           }));
+        },
+
+        // 思い出の画像を端末ローカルへ確実に残すバックフィル。
+        // 自分の通常投稿で「ローカル複製(memoryUri)がまだ無い／リモートURLのまま」のものを、
+        // 元画像（サーバーにまだ在るうち）からローカルへ落として永続化する。
+        // サーバーが24hで消す前に1回でも起動すれば、その投稿の画像は永遠にローカルへ残る。
+        // 既に期限切れでリモートも消えているものは復元不能（何もしない）。
+        backfillMemories: async () => {
+          const me = get().currentUserId;
+          if (!me) return;
+          const targets = get().posts.filter(
+            (p) =>
+              p.userId === me &&
+              !p.topicKey &&
+              p.kind !== 'issue' &&
+              !isLocalMemoryUri(p.memoryUri) &&
+              !!(p.memoryUri || p.imageUrl)
+          );
+          if (targets.length === 0) return;
+          // 通信を詰まらせないよう逐次処理。各投稿ごとに保存できたら memoryUri を差し替える。
+          for (const p of targets) {
+            const source = isLocalMemoryUri(p.memoryUri) ? p.memoryUri! : p.imageUrl || p.memoryUri!;
+            try {
+              const local = await persistMemoryImage(source);
+              if (isLocalMemoryUri(local)) {
+                set((st) => ({ posts: st.posts.map((x) => (x.id === p.id ? { ...x, memoryUri: local } : x)) }));
+              }
+            } catch {
+              // 1枚失敗しても次へ。
+            }
+          }
         },
 
         // 期限切れの投稿を捨ててストレージを増やさない（#4）。

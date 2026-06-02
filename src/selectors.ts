@@ -179,6 +179,7 @@ export interface ActivityItem {
   kind: 'react' | 'view' | 'post' | 'follow';
   user?: User;
   at: number;
+  postId?: string; // 同一投稿への反応/足あとをまとめる（通知のグルーピング用）。
   postImage?: string;
 }
 
@@ -196,20 +197,20 @@ export function activityItems(s: Snapshot): ActivityItem[] {
     for (const r of s.reactions) {
       if (r.userId !== me && !blocked.has(r.userId) && myPostIds.has(r.postId)) {
         reactedPair.add(`${r.userId}_${r.postId}`);
-        out.push({ id: 'r_' + r.id, kind: 'react', user: userById(s.users, r.userId), at: r.createdAt, postImage: imageOf(r.postId) });
+        out.push({ id: 'r_' + r.id, kind: 'react', user: userById(s.users, r.userId), at: r.createdAt, postId: r.postId, postImage: imageOf(r.postId) });
       }
     }
   }
   if (prefs.view) {
     for (const v of s.views) {
       if (v.viewerId !== me && !blocked.has(v.viewerId) && myPostIds.has(v.postId) && !reactedPair.has(`${v.viewerId}_${v.postId}`)) {
-        out.push({ id: 'v_' + v.id, kind: 'view', user: userById(s.users, v.viewerId), at: v.viewedAt, postImage: imageOf(v.postId) });
+        out.push({ id: 'v_' + v.id, kind: 'view', user: userById(s.users, v.viewerId), at: v.viewedAt, postId: v.postId, postImage: imageOf(v.postId) });
       }
     }
   }
   if (prefs.post) {
     for (const p of followedActivePosts(s)) {
-      out.push({ id: 'p_' + p.id, kind: 'post', user: userById(s.users, p.userId), at: p.createdAt, postImage: p.imageUrl });
+      out.push({ id: 'p_' + p.id, kind: 'post', user: userById(s.users, p.userId), at: p.createdAt, postId: p.id, postImage: p.imageUrl });
     }
   }
   // 自分をフォローしてくれた人。

@@ -234,7 +234,7 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
                     <IssueCard label={post.issue.label} images={post.issue.images} createdAt={post.createdAt} width={ME_ITEM_W} tiltSeed={post.id} />
                   </Pressable>
                 ) : (
-                  <ChekiCard uri={post.imageUrl} caption={post.caption} width={ME_ITEM_W} date={post.createdAt} tiltSeed={post.id} />
+                  <ChekiCard uri={post.memoryUri ?? post.imageUrl} caption={post.caption} width={ME_ITEM_W} date={post.createdAt} tiltSeed={post.id} />
                 )}
                 <View style={styles.meStatRow}>
                   <View style={styles.meStat}>

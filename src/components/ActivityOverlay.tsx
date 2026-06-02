@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
@@ -7,21 +7,89 @@ import { Avatar, FadeIn } from './ui';
 import { CameraIcon, CloseIcon, GearIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
 import { timeAgo } from '../lib/time';
 import { ActivityItem } from '../selectors';
+import { User } from '../types';
 import { useStore } from '../store';
 import { NotifySettingsOverlay } from './NotifySettingsOverlay';
 import { tr } from '../i18n';
 
-function lineFor(item: ActivityItem): string {
-  const name = item.user?.displayName ?? tr('友達', 'Friend');
-  if (item.kind === 'follow') return tr(`${name} にフォローされた`, `${name} followed you`);
-  if (item.kind === 'post') return tr(`${name} が投稿した`, `${name} posted`);
-  if (item.kind === 'react') return tr(`${name} が反応した`, `${name} reacted`);
-  if (item.kind === 'view') return tr(`${name} が見た`, `${name} saw your post`);
-  return tr(`${name} が痕跡を残した`, `${name} left a trace`);
+// 同種・同対象の通知を1件にまとめた塊（Twitter風）。
+interface Group {
+  id: string;
+  kind: ActivityItem['kind'];
+  users: User[]; // 重複なし・新しい順
+  at: number; // 最新時刻
+  postImage?: string;
 }
 
-// 通知（アクティビティ）一覧。自分の投稿への反応/足跡＋フォロー中の新着。
-// バックエンドが無いデモなので、ストアのデータから組み立てた擬似通知。
+// 「アクティビティ」を種類×対象でまとめる。
+// react/view は投稿ごと、post はユーザーごと、follow は全部を1件に集約する。
+function groupActivity(items: ActivityItem[]): Group[] {
+  const map = new Map<string, Group>();
+  const order: string[] = [];
+  for (const it of items) {
+    const key =
+      it.kind === 'react'
+        ? `react_${it.postId}`
+        : it.kind === 'view'
+        ? `view_${it.postId}`
+        : it.kind === 'post'
+        ? `post_${it.user?.id}`
+        : 'follow';
+    let g = map.get(key);
+    if (!g) {
+      g = { id: key, kind: it.kind, users: [], at: it.at, postImage: it.postImage };
+      map.set(key, g);
+      order.push(key);
+    }
+    if (it.user && !g.users.some((u) => u.id === it.user!.id)) g.users.push(it.user);
+    if (it.at > g.at) g.at = it.at;
+    if (!g.postImage && it.postImage) g.postImage = it.postImage;
+  }
+  return order.map((k) => map.get(k)!).sort((a, b) => b.at - a.at);
+}
+
+// 「Aさん、Bさん他3人」形式の名前まとめ。
+function names(users: User[]): string {
+  const n = users.length;
+  const a = users[0]?.displayName ?? tr('友達', 'Friend');
+  if (n <= 1) return a;
+  const b = users[1]?.displayName ?? tr('友達', 'Friend');
+  if (n === 2) return tr(`${a}、${b}`, `${a} and ${b}`);
+  return tr(`${a}、${b}他${n - 2}人`, `${a}, ${b} and ${n - 2} others`);
+}
+
+function lineFor(g: Group): string {
+  const who = names(g.users);
+  const n = g.users.length;
+  if (g.kind === 'follow') return tr(`${who}にフォローされた`, `${who} followed you`);
+  if (g.kind === 'post') return tr(`${who}が投稿した`, `${who} posted`);
+  if (g.kind === 'react') return tr(`${who}があなたの投稿に反応`, `${who} reacted to your post`);
+  // 足あとは人数で（「12人が見た」）。
+  return tr(`${n}人が見た`, `${n} ${n === 1 ? 'person' : 'people'} saw your post`);
+}
+
+// 重なった小さなアバターの列＋余りは「+N」。1人だけのときは大きめ1枚。
+function AvatarStack({ users }: { users: User[] }) {
+  if (users.length <= 1) return <Avatar user={users[0]} size={40} />;
+  const shown = users.slice(0, 3);
+  const extra = users.length - shown.length;
+  return (
+    <View style={styles.stack}>
+      {shown.map((u, i) => (
+        <View key={u.id} style={[styles.stackItem, i > 0 && { marginLeft: -10 }]}>
+          <Avatar user={u} size={30} />
+        </View>
+      ))}
+      {extra > 0 && (
+        <View style={styles.stackMore}>
+          <Text style={styles.stackMoreText}>+{extra}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+// 通知一覧。自分の投稿への反応/足あと＋フォロー中の新着＋フォローを、Twitter風にまとめて表示。
 export function ActivityOverlay({
   items,
   passOpen,
@@ -43,10 +111,12 @@ export function ActivityOverlay({
   const notifyTopic = useStore((s) => s.notifyPrefs.topic);
   const [showNotifySettings, setShowNotifySettings] = useState(false);
   const showTopic = !!topicPrompt && notifyTopic;
+  const groups = useMemo(() => groupActivity(items), [items]);
+
   return (
     <FadeIn style={styles.container} dy={16} duration={220}>
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
-        <Text style={styles.title}>{tr('アクティビティ', 'Activity')}</Text>
+        <Text style={styles.title}>{tr('通知', 'Notifications')}</Text>
         <View style={styles.headerActions}>
           <Pressable
             onPress={() => setShowNotifySettings(true)}
@@ -92,28 +162,30 @@ export function ActivityOverlay({
           </View>
         )}
 
-        {items.length === 0 ? (
+        {groups.length === 0 ? (
           <View style={styles.empty}>
             <TraceMark size={40} />
             <Text style={styles.emptyText}>{tr('まだ何もない', 'Nothing yet')}</Text>
           </View>
         ) : (
-          items.map((it) => {
-            const isFollow = it.kind === 'follow' && !!it.user;
-            const followingBack = isFollow && following.includes(it.user!.id);
+          groups.map((g) => {
+            // フォローが1人だけのときはフォローバックボタンを出す（複数人はまとめ表示のみ）。
+            const single = g.kind === 'follow' && g.users.length === 1 && !!g.users[0];
+            const followingBack = single && following.includes(g.users[0].id);
+            const verified = g.users.length === 1 && g.users[0]?.isOfficial;
             return (
-              <View key={it.id} style={styles.row}>
-                <Avatar user={it.user} size={40} />
+              <View key={g.id} style={styles.row}>
+                <AvatarStack users={g.users} />
                 <View style={{ flex: 1, marginLeft: space.sm }}>
                   <View style={styles.lineRow}>
-                    <Text style={styles.line}>{lineFor(it)}</Text>
-                    {it.user?.isOfficial && <VerifiedBadge size={13} />}
+                    <Text style={styles.line} numberOfLines={2}>{lineFor(g)}</Text>
+                    {verified && <VerifiedBadge size={13} />}
                   </View>
-                  <Text style={styles.time}>{timeAgo(it.at)}</Text>
+                  <Text style={styles.time}>{timeAgo(g.at)}</Text>
                 </View>
-                {isFollow ? (
+                {single ? (
                   <Pressable
-                    onPress={() => toggleFollow(it.user!.id)}
+                    onPress={() => toggleFollow(g.users[0].id)}
                     style={({ pressed }) => [
                       styles.followBtn,
                       followingBack && styles.followingBtn,
@@ -125,8 +197,8 @@ export function ActivityOverlay({
                       {followingBack ? tr('フォロー中', 'Following') : tr('フォローバック', 'Follow back')}
                     </Text>
                   </Pressable>
-                ) : it.postImage ? (
-                  <Image source={{ uri: it.postImage }} style={styles.thumb} resizeMode="cover" />
+                ) : g.postImage ? (
+                  <Image source={{ uri: g.postImage }} style={styles.thumb} resizeMode="cover" />
                 ) : null}
               </View>
             );
@@ -200,8 +272,28 @@ const styles = StyleSheet.create({
   topicLine: { color: colors.limeInkSoft, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
   topicSub: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: 1 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: rule.hair, borderBottomColor: colors.hairline },
+  // 重なりアバターの列
+  stack: { flexDirection: 'row', alignItems: 'center', width: 40, height: 40 },
+  stackItem: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: colors.bg,
+    overflow: 'hidden',
+  },
+  stackMore: {
+    marginLeft: -10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.surfaceSunken,
+    borderWidth: 1.5,
+    borderColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stackMoreText: { color: colors.textDim, fontSize: 10, fontWeight: '800', fontFamily: fonts.handle },
   lineRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  line: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui },
+  line: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui, flexShrink: 1 },
   time: { color: colors.textFaint, fontSize: font.small, marginTop: 1, fontFamily: fonts.handle },
   thumb: { width: 40, height: 40, borderRadius: radius.xs, backgroundColor: colors.surfaceSunken, marginLeft: space.sm },
   followBtn: {

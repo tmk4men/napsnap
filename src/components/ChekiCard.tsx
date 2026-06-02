@@ -12,7 +12,10 @@ import { PostCaption } from '../types';
 
 function fmtStamp(ts: number): string {
   const d = new Date(ts);
-  return `${d.getMonth() + 1}.${d.getDate()}`;
+  // 日付＋投稿時刻（例：6.2 12:05）。時刻は2桁ゼロ詰め。
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${d.getMonth() + 1}.${d.getDate()} ${hh}:${mm}`;
 }
 
 // id から決まる微妙な傾き（-1.4〜1.4度）。毎回同じ向きで安定させる。

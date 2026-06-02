@@ -26,7 +26,11 @@ export function RootNavigator() {
       be.completeWebOAuth()
         .catch(() => {})
         .finally(() => {
-          useStore.getState().liveHydrate().finally(() => setLiveReady(true));
+          useStore.getState().liveHydrate().finally(() => {
+            setLiveReady(true);
+            // 自分の投稿画像を端末ローカルへ永続化（サーバーが24hで消す前に保存）。
+            useStore.getState().backfillMemories();
+          });
         });
     } else {
       // モック：復帰時、期限切れを掃除してから、無ければ作り直す。
@@ -35,6 +39,7 @@ export function RootNavigator() {
       useStore.getState().refreshFollowPostsIfStale();
       useStore.getState().refreshTopicPostsIfStale();
       useStore.getState().refreshOfficialPostsIfStale();
+      useStore.getState().backfillMemories();
     }
   }, [hydrated]);
 

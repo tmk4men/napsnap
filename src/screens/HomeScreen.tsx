@@ -1,11 +1,22 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Image,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, rule, space, themeMode, toggleThemeMode } from '../theme';
 import { fonts } from '../lib/fonts';
-import { FadeIn, ShootButton, useTick } from '../components/ui';
+import { FadeIn, useTick } from '../components/ui';
 import { Backdrop } from '../components/Backdrop';
 import { MyPostsSwiper } from '../components/MyPostsSwiper';
+import { TopicPage, TopicSection } from '../components/TopicPage';
 import { ChekiCard } from '../components/ChekiCard';
 import { OfficialCard } from '../components/OfficialCard';
 import { ActivityOverlay } from '../components/ActivityOverlay';
@@ -15,7 +26,7 @@ import { DocOverlay } from '../components/DocOverlay';
 import { SettingsOverlay } from '../components/SettingsOverlay';
 import { AccountLinkOverlay } from '../components/AccountLinkOverlay';
 import { DeleteAccountOverlay } from '../components/DeleteAccountOverlay';
-import { BellIcon, ChevronRightIcon, MenuIcon, SearchIcon } from '../components/icons';
+import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon, SearchIcon } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
@@ -26,7 +37,14 @@ import { tr, lang } from '../i18n';
 import { todaysTopic } from '../topics';
 import { Post, ReactionType } from '../types';
 
-export function HomeScreen({ nav }: { nav: Nav }) {
+// 横スワイプのページ：0=ホーム / 1=お題(フォロー) / 2=お題(おすすめ)
+const PAGE_HOME = 0;
+const PAGE_FOLLOW = 1;
+const PAGE_FORYOU = 2;
+
+export type HomeJump = { page: number; nonce: number };
+
+export function HomeScreen({ nav, jump, onPageChange }: { nav: Nav; jump: HomeJump; onPageChange?: (p: number) => void }) {
   const insets = useSafeAreaInsets();
   useTick();
 
@@ -40,19 +58,16 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const topicNew = topicUnseen(s) && s.notifyPrefs.topic;
 
   // 題字横の日付（号外のデートライン）。
-  const now = new Date();
+  const nowDate = new Date();
   const dateline =
     lang === 'en'
-      ? now.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
-      : `${now.getFullYear()}.${now.getMonth() + 1}.${now.getDate()}（${['日', '月', '火', '水', '木', '金', '土'][now.getDay()]}）`;
+      ? nowDate.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+      : `${nowDate.getFullYear()}.${nowDate.getMonth() + 1}.${nowDate.getDate()}（${['日', '月', '火', '水', '木', '金', '土'][nowDate.getDay()]}）`;
 
   const markViewed = useStore((st) => st.markViewed);
   const reactToPost = useStore((st) => st.reactToPost);
 
-  // ホームの「他人の投稿」は、見たぶんを次回以降は出さない。
-  // ただし「残した」タブ（=リアクションした投稿）は別ロジック（reactions）なので壊れない。
-  // 表示中にビュー記録で消えるとUXが崩れるので、HomeScreen マウント時のビュー集合を
-  // ref で固定し、このセッション中はそれだけで除外する。タブを離れて戻ると再マウント＝再スナップショット。
+  // ホームの「他人の投稿」は、見たぶんを次回以降は出さない（マウント時のビュー集合で固定）。
   const seenSnapshot = useRef<Set<string> | null>(null);
   if (seenSnapshot.current === null) {
     seenSnapshot.current = new Set(
@@ -60,8 +75,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     );
   }
 
-  // ホームに並べる投稿＝フォロー中の他人投稿（残り時間短い順）＋自分の投稿（新しい順）の連結。
-  // 他人優先：他人がいるなら先に他人。自分の投稿はその後ろに新しい順で並べる。
   const others = useMemo(
     () => followedActivePosts(s).filter((p) => !seenSnapshot.current!.has(p.id)),
     [s.posts, s.following, s.currentUserId]
@@ -77,7 +90,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const feedPosts = useMemo(() => {
     const base = [...others, ...myActive];
     const AD_EVERY = 4;
-    if (!ADS_ENABLED || base.length < AD_EVERY) return base; // 広告オフ／投稿が少ないうちは挟まない
+    if (!ADS_ENABLED || base.length < AD_EVERY) return base;
     const out: Post[] = [];
     base.forEach((p, i) => {
       out.push(p);
@@ -100,7 +113,6 @@ export function HomeScreen({ nav }: { nav: Nav }) {
   const activity = useMemo(() => activityItems(s), [s.posts, s.views, s.reactions, s.following, s.currentUserId, s.notifyPrefs]);
   const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length + (topicNew ? 1 : 0);
 
-  // 未投稿（パス未取得）でフォロー中の人がいる → チェキをモザイク予告で1枚見せる
   const mediaMode = !open && !!followedLatest;
   const cardWMedia = (w: number, h: number) => Math.max(0, Math.min(w - 16, Math.floor((h - 56) / 1.31), 380));
 
@@ -120,14 +132,60 @@ export function HomeScreen({ nav }: { nav: Nav }) {
     markTopicSeen(); // 通知を開いたら今日のお題も既読に
   };
 
+  // ── 横ページャ（ホーム⇄お題） ──
+  const [page, setPage] = useState(jump.page);
+  const [pager, setPager] = useState({ w: 0, h: 0 });
+  const pagerRef = useRef<ScrollView | null>(null);
+  const programmaticRef = useRef(false);
+  const programmaticTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const scrollToPage = (p: number, animated: boolean) => {
+    if (pager.w <= 0) return;
+    programmaticRef.current = true;
+    if (programmaticTimer.current) clearTimeout(programmaticTimer.current);
+    programmaticTimer.current = setTimeout(() => {
+      programmaticRef.current = false;
+    }, 420);
+    pagerRef.current?.scrollTo({ x: p * pager.w, animated });
+    setPage(p);
+    onPageChange?.(p);
+  };
+
+  // 外部からの移動指示（通知→お題 / お題に投稿後）と初回レイアウト時の位置合わせ。
+  useEffect(() => {
+    if (pager.w <= 0) return;
+    scrollToPage(jump.page, jump.nonce > 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jump.nonce, pager.w]);
+
+  // ページの現在位置を監視（web は momentum が無いので onScroll で同期）。
+  const onPagerScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (programmaticRef.current) return;
+    const w = pager.w || 1;
+    const next = Math.round(e.nativeEvent.contentOffset.x / w);
+    if (next !== page) {
+      setPage(next);
+      onPageChange?.(next);
+    }
+  };
+
+  const switchSection = (sec: TopicSection) => scrollToPage(sec === 'known' ? PAGE_FOLLOW : PAGE_FORYOU, true);
+
+  // お題ページを開いたら「今日のお題」を既読に（通知ドットを消す）。
+  useEffect(() => {
+    if (page !== PAGE_HOME) markTopicSeen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  // 右下の丸カメラ：ホームでは通常撮影、お題ページではそのお題に出す。
+  const onFab = () => (page === PAGE_HOME ? nav.openCamera() : nav.openCamera(topic.key));
+
   return (
     <View style={styles.container}>
-      {/* 紙の空気感（放射グラデ＋フィルムグレイン） */}
       <Backdrop />
 
-      {/* マストヘッド（題字＋デートライン＋欄外の操作） */}
+      {/* マストヘッド（題字＋デートライン＋欄外の操作）。お題ページではお題名を左詰めで出す。 */}
       <View style={[styles.masthead, { paddingTop: insets.top + space.sm }]}>
-        {/* 題字＋日付はベタ塗りの帯（ライト＝黒地に白／ダーク＝白地に黒）。 */}
         <View style={styles.titleBlock}>
           <View style={styles.titleRow}>
             <Text style={styles.brand}>
@@ -138,11 +196,19 @@ export function HomeScreen({ nav }: { nav: Nav }) {
             </View>
           </View>
         </View>
-        {/* 題字の下線＝二重罫（号外のマストヘッド） */}
         <View style={styles.ruleDoubleTop} />
         <View style={styles.ruleDoubleGap} />
         <View style={styles.ruleDoubleBot} />
         <View style={styles.utilityRow}>
+          {/* 左：お題ページのときだけ「Topic: 空」を左詰めで表示 */}
+          <View style={styles.utilityLeft}>
+            {page !== PAGE_HOME && (
+              <Text style={styles.topicLabel} numberOfLines={1}>
+                {tr('Topic：', 'Topic: ')}
+                <Text style={styles.topicLabelStrong}>{topic.prompt}</Text>
+              </Text>
+            )}
+          </View>
           <View style={styles.glyphs}>
             <Pressable onPress={nav.openSearch} style={styles.glyphBtn} hitSlop={8}>
               <SearchIcon size={23} color={colors.text} />
@@ -165,84 +231,117 @@ export function HomeScreen({ nav }: { nav: Nav }) {
         <View style={styles.ruleThin} />
       </View>
 
-      {/* 縮刷版（1年前の号 など、バックナンバー欄） */}
-      {memory && (
-        <FadeIn delay={70} dy={8}>
-          <Pressable
-            onPress={() => setViewingMemory([memory.post])}
-            style={({ pressed }) => [styles.backnumber, pressed && { backgroundColor: colors.surfaceSunken }]}
-          >
-            <Image source={{ uri: memory.post.imageUrl }} style={styles.bnThumb} resizeMode="cover" />
-            <View style={{ flex: 1, marginLeft: space.sm }}>
-              <Text style={styles.bnKicker}>{memory.label}</Text>
-            </View>
-            <ChevronRightIcon size={18} color={colors.textFaint} />
-          </Pressable>
-        </FadeIn>
-      )}
-
-      {/* 中央：パス開＝他人＋自分の縦スワイプ。パス閉でも自分の投稿があればそれだけ流す。
-          自分も無いときは他人をモザイク1枚で予告、誰もいなければ公式カード。 */}
+      {/* 本文：横スワイプで [ホーム] [お題・フォロー] [お題・おすすめ] */}
       <View
-        style={styles.stage}
-        onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+        style={styles.pagerWrap}
+        onLayout={(e) => setPager({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
-        {open || myActive.length > 0 ? (
-          <MyPostsSwiper
-            posts={open ? feedPosts : myActive}
-            me={me}
-            official={s.users.find(isBrandUser)}
-            users={s.users}
-            passOpen={open}
-            onReact={(postId, type: ReactionType) => reactToPost(postId, type)}
-            onMarkViewed={markViewed}
-            myReactionOf={(postId) => myReaction(s, postId)}
-            onOpenIssue={(p) => {
-              if (!p.issue) return;
-              // 号外の中身を全画面チェキで見返せるように。号外は号外として全画像を24h保持するので、
-              // 画像は号外自身のスナップショット（memoryUri 優先→images URL）を使い、期限も号外の expiresAt に統一する。
-              // 元投稿が残っていればキャプション/音声だけ補完する（無くても画像は順番どおり読み込める）。
-              const built: Post[] = p.issue.images.map((url, i) => {
-                const origId = p.issue!.sourcePostIds[i];
-                const orig = origId ? s.posts.find((x) => x.id === origId) : undefined;
-                return {
-                  id: orig?.id ?? `${p.id}__view_${i}`,
-                  userId: p.userId,
-                  imageUrl: url,
-                  memoryUri: p.issue!.memoryUris?.[i] ?? orig?.memoryUri,
-                  caption: orig?.caption,
-                  audioUrl: orig?.audioUrl,
-                  audioSeed: orig?.audioSeed,
-                  createdAt: orig?.createdAt ?? p.createdAt,
-                  expiresAt: p.expiresAt,
-                };
-              });
-              setViewingMemory(built);
-            }}
-          />
-        ) : mediaMode && followedLatest ? (
-          <FadeIn key={followedLatest.id} delay={130} dy={16} style={styles.heroWrap}>
-            {cardW > 0 && (
-              <ChekiCard
-                uri={followedLatest.imageUrl}
-                width={cardW}
-                tiltSeed={followedLatest.id}
-                blur
-                redactStrip
-              />
+        <ScrollView
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={onPagerScroll}
+          onMomentumScrollEnd={onPagerScroll}
+          scrollEventThrottle={16}
+        >
+          {/* ── ページ0：ホーム ── */}
+          <View style={{ width: pager.w, height: pager.h }}>
+            {memory && (
+              <FadeIn delay={70} dy={8}>
+                <Pressable
+                  onPress={() => setViewingMemory([memory.post])}
+                  style={({ pressed }) => [styles.backnumber, pressed && { backgroundColor: colors.surfaceSunken }]}
+                >
+                  <Image source={{ uri: memory.post.memoryUri ?? memory.post.imageUrl }} style={styles.bnThumb} resizeMode="cover" />
+                  <View style={{ flex: 1, marginLeft: space.sm }}>
+                    <Text style={styles.bnKicker}>{memory.label}</Text>
+                  </View>
+                  <ChevronRightIcon size={18} color={colors.textFaint} />
+                </Pressable>
+              </FadeIn>
             )}
-          </FadeIn>
-        ) : s.following.length === 0 ? (
-          <OfficialCard official={s.users.find(isBrandUser)} message={tr('ようこそ', 'Welcome')} width={Math.min(cardW, 320)} />
-        ) : (
-          <OfficialCard official={s.users.find(isBrandUser)} message={tr('日常を投稿してみよう', 'Try posting your day')} width={Math.min(cardW, 320)} />
-        )}
+
+            <View
+              style={styles.stage}
+              onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+            >
+              {open || myActive.length > 0 ? (
+                <MyPostsSwiper
+                  posts={open ? feedPosts : myActive}
+                  me={me}
+                  official={s.users.find(isBrandUser)}
+                  users={s.users}
+                  passOpen={open}
+                  active={page === PAGE_HOME}
+                  onReact={(postId, type: ReactionType) => reactToPost(postId, type)}
+                  onMarkViewed={markViewed}
+                  myReactionOf={(postId) => myReaction(s, postId)}
+                  onOpenIssue={(p) => {
+                    if (!p.issue) return;
+                    const built: Post[] = p.issue.images.map((url, i) => {
+                      const origId = p.issue!.sourcePostIds[i];
+                      const orig = origId ? s.posts.find((x) => x.id === origId) : undefined;
+                      return {
+                        id: orig?.id ?? `${p.id}__view_${i}`,
+                        userId: p.userId,
+                        imageUrl: url,
+                        memoryUri: p.issue!.memoryUris?.[i] ?? orig?.memoryUri,
+                        caption: orig?.caption,
+                        audioUrl: orig?.audioUrl,
+                        audioSeed: orig?.audioSeed,
+                        createdAt: orig?.createdAt ?? p.createdAt,
+                        expiresAt: p.expiresAt,
+                      };
+                    });
+                    setViewingMemory(built);
+                  }}
+                />
+              ) : mediaMode && followedLatest ? (
+                <FadeIn key={followedLatest.id} delay={130} dy={16} style={styles.heroWrap}>
+                  {cardW > 0 && (
+                    <ChekiCard
+                      uri={followedLatest.imageUrl}
+                      width={cardW}
+                      tiltSeed={followedLatest.id}
+                      blur
+                      redactStrip
+                    />
+                  )}
+                </FadeIn>
+              ) : s.following.length === 0 ? (
+                <OfficialCard official={s.users.find(isBrandUser)} message={tr('ようこそ', 'Welcome')} width={Math.min(cardW, 320)} />
+              ) : (
+                <OfficialCard official={s.users.find(isBrandUser)} message={tr('日常を投稿してみよう', 'Try posting your day')} width={Math.min(cardW, 320)} />
+              )}
+            </View>
+          </View>
+
+          {/* ── ページ1：お題（フォロー） ── */}
+          <View style={{ width: pager.w, height: pager.h }}>
+            <TopicPage section="known" active={page === PAGE_FOLLOW} onSwitchSection={switchSection} />
+          </View>
+
+          {/* ── ページ2：お題（おすすめ） ── */}
+          <View style={{ width: pager.w, height: pager.h }}>
+            <TopicPage section="strangers" active={page === PAGE_FORYOU} onSwitchSection={switchSection} />
+          </View>
+        </ScrollView>
       </View>
 
-      {/* 下部CTA：撮るボタンを常に出す。 */}
-      <FadeIn delay={220} dy={12} style={{ paddingHorizontal: space.lg, paddingBottom: insets.bottom + space.md }}>
-        <ShootButton block onPress={() => nav.openCamera()} />
-      </FadeIn>
+      {/* 右下の丸カメラFAB（横長ボタンは廃止）。お題ページではそのお題に出す。 */}
+      <Pressable
+        onPress={onFab}
+        style={({ pressed }) => [
+          styles.fab,
+          { bottom: insets.bottom + space.lg },
+          pressed && { transform: [{ scale: 0.94 }] },
+        ]}
+        hitSlop={8}
+        accessibilityLabel={tr('撮る', 'Take a photo')}
+      >
+        <CameraIcon size={26} color={colors.limeInk} />
+      </Pressable>
 
       {showActivity && (
         <ActivityOverlay
@@ -251,7 +350,7 @@ export function HomeScreen({ nav }: { nav: Nav }) {
           topicPrompt={topic.prompt}
           onOpenTopic={() => {
             setShowActivity(false);
-            nav.setTab('topic');
+            scrollToPage(PAGE_FOLLOW, true);
           }}
           onClose={() => setShowActivity(false)}
           onShoot={() => {
@@ -289,20 +388,21 @@ const styles = StyleSheet.create({
 
   // マストヘッド
   masthead: { paddingHorizontal: space.lg },
-  // 題字＋日付の帯。地＝インク色（ライト黒/ダーク白）、文字＝紙色（ライト白/ダーク黒）。
   titleBlock: { backgroundColor: colors.text, paddingHorizontal: space.md, paddingTop: 7, paddingBottom: 9 },
   titleRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   brand: { fontSize: 38, fontFamily: fonts.brand, color: colors.bg, letterSpacing: -1, includeFontPadding: false },
-  // 「napsnap」の真ん中の s だけ薄い黄緑でワンポイント。白黒ベースの紙面に小さなアクセント。
   brandAccent: { color: '#D6E66B' },
   dateline: { alignItems: 'flex-end', paddingBottom: 4 },
   dateText: { color: colors.bg, fontSize: 11, fontFamily: fonts.handle, letterSpacing: 0.5, opacity: 0.85 },
-  // 二重罫＝太罫＋紙の隙間＋細罫
   ruleDoubleTop: { height: rule.thick, backgroundColor: colors.text, marginTop: 4 },
   ruleDoubleGap: { height: 2 },
   ruleDoubleBot: { height: rule.hair, backgroundColor: colors.text },
   ruleThin: { height: rule.hair, backgroundColor: colors.hairline },
-  utilityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingVertical: 7 },
+  utilityRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 7 },
+  utilityLeft: { flex: 1, justifyContent: 'center', paddingRight: space.sm },
+  // お題名（号外の節見出し風）。左詰め・明朝。
+  topicLabel: { color: colors.textDim, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
+  topicLabelStrong: { color: colors.text, fontWeight: '900' },
   glyphs: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   glyphBtn: { alignItems: 'center', justifyContent: 'center' },
   glyphSep: { width: rule.hair, height: 16, backgroundColor: colors.hairline },
@@ -312,7 +412,7 @@ const styles = StyleSheet.create({
     right: -7,
     minWidth: 15,
     height: 15,
-    backgroundColor: colors.warn, // 通知バッジは赤（白黒の中で唯一の差し色）
+    backgroundColor: colors.warn,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
@@ -336,6 +436,22 @@ const styles = StyleSheet.create({
   bnKicker: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
 
   // 中央ステージ
+  pagerWrap: { flex: 1, overflow: 'hidden' },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.md },
   heroWrap: { alignItems: 'center', gap: space.md },
+
+  // 右下の丸カメラFAB
+  fab: {
+    position: 'absolute',
+    right: space.lg,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.lime,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: rule.hair,
+    borderColor: colors.limeDust,
+    boxShadow: '0 8px 20px rgba(0,0,0,0.20)',
+  },
 });

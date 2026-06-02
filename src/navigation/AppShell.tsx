@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import { colors } from '../theme';
-import { HomeScreen } from '../screens/HomeScreen';
-import { TopicScreen } from '../screens/TopicScreen';
+import { HomeScreen, HomeJump } from '../screens/HomeScreen';
 import { KeptScreen } from '../screens/KeptScreen';
 import { MeScreen } from '../screens/MeScreen';
 import { CameraScreen } from '../screens/CameraScreen';
@@ -21,6 +20,13 @@ type Overlay = null | 'camera' | 'preview' | 'feed' | 'search';
 
 export function AppShell() {
   const [tab, setTab] = useState<TabKey>('home');
+  // ホーム内の横ページ移動指示（0=ホーム/1=お題フォロー/2=お題おすすめ）。
+  // nonce を増やすと「同じページ値でも再適用＝スクロール」される。
+  const [homeJump, setHomeJump] = useState<HomeJump>({ page: 0, nonce: 0 });
+  const goTopic = () => {
+    setHomeJump((j) => ({ page: 1, nonce: j.nonce + 1 }));
+    setTab('home');
+  };
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [draftUri, setDraftUri] = useState<string | null>(null);
   const [draftAudio, setDraftAudio] = useState<string | undefined>(undefined);
@@ -129,9 +135,9 @@ export function AppShell() {
       // 「ホームに反映されない」を防ぐ）。
       if (hasSupabase) await useStore.getState().liveHydrate();
       if (wasTopic) {
-        // お題は独立：パスは開かない。お題タブへ戻る。
+        // お題は独立：パスは開かない。ホーム内のお題ページ（フォロー）へ戻す。
         setOverlay(null);
-        setTab('topic');
+        goTopic();
       } else {
         // ホームに戻す。ホームの縦スワイプで他人＋自分の投稿が全部見れる（FeedScreen には飛ばさない）。
         setOverlay(null);
@@ -144,8 +150,7 @@ export function AppShell() {
     <View style={styles.root}>
       <View style={styles.content}>
         <FadeIn key={tab} style={styles.content} dy={6} duration={200}>
-          {tab === 'home' && <HomeScreen nav={nav} />}
-          {tab === 'topic' && <TopicScreen nav={nav} />}
+          {tab === 'home' && <HomeScreen nav={nav} jump={homeJump} onPageChange={(p) => setHomeJump((j) => (j.page === p ? j : { ...j, page: p }))} />}
           {tab === 'kept' && <KeptScreen nav={nav} />}
           {tab === 'me' && <MeScreen nav={nav} />}
         </FadeIn>

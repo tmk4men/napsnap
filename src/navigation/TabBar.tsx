@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, rule, space } from '../theme';
 import { TabKey } from './nav';
 import { Avatar } from '../components/ui';
-import { BookmarkIcon, HouseIcon, NoteIcon } from '../components/icons';
+import { BookmarkIcon, HouseIcon } from '../components/icons';
 import { User } from '../types';
 
 export function TabBar({
@@ -23,10 +23,6 @@ export function TabBar({
     <View style={[styles.bar, { paddingBottom: insets.bottom + space.sm }]}>
       <Tab active={active === 'home'} onPress={() => onChange('home')}>
         <HouseIcon size={24} color={active === 'home' ? colors.text : colors.textFaint} filled={active === 'home'} />
-      </Tab>
-
-      <Tab active={active === 'topic'} onPress={() => onChange('topic')}>
-        <NoteIcon size={24} color={active === 'topic' ? colors.text : colors.textFaint} filled={active === 'topic'} />
       </Tab>
 
       <Tab active={active === 'kept'} onPress={() => onChange('kept')}>
