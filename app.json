@@ -75,7 +75,8 @@
       "expo-localization",
       "./plugins/withDisableExpoStubPch",
       "./plugins/withRemoveAdIdPermission",
-      "./plugins/withAndroidOverridePathCheck"
+      "./plugins/withAndroidOverridePathCheck",
+      "./plugins/withReleaseSigning"
     ],
     "experiments": {
       "baseUrl": "/napsnap"
