@@ -4,10 +4,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { Avatar, FadeIn } from './ui';
+import { ChekiCard } from './ChekiCard';
 import { CameraIcon, CloseIcon, GearIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
 import { timeAgo } from '../lib/time';
-import { ActivityItem } from '../selectors';
-import { User } from '../types';
+import { ActivityItem, userById } from '../selectors';
+import { ReactionType, User } from '../types';
+import { reactionMeta } from '../copy';
 import { useStore } from '../store';
 import { NotifySettingsOverlay } from './NotifySettingsOverlay';
 import { tr } from '../i18n';
@@ -18,6 +20,7 @@ interface Group {
   kind: ActivityItem['kind'];
   users: User[]; // 重複なし・新しい順
   at: number; // 最新時刻
+  postId?: string;
   postImage?: string;
 }
 
@@ -37,7 +40,7 @@ function groupActivity(items: ActivityItem[]): Group[] {
         : 'follow';
     let g = map.get(key);
     if (!g) {
-      g = { id: key, kind: it.kind, users: [], at: it.at, postImage: it.postImage };
+      g = { id: key, kind: it.kind, users: [], at: it.at, postId: it.postId, postImage: it.postImage };
       map.set(key, g);
       order.push(key);
     }
@@ -110,6 +113,7 @@ export function ActivityOverlay({
   const toggleFollow = useStore((s) => s.toggleFollow);
   const notifyTopic = useStore((s) => s.notifyPrefs.topic);
   const [showNotifySettings, setShowNotifySettings] = useState(false);
+  const [detail, setDetail] = useState<Group | null>(null);
   const showTopic = !!topicPrompt && notifyTopic;
   const groups = useMemo(() => groupActivity(items), [items]);
 
@@ -174,7 +178,11 @@ export function ActivityOverlay({
             const followingBack = single && following.includes(g.users[0].id);
             const verified = g.users.length === 1 && g.users[0]?.isOfficial;
             return (
-              <View key={g.id} style={styles.row}>
+              <Pressable
+                key={g.id}
+                onPress={() => setDetail(g)}
+                style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}
+              >
                 <AvatarStack users={g.users} />
                 <View style={{ flex: 1, marginLeft: space.sm }}>
                   <View style={styles.lineRow}>
@@ -200,13 +208,107 @@ export function ActivityOverlay({
                 ) : g.postImage ? (
                   <Image source={{ uri: g.postImage }} style={styles.thumb} resizeMode="cover" />
                 ) : null}
-              </View>
+              </Pressable>
             );
           })
         )}
       </ScrollView>
 
       {showNotifySettings && <NotifySettingsOverlay onClose={() => setShowNotifySettings(false)} />}
+      {detail && <NotificationDetail group={detail} onClose={() => setDetail(null)} />}
+    </FadeIn>
+  );
+}
+
+// 通知をタップしたときの詳細。投稿を拡大表示し、反応／足あと／フォローした人を一覧で見せる。
+function NotificationDetail({ group, onClose }: { group: Group; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
+  const s = useStore();
+  const toggleFollow = useStore((st) => st.toggleFollow);
+  const me = s.currentUserId;
+  const post = group.postId ? s.posts.find((p) => p.id === group.postId) : undefined;
+  const [stageW, setStageW] = useState(0);
+  const cardW = Math.min(Math.max(0, stageW - 80), 240);
+
+  type Row = { user?: User; sub: string; reaction?: ReactionType };
+  let rows: Row[] = [];
+  if (group.kind === 'react' && post) {
+    rows = s.reactions
+      .filter((r) => r.postId === post.id && r.userId !== me)
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((r) => ({ user: userById(s.users, r.userId), sub: timeAgo(r.createdAt), reaction: r.type }));
+  } else if (group.kind === 'view' && post) {
+    rows = s.views
+      .filter((v) => v.postId === post.id && v.viewerId !== me)
+      .sort((a, b) => b.viewedAt - a.viewedAt)
+      .map((v) => ({ user: userById(s.users, v.viewerId), sub: timeAgo(v.viewedAt) }));
+  } else if (group.kind === 'follow') {
+    const at = new Map(s.followers.map((f) => [f.followerId, f.followedAt] as const));
+    rows = group.users.map((u) => ({ user: u, sub: timeAgo(at.get(u.id) ?? group.at) }));
+  } else {
+    rows = group.users.map((u) => ({ user: u, sub: timeAgo(group.at) }));
+  }
+
+  const heading = lineFor(group);
+
+  return (
+    <FadeIn style={styles.container} dy={16} duration={200}>
+      <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
+        <Text style={styles.title} numberOfLines={1}>{tr('通知の詳細', 'Notification')}</Text>
+        <Pressable onPress={onClose} style={styles.headerIconBtn} hitSlop={12}>
+          <CloseIcon size={18} color={colors.text} />
+        </Pressable>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={{ padding: space.lg, paddingBottom: insets.bottom + space.xl, alignItems: 'center' }}
+        showsVerticalScrollIndicator={false}
+        onLayout={(e) => setStageW(e.nativeEvent.layout.width)}
+      >
+        <Text style={styles.detailHeading}>{heading}</Text>
+
+        {post && cardW > 0 && (
+          <View style={{ marginBottom: space.lg }}>
+            <ChekiCard
+              uri={post.userId === me ? (post.memoryUri ?? post.imageUrl) : post.imageUrl}
+              caption={post.caption}
+              width={cardW}
+              date={post.createdAt}
+              tiltSeed={post.id}
+            />
+          </View>
+        )}
+
+        <View style={{ alignSelf: 'stretch' }}>
+          {rows.map((r, i) => {
+            const followingBack = group.kind === 'follow' && !!r.user && s.following.includes(r.user.id);
+            return (
+              <View key={(r.user?.id ?? 'u') + i} style={styles.detailRow}>
+                <Avatar user={r.user} size={38} />
+                <View style={{ flex: 1, marginLeft: space.sm }}>
+                  <View style={styles.lineRow}>
+                    <Text style={styles.line} numberOfLines={1}>{r.user?.displayName ?? tr('友達', 'Friend')}</Text>
+                    {r.user?.isOfficial && <VerifiedBadge size={13} />}
+                    {r.reaction && <Text style={styles.reactEmoji}>{reactionMeta(r.reaction).emoji}</Text>}
+                  </View>
+                  <Text style={styles.time}>{r.sub}</Text>
+                </View>
+                {group.kind === 'follow' && r.user && (
+                  <Pressable
+                    onPress={() => toggleFollow(r.user!.id)}
+                    style={({ pressed }) => [styles.followBtn, followingBack && styles.followingBtn, pressed && { opacity: 0.85 }]}
+                    hitSlop={6}
+                  >
+                    <Text style={[styles.followText, followingBack && styles.followingText]}>
+                      {followingBack ? tr('フォロー中', 'Following') : tr('フォローバック', 'Follow back')}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
     </FadeIn>
   );
 }
@@ -295,6 +397,10 @@ const styles = StyleSheet.create({
   stackMoreText: { color: colors.textDim, fontSize: 10, fontWeight: '800', fontFamily: fonts.handle },
   lineRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   line: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.ui, flexShrink: 1 },
+  // 詳細オーバーレイ
+  detailHeading: { alignSelf: 'stretch', color: colors.text, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui, marginBottom: space.md },
+  detailRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: rule.hair, borderBottomColor: colors.hairline },
+  reactEmoji: { fontSize: 15 },
   time: { color: colors.textFaint, fontSize: font.small, marginTop: 1, fontFamily: fonts.handle },
   thumb: { width: 40, height: 40, borderRadius: radius.xs, backgroundColor: colors.surfaceSunken, marginLeft: space.sm },
   followBtn: {
