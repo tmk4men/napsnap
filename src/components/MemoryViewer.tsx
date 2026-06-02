@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, space } from '../theme';
 import { fonts } from '../lib/fonts';
 import { ChekiCard } from './ChekiCard';
-import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SaveDeviceIcon, SpeakerOnIcon } from './icons';
+import { useChekiShare } from './ChekiShareLayer';
+import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, SaveDeviceIcon, ShareIcon, SpeakerOnIcon } from './icons';
 import { Post } from '../types';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { saveChekiToDevice } from '../lib/share';
@@ -34,6 +35,7 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
   const hasSound = postHasSound(post);
   const [stageW, setStageW] = useState(0);
   const cardW = Math.min(Math.max(0, stageW - 72), 300);
+  const { share, ShareLayer } = useChekiShare();
 
   const playSound = () => {
     if (!audioSrc) return;
@@ -58,6 +60,7 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
 
   return (
     <View style={styles.container}>
+      {ShareLayer}
       <View style={[styles.top, { paddingTop: insets.top + space.sm }]}>
         <Pressable onPress={onClose} style={styles.iconBtn} hitSlop={12}>
           <CloseIcon size={18} color={colors.text} />
@@ -73,6 +76,14 @@ export function MemoryViewer({ posts, onClose }: { posts: Post[]; onClose: () =>
               <SpeakerOnIcon size={18} color={colors.text} />
             </Pressable>
           )}
+          <Pressable
+            onPress={() => share(post)}
+            style={styles.iconBtn}
+            hitSlop={8}
+            accessibilityLabel={tr('シェア', 'Share')}
+          >
+            <ShareIcon size={18} color={colors.text} />
+          </Pressable>
           <Pressable
             onPress={saveToDevice}
             disabled={saving}

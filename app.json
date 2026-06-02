@@ -76,7 +76,8 @@
       "./plugins/withDisableExpoStubPch",
       "./plugins/withRemoveAdIdPermission",
       "./plugins/withAndroidOverridePathCheck",
-      "./plugins/withReleaseSigning"
+      "./plugins/withReleaseSigning",
+      "expo-sharing"
     ],
     "experiments": {
       "baseUrl": "/napsnap"

@@ -11,8 +11,8 @@ import { AdSlide } from './AdSlide';
 import { OfficialCard } from './OfficialCard';
 import { ReactionBar } from './ReactionBar';
 import { ModerationMenu, ModerationTarget } from './ModerationMenu';
+import { useChekiShare } from './ChekiShareLayer';
 import { Post, ReactionType, User } from '../types';
-import { shareCheki } from '../lib/share';
 import { tr } from '../i18n';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { isBrandUser } from '../selectors';
@@ -49,6 +49,7 @@ export function MyPostsSwiper({
   const total = posts.length + 1; // 末尾に公式の促しカード
   const [index, setIndex] = useState(0);
   const [moderating, setModerating] = useState<ModerationTarget | null>(null);
+  const { share: shareChekiNow, ShareLayer } = useChekiShare();
   const safeIndex = Math.min(index, total - 1);
   const isPrompt = safeIndex >= posts.length; // 最後のスライド＝公式カード
   const current = posts[safeIndex];
@@ -194,8 +195,8 @@ export function MyPostsSwiper({
                       <Remaining expiresAt={current.expiresAt} color={colors.warn} size={12} />
                     </View>
                   )}
-                  {currentIsMine && Platform.OS === 'web' && (
-                    <Pressable onPress={() => shareCheki(current)} hitSlop={10} style={{ marginLeft: 4 }}>
+                  {currentIsMine && (
+                    <Pressable onPress={() => shareChekiNow(current)} hitSlop={10} style={{ marginLeft: 4 }}>
                       <ShareIcon size={18} color={colors.textDim} />
                     </Pressable>
                   )}
@@ -211,6 +212,7 @@ export function MyPostsSwiper({
         </View>
       </Animated.View>
       {moderating && <ModerationMenu target={moderating} onClose={() => setModerating(null)} />}
+      {ShareLayer}
     </View>
   );
 }

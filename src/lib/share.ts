@@ -59,9 +59,9 @@ export async function shareInvite(handle: string): Promise<ShareResult> {
 
 // チェキを端末に保存（ダウンロード）。共有シートを経由せず、純粋に保存だけ。
 // Web 限定（ネイティブはまだチェキ合成に対応していない＝falseを返す）。
-export async function saveChekiToDevice(post: Post): Promise<boolean> {
+export async function saveChekiToDevice(post: Post, handle?: string): Promise<boolean> {
   if (Platform.OS !== 'web') return false;
-  const blob = await composeChekiPng(post);
+  const blob = await composeChekiPng(post, handle);
   if (!blob) return false;
   try {
     const url = URL.createObjectURL(blob);
@@ -78,17 +78,19 @@ export async function saveChekiToDevice(post: Post): Promise<boolean> {
   }
 }
 
-export async function shareCheki(post: Post): Promise<ShareResult> {
-  if (Platform.OS !== 'web') return 'none'; // ネイティブは未対応
-  const blob = await composeChekiPng(post);
+export async function shareCheki(post: Post, handle?: string): Promise<ShareResult> {
+  if (Platform.OS !== 'web') return 'none'; // ネイティブは ChekiShareLayer 側で対応
+  const blob = await composeChekiPng(post, handle);
   if (!blob) return 'none';
   const file = new (globalThis as any).File([blob], `napsnap-${post.id.slice(0, 8)}.png`, {
     type: 'image/png',
   });
   const navAny: any = (globalThis as any).navigator;
+  const shareText = `napsnap${handle ? ` ${handle}` : ''}`;
   try {
     if (navAny?.canShare?.({ files: [file] }) && navAny.share) {
-      await navAny.share({ files: [file], text: 'napsnap' });
+      // 画像＋ディープリンク（URL）。受け手がアプリ/デモへ来られるように。
+      await navAny.share({ files: [file], text: shareText, url: NAPSNAP_URL });
       return 'shared';
     }
   } catch {}
@@ -108,7 +110,7 @@ export async function shareCheki(post: Post): Promise<ShareResult> {
   }
 }
 
-async function composeChekiPng(post: Post): Promise<Blob | null> {
+async function composeChekiPng(post: Post, handle?: string): Promise<Blob | null> {
   const g: any = globalThis;
   const doc = g?.document;
   if (!doc) return null;
@@ -120,7 +122,7 @@ async function composeChekiPng(post: Post): Promise<Blob | null> {
   const photoH = Math.round(photoW * 1.12);
   const stripH = Math.round(W * 0.2);
   const cutGap = 4;
-  const footerH = 56;
+  const footerH = 92; // 透かし（napsnap＋@ID＋URL）の2行ぶん
   const totalH = FRAME + photoH + cutGap + stripH + footerH;
 
   const canvas = doc.createElement('canvas');
@@ -163,20 +165,28 @@ async function composeChekiPng(post: Post): Promise<Blob | null> {
     ctx.fillText(post.caption.text, W / 2, stripY + stripH / 2 - 6);
   }
 
-  // 日付
+  // 日付＋時刻（例 6.2 12:05）
   const d = new Date(post.createdAt);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
   ctx.fillStyle = '#9C9C9C';
   ctx.font = '500 20px monospace';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText(`${d.getMonth() + 1}.${d.getDate()}`, W - FRAME - 6, stripY + stripH - 12);
+  ctx.fillText(`${d.getMonth() + 1}.${d.getDate()} ${hh}:${mm}`, W - FRAME - 6, stripY + stripH - 12);
 
-  // フッタ：napsnap ロゴ
-  ctx.fillStyle = '#0F0F0F';
-  ctx.font = '800 28px serif';
-  ctx.textAlign = 'center';
+  // フッタ＝透かし：napsnap ＋ @ID（あれば）＋ URL（ディープリンクの手がかり）
+  const footTop = FRAME + photoH + cutGap + stripH;
   ctx.textBaseline = 'middle';
-  ctx.fillText('napsnap', W / 2, totalH - footerH / 2);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#0F0F0F';
+  ctx.font = '800 30px serif';
+  const brand = 'napsnap';
+  const idText = handle ? `  ${handle}` : '';
+  ctx.fillText(brand + idText, W / 2, footTop + 30);
+  ctx.fillStyle = '#9C9C9C';
+  ctx.font = '500 18px monospace';
+  ctx.fillText(NAPSNAP_URL.replace(/^https?:\/\//, ''), W / 2, footTop + 62);
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
