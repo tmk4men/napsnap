@@ -272,8 +272,9 @@ const styles = StyleSheet.create({
   topicLine: { color: colors.limeInkSoft, fontSize: font.body, fontWeight: '800', fontFamily: fonts.ui },
   topicSub: { color: colors.limeInkSoft, fontSize: font.small, fontWeight: '700', fontFamily: fonts.ui, marginTop: 1 },
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: rule.hair, borderBottomColor: colors.hairline },
-  // 重なりアバターの列
-  stack: { flexDirection: 'row', alignItems: 'center', width: 40, height: 40 },
+  // 重なりアバターの列。固定幅にすると中身（複数アバター＋「+N」）がはみ出して
+  // 隣の文字に重なるため、幅は中身に合わせる（flexShrink:0 で文字側に潰されない）。
+  stack: { flexDirection: 'row', alignItems: 'center', flexShrink: 0 },
   stackItem: {
     borderRadius: 16,
     borderWidth: 1.5,
