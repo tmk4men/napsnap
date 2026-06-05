@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, rule, shadow, space } from '../theme';
 import { fonts } from '../lib/fonts';
@@ -8,7 +8,7 @@ import { Backdrop } from '../components/Backdrop';
 import { SoundBadge, useClipPlayer } from '../components/audio';
 import { ChekiCard } from '../components/ChekiCard';
 import { IssueCard } from '../components/IssueCard';
-import { FootprintIcon, MoreIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark, VerifiedBadge } from '../components/icons';
+import { ChevronRightIcon, FootprintIcon, MoreIcon, PencilIcon, ShareIcon, ThumbsUpIcon, TraceMark, VerifiedBadge } from '../components/icons';
 import { shareInvite } from '../lib/share';
 import { MemoryCalendar } from '../components/MemoryCalendar';
 import { MemoryViewer } from '../components/MemoryViewer';
@@ -17,7 +17,7 @@ import { CropModal } from '../components/CropModal';
 import { ProfileEditOverlay } from '../components/ProfileEditOverlay';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
-import { currentUser, myArchive, myPosts, nextProfileEditDays, profileEditsLeft } from '../selectors';
+import { currentUser, memoryHighlights, myArchive, myPosts, nextProfileEditDays, profileEditsLeft } from '../selectors';
 import { postHasSound, resolvePostAudioSource } from '../lib/audio';
 import { pickRawImage } from '../lib/avatar';
 import { isFriday, issueLabel, startOfWeek } from '../lib/time';
@@ -43,6 +43,8 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
   const me = currentUser(s);
   const mine = useMemo(() => myPosts(s), [s.posts, s.views, s.reactions, s.currentUserId]);
   const archive = useMemo(() => myArchive(s), [s.posts, s.currentUserId]);
+  // 「1週間前／1ヶ月前／1年前の今日」の自分の投稿ハイライト（号外の上に1件だけ出す）。
+  const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
   const mockPeople = s.users.filter((u) => u.isMock);
   const followingUsers = s.users.filter((u) => u.id !== me?.id && s.following.includes(u.id));
   // 自分をフォローしている人。ライブ：s.followers から profile を引く。モック：従来通り mock 全員。
@@ -168,6 +170,20 @@ export function MeScreen({ nav: _nav }: { nav: Nav }) {
 
         {/* カレンダー（過去の自分の投稿を日別に。タップで MemoryViewer 起動） */}
         <MemoryCalendar posts={archive} onPressDay={(dayPosts) => setViewing(dayPosts)} />
+
+        {/* 縮刷版（バックナンバー欄）：1週間前などの自分の投稿を号外の上に出す。 */}
+        {memory && (
+          <Pressable
+            onPress={() => setViewing([memory.post])}
+            style={({ pressed }) => [styles.backnumber, pressed && { backgroundColor: colors.surfaceSunken }]}
+          >
+            <Image source={{ uri: memory.post.memoryUri ?? memory.post.imageUrl }} style={styles.bnThumb} resizeMode="cover" />
+            <View style={{ flex: 1, marginLeft: space.sm }}>
+              <Text style={styles.bnKicker}>{memory.label}</Text>
+            </View>
+            <ChevronRightIcon size={18} color={colors.textFaint} />
+          </Pressable>
+        )}
 
         {/* 今週の号外：日曜0時以降の自分の投稿をまとめて1枚の号外として発行（24hで消える） */}
         <Text style={styles.sectionLabel}>{tr('今週の号外', 'This week\'s extra')}</Text>
@@ -417,6 +433,19 @@ const styles = StyleSheet.create({
   menuItem: { paddingVertical: 15, alignItems: 'center' },
   menuCancel: { borderTopWidth: rule.hair, borderTopColor: colors.hairline },
   menuItemText: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0.3 },
+
+  // 縮刷版（バックナンバー欄）：号外の上の「1週間前」ハイライト
+  backnumber: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: space.lg,
+    paddingVertical: space.xs,
+    borderTopWidth: rule.hair,
+    borderBottomWidth: rule.hair,
+    borderColor: colors.hairline,
+  },
+  bnThumb: { width: 46, height: 46, backgroundColor: colors.surfaceSunken, borderWidth: rule.hair, borderColor: colors.hairline },
+  bnKicker: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
 
   // 今週の号外
   issueRow: {

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
@@ -26,12 +25,12 @@ import { DocOverlay } from '../components/DocOverlay';
 import { SettingsOverlay } from '../components/SettingsOverlay';
 import { AccountLinkOverlay } from '../components/AccountLinkOverlay';
 import { DeleteAccountOverlay } from '../components/DeleteAccountOverlay';
-import { BellIcon, CameraIcon, ChevronRightIcon, MenuIcon, SearchIcon } from '../components/icons';
+import { BellIcon, CameraIcon, MenuIcon, SearchIcon } from '../components/icons';
 import { LegalDoc, PRIVACY_POLICY, TERMS_OF_SERVICE } from '../legal';
 import { Nav } from '../navigation/nav';
 import { useStore } from '../store';
 import { ADS_ENABLED } from '../config';
-import { activityItems, currentUser, followedActivePosts, isBrandUser, isPassOpen, memoryHighlights, myReaction, topicUnseen } from '../selectors';
+import { activityItems, currentUser, followedActivePosts, isBrandUser, isPassOpen, myReaction, topicUnseen } from '../selectors';
 import { isActive } from '../lib/time';
 import { tr, lang } from '../i18n';
 import { todaysTopic } from '../topics';
@@ -109,7 +108,6 @@ export function HomeScreen({ nav, jump, onPageChange }: { nav: Nav; jump: HomeJu
   }, [others, myActive]);
   const followedLatest = others[0];
 
-  const memory = useMemo(() => memoryHighlights(s)[0], [s.posts, s.currentUserId]);
   const activity = useMemo(() => activityItems(s), [s.posts, s.views, s.reactions, s.following, s.currentUserId, s.notifyPrefs]);
   const unread = activity.filter((i) => i.at > s.lastSeenActivityAt).length + (topicNew ? 1 : 0);
 
@@ -247,21 +245,6 @@ export function HomeScreen({ nav, jump, onPageChange }: { nav: Nav; jump: HomeJu
         >
           {/* ── ページ0：ホーム ── */}
           <View style={{ width: pager.w, height: pager.h }}>
-            {memory && (
-              <FadeIn delay={70} dy={8}>
-                <Pressable
-                  onPress={() => setViewingMemory([memory.post])}
-                  style={({ pressed }) => [styles.backnumber, pressed && { backgroundColor: colors.surfaceSunken }]}
-                >
-                  <Image source={{ uri: memory.post.memoryUri ?? memory.post.imageUrl }} style={styles.bnThumb} resizeMode="cover" />
-                  <View style={{ flex: 1, marginLeft: space.sm }}>
-                    <Text style={styles.bnKicker}>{memory.label}</Text>
-                  </View>
-                  <ChevronRightIcon size={18} color={colors.textFaint} />
-                </Pressable>
-              </FadeIn>
-            )}
-
             <View
               style={styles.stage}
               onLayout={(e) => setStage({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
@@ -420,20 +403,6 @@ const styles = StyleSheet.create({
     borderColor: colors.bg,
   },
   bellBadgeText: { color: '#FFFFFF', fontSize: 9, fontWeight: '700', fontFamily: fonts.handle },
-
-  // 縮刷版（バックナンバー欄）
-  backnumber: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: space.lg,
-    marginTop: space.sm,
-    paddingVertical: space.xs,
-    borderTopWidth: rule.hair,
-    borderBottomWidth: rule.hair,
-    borderColor: colors.hairline,
-  },
-  bnThumb: { width: 46, height: 46, backgroundColor: colors.surfaceSunken, borderWidth: rule.hair, borderColor: colors.hairline },
-  bnKicker: { color: colors.text, fontSize: font.body, fontWeight: '700', fontFamily: fonts.serif, letterSpacing: 0 },
 
   // 中央ステージ
   pagerWrap: { flex: 1, overflow: 'hidden' },

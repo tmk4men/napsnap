@@ -7,7 +7,7 @@ import { Avatar, FadeIn } from './ui';
 import { ChekiCard } from './ChekiCard';
 import { CameraIcon, CloseIcon, GearIcon, NoteIcon, TraceMark, VerifiedBadge } from './icons';
 import { timeAgo } from '../lib/time';
-import { ActivityItem, userById } from '../selectors';
+import { ActivityItem, isPassOpen, userById } from '../selectors';
 import { ReactionType, User } from '../types';
 import { reactionMeta } from '../copy';
 import { useStore } from '../store';
@@ -177,6 +177,9 @@ export function ActivityOverlay({
             const single = g.kind === 'follow' && g.users.length === 1 && !!g.users[0];
             const followingBack = single && following.includes(g.users[0].id);
             const verified = g.users.length === 1 && g.users[0]?.isOfficial;
+            // 反応／足あとの写真は「自分の投稿」なので常に見せてよい。
+            // フォロー中の新着（post）は他人の写真なので、未開放（自分が出してない）なら伏せる。
+            const lockedThumb = g.kind === 'post' && !passOpen;
             return (
               <Pressable
                 key={g.id}
@@ -206,7 +209,12 @@ export function ActivityOverlay({
                     </Text>
                   </Pressable>
                 ) : g.postImage ? (
-                  <Image source={{ uri: g.postImage }} style={styles.thumb} resizeMode="cover" />
+                  <Image
+                    source={{ uri: g.postImage }}
+                    style={styles.thumb}
+                    resizeMode="cover"
+                    blurRadius={lockedThumb ? 16 : 0}
+                  />
                 ) : null}
               </Pressable>
             );
@@ -226,7 +234,10 @@ function NotificationDetail({ group, onClose }: { group: Group; onClose: () => v
   const s = useStore();
   const toggleFollow = useStore((st) => st.toggleFollow);
   const me = s.currentUserId;
+  const passOpen = isPassOpen(s);
   const post = group.postId ? s.posts.find((p) => p.id === group.postId) : undefined;
+  // 他人の投稿は、自分が出してない（未開放）あいだは伏せる。自分の投稿は常に見せる。
+  const lockedCard = !!post && post.userId !== me && !passOpen;
   const [stageW, setStageW] = useState(0);
   const cardW = Math.min(Math.max(0, stageW - 80), 240);
 
@@ -275,6 +286,8 @@ function NotificationDetail({ group, onClose }: { group: Group; onClose: () => v
               width={cardW}
               date={post.createdAt}
               tiltSeed={post.id}
+              blur={lockedCard}
+              redactStrip={lockedCard}
             />
           </View>
         )}
