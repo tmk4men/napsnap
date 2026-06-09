@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "app.napsnap",
-      "versionCode": 6,
+      "versionCode": 7,
       "adaptiveIcon": {
         "backgroundColor": "#FDFBF7",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -75,7 +75,6 @@
       "expo-web-browser",
       "expo-localization",
       "./plugins/withDisableExpoStubPch",
-      "./plugins/withRemoveAdIdPermission",
       "./plugins/withAndroidOverridePathCheck",
       "./plugins/withReleaseSigning",
       "expo-sharing",
