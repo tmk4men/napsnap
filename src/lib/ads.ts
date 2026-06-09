@@ -15,11 +15,11 @@ function pickByPlatform(android: string, ios: string): string {
 }
 
 // プロダクション用 ID。空文字なら未設定＝テスト ID を使う。Play / App Store 提出時に埋める。
-const PROD_BANNER_ANDROID = '';
+const PROD_BANNER_ANDROID = 'ca-app-pub-5634961953346923/7055995952';
 const PROD_BANNER_IOS = '';
-const PROD_NATIVE_ANDROID = '';
+const PROD_NATIVE_ANDROID = 'ca-app-pub-5634961953346923/8276407428';
 const PROD_NATIVE_IOS = '';
-const PROD_REWARDED_ANDROID = '';
+const PROD_REWARDED_ANDROID = 'ca-app-pub-5634961953346923/4874845310';
 const PROD_REWARDED_IOS = '';
 
 export const adUnitIds = {

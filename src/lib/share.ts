@@ -122,7 +122,7 @@ async function composeChekiPng(post: Post, handle?: string): Promise<Blob | null
   const photoH = Math.round(photoW * 1.12);
   const stripH = Math.round(W * 0.2);
   const cutGap = 4;
-  const footerH = 92; // 透かし（napsnap＋@ID＋URL）の2行ぶん
+  const footerH = 58; // 透かし（napsnap＋@ID）の1行ぶん（URLは焼き込まない）
   const totalH = FRAME + photoH + cutGap + stripH + footerH;
 
   const canvas = doc.createElement('canvas');
@@ -175,7 +175,7 @@ async function composeChekiPng(post: Post, handle?: string): Promise<Blob | null
   ctx.textBaseline = 'alphabetic';
   ctx.fillText(`${d.getMonth() + 1}.${d.getDate()} ${hh}:${mm}`, W - FRAME - 6, stripY + stripH - 12);
 
-  // フッタ＝透かし：napsnap ＋ @ID（あれば）＋ URL（ディープリンクの手がかり）
+  // フッタ＝透かし：napsnap ＋ @ID（あれば）。URL（gitリンク）は画像に焼き込まない。
   const footTop = FRAME + photoH + cutGap + stripH;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'center';
@@ -183,10 +183,7 @@ async function composeChekiPng(post: Post, handle?: string): Promise<Blob | null
   ctx.font = '800 30px serif';
   const brand = 'napsnap';
   const idText = handle ? `  ${handle}` : '';
-  ctx.fillText(brand + idText, W / 2, footTop + 30);
-  ctx.fillStyle = '#9C9C9C';
-  ctx.font = '500 18px monospace';
-  ctx.fillText(NAPSNAP_URL.replace(/^https?:\/\//, ''), W / 2, footTop + 62);
+  ctx.fillText(brand + idText, W / 2, footTop + footerH / 2);
 
   return await new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(

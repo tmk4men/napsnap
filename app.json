@@ -23,7 +23,7 @@
     },
     "android": {
       "package": "app.napsnap",
-      "versionCode": 4,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#FDFBF7",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -52,7 +52,8 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "その瞬間の音を2.5秒だけ録音します。"
+          "microphonePermission": "その瞬間の音を2.5秒だけ録音します。",
+          "enableBackgroundPlayback": false
         }
       ],
       [
@@ -65,7 +66,7 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "androidAppId": "ca-app-pub-5634961953346923~9311251528",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511",
           "delayAppMeasurementInit": true,
           "userTrackingUsageDescription": "広告をあなたに合わせて表示するために、トラッキングの許可をお願いします。許可しなくてもアプリは使えます。"
@@ -102,7 +103,7 @@
     }
   },
   "react-native-google-mobile-ads": {
-    "android_app_id": "ca-app-pub-3940256099942544~3347511713",
+    "android_app_id": "ca-app-pub-5634961953346923~9311251528",
     "ios_app_id": "ca-app-pub-3940256099942544~1458002511"
   }
 }

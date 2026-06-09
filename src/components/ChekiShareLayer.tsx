@@ -6,7 +6,7 @@ import { colors } from '../theme';
 import { captionFont, fonts } from '../lib/fonts';
 import { Post } from '../types';
 import { useStore } from '../store';
-import { NAPSNAP_URL, shareCheki, ShareResult } from '../lib/share';
+import { shareCheki, ShareResult } from '../lib/share';
 
 // 外部シェア用にチェキ画像を生成して共有する（ネイティブ）。
 // 透かし＝フッタに「napsnap」＋投稿者の @ID（＝ディープリンクの手がかり）を焼き込む。
@@ -94,11 +94,10 @@ function ShareChekiCard({ post, handle, onPhotoReady }: { post: Post; handle: st
         )}
         <Text style={styles.date}>{stamp}</Text>
       </View>
-      {/* 透かし（ディープリンクの手がかり）：napsnap ・ @ID ＋ URL */}
+      {/* 透かし：napsnap ・ @ID（URL＝gitリンクは画像に焼き込まない） */}
       <View style={styles.footer}>
         <Text style={styles.brand}>nap<Text style={styles.brandAccent}>s</Text>nap</Text>
         <Text style={styles.handle}>{handle}</Text>
-        <Text style={styles.url}>{NAPSNAP_URL.replace(/^https?:\/\//, '')}</Text>
       </View>
     </View>
   );
@@ -116,5 +115,4 @@ const styles = StyleSheet.create({
   brand: { fontSize: 30, fontFamily: fonts.brand, color: '#0F0F0F', includeFontPadding: false },
   brandAccent: { color: '#9BBF3B' },
   handle: { fontSize: 18, fontFamily: fonts.handle, color: '#5A5A5A' },
-  url: { fontSize: 16, fontFamily: fonts.handle, color: '#9C9C9C' },
 });
